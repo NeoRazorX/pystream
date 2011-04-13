@@ -14,22 +14,23 @@ from google.appengine.api import users
 
 from base import *
 
-class Portada(webapp.RequestHandler):
+class Main_page(webapp.RequestHandler):
     def get(self):
-        
         template_values = {
-            'titulo': 'pyStream - beta',
-            'descripcion': 'Folder sharing made easy.',
-            'tags': 'share, folder, python, linux, ubuntu'
+            'title': 'pyStream - alpha',
+            'description': 'Data sharing made easy.',
+            'tags': 'share, folder, python, linux, ubuntu',
+            'streams': db.GqlQuery("SELECT * FROM Stream ORDER BY date DESC").fetch(20)
         }
         
-        path = os.path.join(os.path.dirname(__file__), 'templates/portada.html')
+        path = os.path.join(os.path.dirname(__file__), 'templates/admin.html')
         self.response.out.write( template.render(path, template_values) )
 
 def main():
-    application = webapp.WSGIApplication([('/', Portada),
-                                    ],
-                                    debug=DEBUG_FLAG)
+    application = webapp.WSGIApplication([('/admin/', Main_page),
+                                         ],
+                                         debug=DEBUG_FLAG)
+    webapp.template.register_template_library('filters.django_filters')
     run_wsgi_app(application)
 
 if __name__ == "__main__":

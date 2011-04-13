@@ -16,5 +16,9 @@ handlers:
 - url: /robots.txt
   script: robots.py
 
+- url: /admin/.*
+  script: admin.py
+  login: admin
+
 - url: .*
-  script: main.py
+  script: public.py

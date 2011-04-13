@@ -1,0 +1,16 @@
+{% include "header.html" %}
+<div class="body">
+
+{% if admin %}
+    <div class="message">You are admin, you can go to <a href="/admin/">admin dashboard</a>.</div>
+{% endif %}
+
+<table width="100%" height="600">
+<tr>
+    <td align="center"><a href="/new">new stream</a></td>
+    <td align="center"><a href="/random">random stream</a></td>
+</tr>
+</table>
+
+</div>
+{% include "footer.html" %}

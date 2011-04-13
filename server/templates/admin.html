@@ -1,0 +1,20 @@
+{% include "header.html" %}
+<div class="body">
+
+<table class="custom">
+<tr class="top">
+    <td>ID</td><td>Stream</td><td>Date</td>
+</tr>
+{% for stream in streams %}
+    <tr>
+        <td><a href="/s/{{ stream.key.id }}">{{ stream.key.id }}</a></td>
+        <td><a href="/s/{{ stream.key.id }}">{{ stream.ip|full_ip }}:{{ stream.port }}</a></td>
+        <td>{{ stream.date|date:"d/m/Y H:i" }}</td>
+    </tr>
+{% empty %}
+    <tr><td>empty!</td></tr>
+{% endfor %}
+</table>
+
+</div>
+{% include "footer.html" %}
