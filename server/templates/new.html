@@ -1,11 +1,79 @@
 {% include "header.html" %}
-
 <div class="body">
-<center>
-New stream!
-<br/>
-You need to download pystream client.
-</center>
+
+<div class="section">
+    <div class="title">What is a stream?</div>
+    A stream is basicaly a web server, is defined by a IP and a port.
+    You can easily create a stream by using the <a href="#client">pystream client</a>,
+    doing this, you can share files between computers
+    (on LAN and Internet). Also, you can protect your stream with a
+    password.
 </div>
 
+<div class="section">
+    <a name="client"></a>
+    <div class="title">Where can i get the pystream client?</div>
+    Here :P
+</div>
+
+<div class="section">
+    <div class="title">Can i develop my own client?</div>
+    <table width="100%">
+    <tr>
+        <td valign="top">
+            <table>
+                <tr>
+                    <td colspan="2">
+                    Off course! To create a stream you only need to send a POST request to
+                    <a href="/new">http://www.pystream.com/new</a>
+                    with this data:
+                    </td>
+                </tr>
+                <tr><td align="right"><b>version</b>:</td><td>API version.</td></tr>
+                <tr><td align="right"><b>ip</b>:</td><td>Your public IP.</td></tr>
+                <tr><td align="right"><b>port</b>:</td><td>Your public port.</td></tr>
+                <tr><td align="right"><b>lan_ip</b>:</td><td>Your IP from LAN (this is optional).</td></tr>
+                <tr>
+                    <td colspan="2">
+                    <br/>
+                    If you develop a new client, please <a href="mailto:admin@pystream.com">tell me</a>
+                    and i'll put it here.
+                    </td>
+                </tr>
+            </table>
+        </td>
+        <td valign="top">
+            <form name="stream" action="/new" method="post">
+            <input type="hidden" name="version" value="{{ pystream_version }}"/>
+            <input type="hidden" name="web" value="True"/>
+            <table>
+                <tr>
+                    <td colspan="2" align="center">
+                    ... or you can use this form. Show your creativity!
+                    </td>
+                </tr>
+                <tr>
+                    <td align="right"><b>IP:</b></td>
+                    <td><input type="text" name="ip" size='15' maxlength='15' value="0.0.0.0"/></td>
+                </tr>
+                <tr>
+                    <td align="right"><b>Port:</b></td>
+                    <td><input type="text" name="port" size='5' maxlength='5' value="80"/></td>
+                </tr>
+                <tr>
+                    <td align="right"><b>LAN IP:</b></td>
+                    <td><input type="text" name="lan_ip" size='15' maxlength='15' value=""/> (optional)</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><input type="submit" value="send"/></td>
+                </tr>
+            </table>
+            </form>
+        </td>
+    </tr>
+    </table>
+</div>
+
+</div>
 {% include "footer.html" %}

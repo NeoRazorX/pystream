@@ -8,6 +8,7 @@
     <style type="text/css">
     body {
         background-color: white;
+        font-family: Arial, Helvetica, sans-serif;
         font-size: 13px;
         margin: 0px;
         margin-left: 30px;
@@ -36,10 +37,11 @@
         border: 1px dashed #191919;
     }
     
-    div.header {
-        background-color: #191919;
+    table.header {
+        width: 100%;
         color: white;
-        font-size: 14px;
+        font-size: 15px;
+        background-color: #191919;
         border-left: 10px solid #191919;
         border-right: 10px solid #191919;
         border-bottom-left-radius: 8px 8px;
@@ -47,12 +49,18 @@
         margin-bottom: 10px;
     }
     
-    div.header a {
+    table.header a {
         color: white;
     }
     
     div.body {
         min-height: 700px;
+    }
+    
+    table.main {
+        width: 100%;
+        height: 600px;
+        font-size: 18px;
     }
     
     div.message {
@@ -66,37 +74,55 @@
         font-size: 15px;
     }
     
-    ul.social_buttons {
-        list-style: none;
-        height: 20px;
-        margin-top: 5px;
-        padding-left: 5px;
+    div.section {
+        width: 95%;
+        margin-top: 20px;
+        margin-left: auto;
+        margin-right: auto;
+        margin-bottom: 10px;
     }
     
-    ul.social_buttons li {
-        float: left;
-        margin-right: 5px;
-        padding-left: 5px;
-        padding-right: 5px;
+    div.title {
+        font-size: 16px;
+        border-bottom: 1px solid #191919;
+    }
+    
+    div.stream_description {
+        background-color: #EFEFEF;
+        border: 1px solid #DEDEDE;
+        padding: 5px;
+        font-size: 17px;
+    }
+    
+    div.stream_info {
+        font-size: 11px;
+        margin-top: 0px;
+        margin-bottom: 15px;
+        padding: 0px;
     }
     
     table.comments {
         width: 100%;
     }
     
-    table.comments tr:hover {
-        background-color: #D6D6D6;
+    table.comments tr.comment:hover {
+        background-color: #EFEFEF;
+    }
+    
+    table.comments td {
+        vertical-align: top;
+        padding-top: 5px;
+        padding-bottom: 5px;
     }
     
     table.comments td.autor {
-        vertical-align: top;
         width: 110px;
-        border-right: 1px solid silver;
+        border-bottom: 1px solid silver;
     }
     
     table.comments td.text {
-        vertical-align: top;
         padding-left: 5px;
+        border-bottom: 1px solid silver;
     }
     
     table.custom {
@@ -108,26 +134,25 @@
     }
     
     table.custom tr:hover {
-        background-color: #D6D6D6;
+        background-color: #EFEFEF;
     }
     
-    div.footer {
+    table.footer {
+        width: 100%;
         margin-top: 10px;
     }
     
-    div.footer a {
+    table.footer a {
         color: black;
     }
     </style>
 </head>
 <body>
-<div class="header">
-    <table width="100%">
-    <tr>
-        <td><a href="/">pystream</a> (alpha)</td>
-        <td align="right"><a href="/new">new stream</a></td>
-        <td align="center" width="20">|</td>
-        <td width="100"><a href="/random">random stream</a></td>
-    </tr>
-    </table>
-</div>
+<table class="header">
+<tr>
+    <td><a href="/">pystream</a> (alpha)</td>
+    <td align="right"><a href="/new">new stream</a></td>
+    <td align="center" width="20">|</td>
+    <td width="120"><a href="/random">random stream</a></td>
+</tr>
+</table>

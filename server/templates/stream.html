@@ -1,15 +1,19 @@
 {% include "header.html" %}
 <div class="body">
 
+<script src="http://connect.facebook.net/en_US/all.js#xfbml=1"></script>
+<script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
+<script type="text/javascript" src="http://www.google.com/buzz/api/button.js"></script>
+
 <table width="100%">
 <tr>
-    <td width="405" valign="top">
+    <td width="40%" valign="top">
     {% if local %}
-        <iframe src="http://localhost:{{ stream.port }}" width="400" height="800" frameborder="0">
+        <iframe src="http://{{ stream.lan_ip|full_ip }}:{{ stream.port }}" width="100%" height="800" frameborder="0">
             You need a new browser -&gt; <a href="http://www.google.com/chrome">Google Chrome</a>
         </iframe>
     {% else %}
-        <iframe src="http://{{ stream.ip|full_ip }}:{{ stream.port }}" width="400" height="800" frameborder="0">
+        <iframe src="http://{{ stream.ip|full_ip }}:{{ stream.port }}" width="100%" height="800" frameborder="0">
             You need a new browser -&gt; <a href="http://www.google.com/chrome">Google Chrome</a>
         </iframe>
     {% endif %}
@@ -18,18 +22,49 @@
     {% endif %}
     </td>
     <td valign="top">
-        <ul class="social_buttons">
-            <li><a name="fb_share" type="button_count" href="http://www.facebook.com/sharer.php">Share on facebook</a><script src="http://static.ak.fbcdn.net/connect.php/js/FB.Share" type="text/javascript"></script></li>
-            <li><a title="Share on Google Buzz" class="google-buzz-button" href="http://www.google.com/buzz/post" data-button-style="small-count" data-locale="es"></a><script type="text/javascript" src="http://www.google.com/buzz/api/button.js"></script></li>
-            <li><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script></li>
-        </ul>
+        <table>
+        <tr>
+            <td><a title="Share on Google Buzz" class="google-buzz-button" href="http://www.google.com/buzz/post" data-button-style="small-count" data-locale="es"></a></td>
+            <td><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal">Tweet</a></td>
+            <td><fb:like href="" show_faces="true" width="450" font=""></fb:like></td>
+            <td align="right"><a href="/report?link={{ stream.get_link }}">report an issue</a></td>
+        </tr>
+        </table>
+        
+        {% if stream.password %}
+            <div class="message">This stream is password protected</div>
+        {% endif %}
+        
+        {% if publisher or admin %}
+            <form name="stream" action="/mod_stream" method="post">
+            <input type="hidden" name="key" value="{{ stream.key }}"/>
+            <b>Description</b>:<br/>
+            <textarea name="description" rows="4" cols="60">{{ stream.description|safe }}</textarea>
+            <br/><b>Password</b> (optional): 
+            <input type="password" name="password" size='20' maxlength='20' value="{{ stream.password }}"/>
+            <input type="submit" value="send"/>
+            </form>
+            <br/>
+        {% else %}
+            <div class="stream_description">
+                {{ stream.description|safe|urlize }}
+            </div>
+            <div class="stream_info">
+                {{ stream.date|date:"d/m/Y H:i" }}
+                | {{ stream.comments }} comments
+            </div>
+        {% endif %}
+        
+        <div class="title">Comments:</div>
         <table class="comments">
         {% for comment in comments %}
-        <tr>
+        <tr class="comment">
             <td class="autor">
                 <b>{{ comment.autor }}</b>
                 <br/>
                 {{ comment.date|date:"d/m/Y H:i" }}
+                <br/>
+                {{ comment.os|show_os }}
                 <br/>
                 {% if admin %}
                     {{ comment.ip|full_ip }}
@@ -40,24 +75,23 @@
             <td class="text">{{ comment.text|safe|linebreaksbr|urlize }}</td>
         </tr>
         {% empty %}
-            <tr><td><div class="message">No comments yet!</div></td></tr>
+            <tr><td colspan="2"><div class="message">No comments yet!</div></td></tr>
         {% endfor %}
-        </table>
-        <hr/>
-        <table width="100%">
         <tr>
+            <td>
             {% if admin %}
-                <td valign="top"><b>admin</b></td>
+                <b>admin</b>
             {% else %}
                 {% if publisher %}
-                    <td valign="top"><b>publisher</b></td>
+                    <b>publisher</b>
                 {% else %}
-                    <td valign="top"><b>anonymous</b></td>
+                    <b>anonymous</b>
                 {% endif %}
             {% endif %}
+            </td>
             <td>
             <form name="comment" action="/comment" method="post">
-            <input type="hidden" name="link" value="http://www.pystream.com/s/{{ stream.key.id }}"/>
+            <input type="hidden" name="stream_id" value="{{ stream.key.id }}"/>
             <textarea name="text" rows="6" cols="60">Leave a comment!</textarea>
             <br/>{{ captcha|safe }}
             <input type="submit" value="send"/>

@@ -3,18 +3,56 @@
 
 <table class="custom">
 <tr class="top">
-    <td>ID</td><td>Stream</td><td>Date</td>
+    <td>Stream</td>
+    <td>LAN IP</td>
+    <td>Description</td>
+    <td>Password</td>
+    <td>Comments</td>
+    <td align="right">Date</td>
 </tr>
 {% for stream in streams %}
     <tr>
-        <td><a href="/s/{{ stream.key.id }}">{{ stream.key.id }}</a></td>
-        <td><a href="/s/{{ stream.key.id }}">{{ stream.ip|full_ip }}:{{ stream.port }}</a></td>
-        <td>{{ stream.date|date:"d/m/Y H:i" }}</td>
+        <td><a href="{{ stream.get_link }}">{{ stream.ip|full_ip }}:{{ stream.port }}</a></td>
+        <td>{{ stream.lan_ip|full_ip }}</td>
+        <td>{{ stream.description|truncatewords:15 }}</td>
+        {% if stream.password %}
+            <td>Yes</td>
+        {% else %}
+            <td>No</td>
+        {% endif %}
+        <td>{{ stream.comments }}</td>
+        <td align="right">{{ stream.date|date:"d/m/Y H:i" }}</td>
     </tr>
 {% empty %}
     <tr><td>empty!</td></tr>
 {% endfor %}
 </table>
+
+<br/>
+
+<table class="custom">
+<tr class="top">
+    <td>Reports</td>
+</tr>
+{% for rep in reports %}
+    <tr>
+        <td>
+        <b>Link</b>: <a href="{{ rep.get_link }}">{{ rep.link }}</a>
+        <b>from</b>: {{ rep.ip|full_ip }}
+        <b>with</b>: {{ rep.os|show_os }}
+        <b>on</b>: {{ rep.date|date:"d/m/Y H:i" }}
+        | <a href="/admin?rm_report={{ rep.key }}">remove</a>
+        <br/>
+        {{ rep.text|safe|linebreaksbr|urlize }}
+        </td>
+    </tr>
+{% empty %}
+    <tr><td>empty!</td></tr>
+{% endfor %}
+</table>
+
+<br/><br/>
+<div><a href="{{ logout }}">logout</a></div>
 
 </div>
 {% include "footer.html" %}

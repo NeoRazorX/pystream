@@ -15,3 +15,17 @@ def full_ip(n):
         d = d/256
     return mark_safe( '.'.join(q) )
 
+@register.filter
+def show_os(ua):
+    os = 'unknown'
+    browser = 'unknown'
+    # detecting os
+    for aux in ['mac', 'iphone', 'ipad', 'ipod', 'windows', 'linux', 'android']:
+        if ua.lower().find( aux ) != -1:
+            os = aux
+    # detecting browser
+    for aux in ['safari', 'opera', 'chrome', 'firefox', 'explorer']:
+        if ua.lower().find( aux ) != -1:
+            browser = aux
+    return mark_safe('<span title="' + ua + '">' + os + '+' + browser + '</span>')
+

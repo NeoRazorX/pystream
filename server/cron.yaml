@@ -1,0 +1,6 @@
+cron:
+
+- description: Stream check
+  url: /cron/stream_check
+  schedule: every 60 minutes
+
