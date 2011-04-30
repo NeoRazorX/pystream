@@ -7,19 +7,23 @@ PYSTREAM_VERSION = '1'
 RANDOM_CACHE_TIME = 600
 
 import logging
-from google.appengine.ext import db
+from google.appengine.ext import db, search
 from google.appengine.api import memcache
 
 
-class Stream(db.Model):
-    ip = db.IntegerProperty(default=0)
-    port = db.IntegerProperty(default=80)
-    lan_ip = db.IntegerProperty(default=0)
+class Stream(search.SearchableModel):
+    comments = db.IntegerProperty(default=0)
     date = db.DateTimeProperty(auto_now_add=True)
     description = db.StringProperty(default='no description')
-    password = db.StringProperty(default='')
+    ip = db.IntegerProperty(default=0)
+    lan_ip = db.IntegerProperty(default=0) # to show on lan
+    online = db.BooleanProperty(default=False) # /cron/streams.py will put True if no problem detected
     os = db.StringProperty(default='unknown')
-    comments = db.IntegerProperty(default=0)
+    password = db.StringProperty(default='')
+    port = db.IntegerProperty(default=80)
+    public = db.BooleanProperty(default=True) # public/private
+    size = db.IntegerProperty(default=0)
+    strikes = db.IntegerProperty(default=0) # times offline to /cron/streams.py checker
     
     def get_link(self):
         if self.password != '':
@@ -44,12 +48,29 @@ class Stream(db.Model):
                 logging.error("Error adding comments to memcache!")
         return comments
     
+    def status_text(self):
+        status = ''
+        if self.public:
+            if self.online:
+                status = 'public online'
+            else:
+                status = 'public offline, ' + str(self.strikes) + ' strikes'
+        else:
+            if self.password != '':
+                status = 'password protected, '
+            if self.strikes == -1:
+                status += 'private online'
+            else:
+                status += 'private offline'
+        return status
+    
     def rm_comments(self):
         comments = db.GqlQuery("SELECT * FROM Comment WHERE stream_id = :1", self.key().id() )
         db.delete( comments )
     
     def rm_cache(self):
         memcache.delete( str(self.key()) )
+        memcache.delete('random_streams')
 
 
 class Comment(db.Model):
@@ -82,8 +103,35 @@ class Report(db.Model):
 class Stat_item(db.Model):
     date = db.DateTimeProperty(auto_now_add=True)
     streams = db.IntegerProperty(default=0)
+    publics = db.IntegerProperty(default=0)
+    online = db.IntegerProperty(default=0)
+    sharing = db.IntegerProperty(default=0)
     comments = db.IntegerProperty(default=0)
     reports = db.IntegerProperty(default=0)
+    
+    def public_relation(self):
+        if self.streams > 0 and self.publics > 0:
+            return (self.publics*100)/self.streams
+        else:
+            return 0
+    
+    def online_relation(self):
+        if self.streams > 0 and self.online > 0:
+            return (self.online*100)/self.streams
+        else:
+            return 0
+    
+    def share_relation(self):
+        if self.streams > 0 and self.sharing > 0:
+            return self.sharing/self.streams
+        else:
+            return 0
+    
+    def comments_relation(self):
+        if self.streams > 0 and self.comments > 0:
+            return self.comments/self.streams
+        else:
+            return 0
 
 
 class ip_item:

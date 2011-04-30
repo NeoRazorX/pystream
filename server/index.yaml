@@ -14,3 +14,9 @@ indexes:
   properties:
   - name: stream_id
   - name: date
+
+- kind: Stream
+  properties:
+  - name: online
+  - name: date
+    direction: desc

@@ -1,0 +1,39 @@
+{% include "header.html" %}
+<div class="arrow" id="menu"></div>
+<div class="body">
+
+<center>
+    <a href="/admin/streams">streams</a>
+    | <a href="/admin/reports">reports</a>
+    | <s><a href="/admin/stats">stats</a></s>
+</center>
+
+<table class="custom">
+<tr class="top">
+    <td>Date</td>
+    <td>Streams</td>
+    <td>Publics</td>
+    <td>Online</td>
+    <td>Sharing</td>
+    <td>Comments</td>
+    <td>Reports</td>
+</tr>
+{% for s in stats %}
+    <tr>
+        <td>{{ s.date|date:"d/m/Y H:i" }}</td>
+        <td>{{ s.streams }}</td>
+        <td>{{ s.publics }} ({{ s.public_relation }}%)</td>
+        <td>{{ s.online }} ({{ s.online_relation }}%)</td>
+        <td>{{ s.sharing|size }} ({{ s.share_relation|size }}/stream)</td>
+        <td>{{ s.comments }} ({{ s.comments_relation }}/stream)</td>
+        <td>{{ s.reports }}</td>
+    </tr>
+{% empty %}
+    <tr><td colspan="9">empty!</td></tr>
+{% endfor %}
+</table>
+
+{{ pages_data|pages }}
+
+</div>
+{% include "footer.html" %}

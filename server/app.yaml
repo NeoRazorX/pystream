@@ -13,6 +13,15 @@ handlers:
 - url: /img
   static_dir: img
 
+- url: /css
+  static_dir: css
+
+- url: /js
+  static_dir: js
+
+- url: /client
+  static_dir: client
+
 - url: /robots.txt
   script: robots.py
 
@@ -20,6 +29,9 @@ handlers:
   script: cron/streams.py
   login: admin
 
+- url: /cron/stats
+  script: cron/stats.py
+  login: admin
 
 - url: /admin/.*
   script: admin.py

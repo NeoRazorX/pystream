@@ -1,4 +1,5 @@
 {% include "header.html" %}
+<div class="arrow" id="menu"></div>
 <div class="body">
 
 <div class="section">
@@ -14,6 +15,25 @@
     <a name="client"></a>
     <div class="title">Where can i get the pystream client?</div>
     Here :P
+    <table align="center">
+    <tr>
+        <td align="center">
+            <a href="#" onclick="this_is_alpha()"><img src="/img/windows.png"/></a>
+            <br/>
+            <a href="#" onclick="this_is_alpha()">Windows</a>
+        </td>
+        <td align="center">
+            <a href="#" onclick="this_is_alpha()"><img src="/img/linux.png"/></a>
+            <br/>
+            <a href="#" onclick="this_is_alpha()">Linux</a>
+        </td>
+        <td align="center">
+            <a href="#" onclick="this_is_alpha()"><img src="/img/mac.jpg"/></a>
+            <br/>
+            <a href="#" onclick="this_is_alpha()">Mac</a>
+        </td>
+    </tr>
+    </table>
 </div>
 
 <div class="section">
@@ -32,7 +52,6 @@
                 <tr><td align="right"><b>version</b>:</td><td>API version.</td></tr>
                 <tr><td align="right"><b>ip</b>:</td><td>Your public IP.</td></tr>
                 <tr><td align="right"><b>port</b>:</td><td>Your public port.</td></tr>
-                <tr><td align="right"><b>lan_ip</b>:</td><td>Your IP from LAN (this is optional).</td></tr>
                 <tr>
                     <td colspan="2">
                     <br/>
@@ -59,10 +78,6 @@
                 <tr>
                     <td align="right"><b>Port:</b></td>
                     <td><input type="text" name="port" size='5' maxlength='5' value="80"/></td>
-                </tr>
-                <tr>
-                    <td align="right"><b>LAN IP:</b></td>
-                    <td><input type="text" name="lan_ip" size='15' maxlength='15' value=""/> (optional)</td>
                 </tr>
                 <tr>
                     <td></td>

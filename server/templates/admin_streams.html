@@ -1,0 +1,46 @@
+{% include "header.html" %}
+<div class="arrow" id="menu"></div>
+<div class="body">
+
+<center>
+    <s><a href="/admin/streams">streams</a></s>
+    | <a href="/admin/reports">reports</a>
+    | <a href="/admin/stats">stats</a>
+</center>
+
+{% if removed %}
+    <div class="message">Stream removed successfull!</div>
+{% endif %}
+
+<table class="custom">
+<tr class="top">
+    <td>Stream</td>
+    <td>Size</td>
+    <td>OS</td>
+    <td>Description</td>
+    <td>Status</td>
+    <td>Comments</td>
+    <td align="right">Date</td>
+</tr>
+{% for stream in streams %}
+    <tr>
+        <td>
+            <a href="{{ stream.get_link }}" title="LAN: {{ stream.lan_ip|full_ip }}">
+            {{ stream.ip|full_ip }}:{{ stream.port }}</a>
+        </td>
+        <td>{{ stream.size|size }}</td>
+        <td>{{ stream.os|show_platform }}</td>
+        <td>{{ stream.description|truncate:80 }}</td>
+        <td>{{ stream.status_text }}</td>
+        <td>{{ stream.comments }}</td>
+        <td align="right">{{ stream.date|date:"d/m/Y H:i" }}</td>
+    </tr>
+{% empty %}
+    <tr><td colspan="9">empty!</td></tr>
+{% endfor %}
+</table>
+
+{{ pages_data|pages }}
+
+</div>
+{% include "footer.html" %}

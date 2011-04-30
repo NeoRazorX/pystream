@@ -1,18 +1,51 @@
 {% include "header.html" %}
+<div class="arrow" id="main"></div>
 <div class="body">
 
-{% if admin %}
-    <div class="message">You are admin, you can go to <a href="/admin/">admin dashboard</a>.</div>
+<div class="search">
+    <form name="search" action="/search" method="get">
+        <input class="search_box" type="text" name="query" value=""/>
+        <input type="submit" value="search"/>
+    </form>
+</div>
+
+{% if local_streams %}
+<table class="custom">
+<tr class="top">
+    <td>Streams nears you</td>
+    <td>Size</td>
+    <td>Status</td>
+    <td>Comments</td>
+    <td align="right">Date</td>
+</tr>
+{% for stream in local_streams %}
+    <tr>
+        <td>
+            <a href="{{ stream.get_link }}" title="Stream: {{ stream.key.id }}">
+            {{ stream.description|truncate:70 }}
+            </a>
+        </td>
+        <td>{{ stream.size|size }}</td>
+        <td>{{ stream.status_text }}</td>
+        <td>{{ stream.comments }}</td>
+        <td align="right">{{ stream.date|date:"d/m/Y H:i" }}</td>
+    </tr>
+{% endfor %}
+</table>
 {% endif %}
 
 <table class="main">
 <tr>
     <td align="center">
+        <a href="/new"><img src="/img/notebook.jpg"/></a>
+        <br/>
         <a href="/new">new stream</a>
         <br/>
         The easy way to share data between computers!
     </td>
     <td align="center">
+        <a href="/random"><img src="/img/dados.jpg"/></a>
+        <br/>
         <a href="/random">random stream</a>
         <br/>
         Look a random stream. What are people sharing?

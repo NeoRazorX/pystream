@@ -4,3 +4,6 @@ cron:
   url: /cron/stream_check
   schedule: every 60 minutes
 
+- description: Stats
+  url: /cron/stats
+  schedule: every 24 hours

@@ -1,0 +1,39 @@
+{% include "header.html" %}
+<div class="arrow" id="menu"></div>
+<div class="body">
+
+<center>
+    <a href="/admin/streams">streams</a>
+    | <s><a href="/admin/reports">reports</a></s>
+    | <a href="/admin/stats">stats</a>
+</center>
+
+{% if removed %}
+    <div class="message">Report removed successfull!</div>
+{% endif %}
+
+<table class="custom">
+<tr class="top">
+    <td>Reports</td>
+</tr>
+{% for rep in reports %}
+    <tr>
+        <td>
+        <b>Link</b>: <a href="{{ rep.get_link }}">{{ rep.link }}</a>
+        <b>from</b>: {{ rep.ip|full_ip }}
+        <b>with</b>: {{ rep.os|show_os }}
+        <b>on</b>: {{ rep.date|date:"d/m/Y H:i" }}
+        | <a href="#" onclick="remove_report('{{ rep.key }}')">remove</a>
+        <br/>
+        {{ rep.text|safe|linebreaksbr|urlize }}
+        </td>
+    </tr>
+{% empty %}
+    <tr><td>empty!</td></tr>
+{% endfor %}
+</table>
+
+{{ pages_data|pages }}
+
+</div>
+{% include "footer.html" %}
