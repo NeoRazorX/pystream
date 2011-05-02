@@ -1,4 +1,4 @@
-application: pystream
+application: streampy
 version: 1
 runtime: python
 api_version: 1

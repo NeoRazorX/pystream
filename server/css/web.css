@@ -122,6 +122,7 @@ div.search input.search_box {
 
 table.main {
     width: 100%;
+    margin-top: 20px;
     font-size: 18px;
 }
 
