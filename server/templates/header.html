@@ -7,6 +7,17 @@
     <meta name="Robots" content="all" />
     <link rel="stylesheet" href="/css/web.css" type="text/css" />
     <script type="text/javascript" src="/js/basic.js"></script>
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-417932-6']);
+      _gaq.push(['_trackPageview']);
+    
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
 </head>
 <body onload="{{ onload }}">
 <div class="top_right">
@@ -19,10 +30,9 @@
     {% endif %}
 </div>
 <div class="header">
-    <img src="/img/logo.png"/>
-    <a href="/">pystream</a> (alpha)
+    <a href="/"><img src="/img/logo.png" alt="pystream (alpha)"/></a>
     {% if stream %}
-        <a href="/s/{{ stream.key.id }}">{{ stream.key.id }}</a>
+        &nbsp; <a href="/s/{{ stream.key.id }}">{{ stream.key.id }}</a>
     {% endif %}
     {% if stream.password %}
         <img src="/img/mini-lock.png" alt="locked" title="password protected"/>

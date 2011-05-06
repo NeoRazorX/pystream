@@ -1,13 +1,25 @@
 {% include "header.html" %}
+
+<script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
+<script type="text/javascript" src="http://www.google.com/buzz/api/button.js"></script>
+
 <div class="arrow" id="main"></div>
 <div class="body">
 
-<div class="search">
-    <form name="search" action="/search" method="get">
-        <input class="search_box" type="text" name="query" value=""/>
-        <input type="submit" value="search"/>
-    </form>
-</div>
+<table class="social_buttons">
+<tr>
+    <td>
+    <table>
+    <tr>
+        <td><a title="Share on Google Buzz" class="google-buzz-button" href="http://www.google.com/buzz/post" data-button-style="small-count" data-locale="es"></a></td>
+        <td><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal">Tweet</a></td>
+        <td><iframe src="http://www.facebook.com/plugins/like.php?href&amp;send=true&amp;layout=button_count&amp;width=150&amp;show_faces=false&amp;action=like&amp;colorscheme=light&amp;font&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:150px; height:21px;" allowTransparency="true"></iframe></td>
+    </tr>
+    </table>
+    </td>
+    <td align="right"><a href="/report?link=/">report an issue</a></td>
+</tr>
+</table>
 
 {% if local_streams %}
 <table class="custom">
@@ -15,7 +27,6 @@
     <td>Streams nears you</td>
     <td>Size</td>
     <td>Status</td>
-    <td>Comments</td>
     <td align="right">Date</td>
 </tr>
 {% for stream in local_streams %}
@@ -27,11 +38,28 @@
         </td>
         <td>{{ stream.size|size }}</td>
         <td>{{ stream.status_text }}</td>
-        <td>{{ stream.comments }}</td>
         <td align="right">{{ stream.date|date:"d/m/Y H:i" }}</td>
     </tr>
 {% endfor %}
 </table>
+<br/>
+{% endif %}
+
+<br/>
+
+<div class="search">
+    <form name="search" action="/search" method="get">
+        <input class="search_box" type="text" name="query" value=""/>
+        <input type="submit" value="search"/>
+    </form>
+</div>
+
+{% if previouss %}
+<center>
+{% for p in previouss %}
+    <a href="/search?query={{ p.0 }}" title="{{ p.1 }}">{{ p.0 }}</a> &nbsp;
+{% endfor %}
+</center><br/>
 {% endif %}
 
 <table class="main">

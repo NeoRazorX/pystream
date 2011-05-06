@@ -2,6 +2,7 @@
 
 from google.appengine.ext import webapp
 from django.utils.safestring import mark_safe
+from datetime import datetime, timedelta
 
 register = webapp.template.create_template_register()
 
@@ -46,7 +47,7 @@ def show_os(ua):
 def show_platform(ua):
     os = 'unknown'
     # detecting os
-    for aux in ['mac', 'windows', 'linux', 'ubuntu', 'debian', 'fedora', 'suse']:
+    for aux in ['mac', 'windows', 'linux', 'ubuntu', 'debian', 'fedora', 'suse', 'web']:
         if ua.lower().find( aux ) != -1:
             os = aux
     return mark_safe('<span title="' + ua + '">' + os + '</span>')
@@ -64,6 +65,14 @@ def size(n):
         return mark_safe( str(n/1000000000) + ' GiB')
     else:
         return mark_safe( str(n/1000000000000) + ' TiB')
+
+@register.filter
+def stream_time_left(date, strikes):
+    if strikes <= 0:
+        rdate = date - datetime.today() - timedelta(hours=24)
+    else:
+        rdate = date - datetime.today() - timedelta(hours=12)
+    return mark_safe('This stream will be removed after '+str( rdate.seconds/3600 )+' hours.')
 
 @register.filter
 def pages(data):

@@ -1,95 +1,88 @@
 #!/usr/bin/env python
 
-import logging, random
-from google.appengine.ext import db, webapp
-from google.appengine.ext.webapp.util import run_wsgi_app
-from google.appengine.api import urlfetch
+import logging, random, math
 from datetime import datetime, timedelta
 from base import *
 
+CHECKS_EACH_RUN = 10
+CHECKS_BEFORE_REMOVE = 3
 
-# this class needs to know the local ip to work correctly on local/lan
-class Stream_check(webapp.RequestHandler, ip_item):
-    def get(self):
-        query = db.GqlQuery("SELECT * FROM Stream")
-        ss = query.fetch(10, random.randint(0, query.count()-1))
+class Stream_check(ip_item):
+    def __init__(self):
+        query = db.GqlQuery("SELECT * FROM Stream ORDER BY date DESC")
+        ss = query.fetch(CHECKS_EACH_RUN,
+                         random.randint(0, max(query.count()-CHECKS_EACH_RUN+1,0)))
         for s in ss:
             if s.public:
                 self.check_public(s)
             else:
                 self.check_private(s)
     
-    # needed for testing purposes
-    def from_local(self, ip):
-        if ip == self.request.remote_addr:
-            return True
-        elif self.request.remote_addr == '127.0.0.1':
-            return True
-        else:
-            return False
-    
-    def check_online(self, s):
-        if self.from_local( self.numToDottedQuad( s.ip ) ):
-            result = urlfetch.fetch('http://' + self.numToDottedQuad(s.lan_ip) + ':' + str(s.port))
-        else:
-            result = urlfetch.fetch('http://' + self.numToDottedQuad(s.ip) + ':' + str(s.port))
-        if result.status_code == 200:
-            return True
-        else:
-            return False
-    
-    # check public avaliability of public streams
+    # removes public streams after CHECKS_BEFORE_REMOVE strikes
     def check_public(self, s):
-        try:
-            if self.check_online(s):
-                s.strikes = 0
-                s.online = True
-                logging.info('Stream ' + str( s.key().id() ) + ' loaded!')
-            else:
-                s.strikes += 1
-                logging.info('Cant load stream ' + str( s.key().id() ) + '! ' + str(result.status_code) + ' code')
-        except:
-            s.strikes += 1
-            logging.info('Cant load stream ' + str( s.key().id() ) + '!')
-        if s.strikes > 5:
-            s.rm_comments()
-            s.rm_cache()
+        result = self.process_stream_check_results(s)
+        if s.strikes > CHECKS_BEFORE_REMOVE:
+            s.rm_all()
             s.delete()
             logging.info('Stream ' + str( s.key().id() ) + ' deleted!')
-        else:
+        elif result >= 0: # offline
+            s.strikes += 1
+            s.online = False
+            s.rm_cache()
+            s.put()
+        elif result < 0: # online
+            s.strikes = 0
+            s.online = True
             s.rm_cache()
             s.put()
     
-    # removes private streams after 24 hours
+    # removes private online streams after 24 hours
+    # removes private offline streams after 12 hours
     def check_private(self, s):
-        # first and only one online check
-        # strikes = -1 -> online, strikes = 1 offline
-        # online is only for public streams
-        if s.strikes == 0:
-            try:
-                if self.check_online(s):
-                    s.strikes = -1
-                else:
-                    s.strikes = 1
-            except:
-                s.strikes = 1
-        if s.date < (datetime.today() - timedelta(days=1)):
-            s.rm_comments()
-            s.rm_cache()
-            s.delete()
-            logging.info('Stream ' + str( s.key().id() ) + ' deleted!')
-        elif s.online: # private streams can't be online
+        if s.online: # private streams can't be online
             s.online = False
-            s.put()
-            s.rm_cache()
-
-
-def main():
-    application = webapp.WSGIApplication([('/cron/stream_check', Stream_check)],
-                                            debug=DEBUG_FLAG)
-    run_wsgi_app(application)
+        s.strikes = self.process_stream_check_results(s)
+        if s.strikes <= 0: # online or unknown
+            if s.date < (datetime.today() - timedelta(hours=24)):
+                s.rm_all()
+                s.delete()
+                logging.info('Stream ' + str( s.key().id() ) + ' deleted!')
+            else:
+                s.put()
+        else: # offline
+            if s.date < (datetime.today() - timedelta(hours=12)):
+                s.rm_all()
+                s.delete()
+                logging.info('Stream ' + str( s.key().id() ) + ' deleted!')
+            else:
+                s.put()
+    
+    # read stream check results.
+    # -1 = online
+    #  0 = unknown
+    #  1 = offline
+    def process_stream_check_results(self, s):
+        strikes = 0
+        ips = []
+        rr = db.GqlQuery("SELECT * FROM Stream_check_result WHERE stream_id = :1 ORDER BY stream_id ASC", s.key().id())
+        for r in rr:
+            if r.ip not in ips:
+                if r.result == 'online':
+                    strikes -= 1
+                elif r.result == 'offline':
+                    strikes += 1
+                elif r.result == 'error':
+                    strikes += 1
+                ips.append(r.ip)
+        db.delete(rr)
+        if strikes > 0:
+            return 1
+        elif strikes < 0:
+            return -1
+        else:
+            return 0
 
 
 if __name__ == "__main__":
-    main()
+    Stream_check()
 

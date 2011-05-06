@@ -21,6 +21,14 @@
 </tr>
 </table>
 
+{% if stream.public %}
+    {% if stream.strikes > 0 %}
+    <div class="message">This stream is not working propertly. It has {{ stream.strikes }} strikes.</div>
+    {% endif %}
+{% else %}
+    <div class="message">{{ stream.date|stream_time_left:stream.strikes }}</div>
+{% endif %}
+
 {% if publisher or admin %}
 <div class="stream_description">
     <form name="stream" action="/mod_stream" method="post">
@@ -69,9 +77,6 @@
 <table width="100%">
 <tr>
     <td width="40%" valign="top">
-    {% if stream.strikes > 0 %}
-        <div class="message">This stream is not working propertly!</div>
-    {% endif %}
     {% if local %}
         <iframe src="http://{{ stream.lan_ip|full_ip }}:{{ stream.port }}" width="100%" height="800" frameborder="0">
             You need a new browser -&gt; <a href="http://www.google.com/chrome">Google Chrome</a>

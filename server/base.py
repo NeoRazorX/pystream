@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-DEBUG_FLAG = True
+DEBUG_FLAG = False
 RECAPTCHA_PUBLIC_KEY = '6Ldrqb4SAAAAAOowIidxQ3Hc6igXPdqWKec3dL_H'
 RECAPTCHA_PRIVATE_KEY = '6Ldrqb4SAAAAABJ33eyTnkT5t2ll8kKDerqDoNj2'
 PYSTREAM_VERSION = '1'
-RANDOM_CACHE_TIME = 600
+RANDOM_CACHE_TIME = 1200
 
 import logging
 from google.appengine.ext import db, search
@@ -68,9 +68,25 @@ class Stream(search.SearchableModel):
         comments = db.GqlQuery("SELECT * FROM Comment WHERE stream_id = :1", self.key().id() )
         db.delete( comments )
     
+    def rm_stream_check_result(self):
+        rep = db.GqlQuery("SELECT * FROM Stream_check_result WHERE stream_id = :1", self.key().id() )
+        db.delete( rep )
+    
     def rm_cache(self):
         memcache.delete( str(self.key()) )
         memcache.delete('random_streams')
+    
+    def rm_all(self):
+        self.rm_comments()
+        self.rm_stream_check_result()
+        self.rm_cache()
+
+
+class Stream_check_result(db.Model):
+    date = db.DateTimeProperty(auto_now_add=True)
+    ip = db.IntegerProperty(default=0)
+    stream_id = db.IntegerProperty()
+    result = db.StringProperty(default='none')
 
 
 class Comment(db.Model):

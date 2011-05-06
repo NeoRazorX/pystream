@@ -17,6 +17,25 @@ indexes:
 
 - kind: Stream
   properties:
+  - name: ip
+  - name: date
+    direction: desc
+
+- kind: Stream
+  properties:
+  - name: ip
+  - name: port
+  - name: date
+    direction: desc
+
+- kind: Stream
+  properties:
   - name: online
+  - name: date
+    direction: desc
+
+- kind: Stream
+  properties:
+  - name: public
   - name: date
     direction: desc

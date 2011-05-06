@@ -2,9 +2,19 @@
 <div class="arrow" id="menu"></div>
 <div class="body">
 
+<table class="social_buttons">
+<tr><td align="right"><a href="/report?link=/">report an issue</a></td></tr>
+</table>
+
 {% if error %}
     <div class="error">{{ error|safe|urlize }}</div>
     <br/>
+{% else %}
+    <br/>
+{% endif %}
+
+{% if code == '404' %}
+    <center><img src="/img/not_found.png"/></center>
 {% endif %}
 
 <div class="search">
@@ -14,11 +24,20 @@
     </form>
 </div>
 
+{% if previouss %}
+<center>
+{% for p in previouss %}
+    <a href="/search?query={{ p.0 }}" title="{{ p.1 }}">{{ p.0 }}</a> &nbsp;
+{% endfor %}
+</center><br/>
+{% endif %}
+
+{% if query %}
 <table class="custom">
 <tr class="top">
     <td>Streams</td>
     <td>Size</td>
-    <td>Comments</td>
+    <td>Status</td>
     <td align="right">Date</td>
 </tr>
 {% for stream in streams %}
@@ -29,13 +48,14 @@
             </a>
         </td>
         <td>{{ stream.size|size }}</td>
-        <td>{{ stream.comments }}</td>
+        <td>{{ stream.status_text }}</td>
         <td align="right">{{ stream.date|date:"d/m/Y H:i" }}</td>
     </tr>
 {% empty %}
     <tr><td colspan="5">No streams found!</td></tr>
 {% endfor %}
 </table>
+{% endif %}
 
 </div>
 {% include "footer.html" %}

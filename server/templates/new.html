@@ -1,20 +1,51 @@
 {% include "header.html" %}
+
+<script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
+<script type="text/javascript" src="http://www.google.com/buzz/api/button.js"></script>
+
 <div class="arrow" id="menu"></div>
 <div class="body">
+
+<table class="social_buttons">
+<tr>
+    <td>
+    <table>
+    <tr>
+        <td><a title="Share on Google Buzz" class="google-buzz-button" href="http://www.google.com/buzz/post" data-button-style="small-count" data-locale="es"></a></td>
+        <td><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal">Tweet</a></td>
+        <td><iframe src="http://www.facebook.com/plugins/like.php?href&amp;send=true&amp;layout=button_count&amp;width=150&amp;show_faces=false&amp;action=like&amp;colorscheme=light&amp;font&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:150px; height:21px;" allowTransparency="true"></iframe></td>
+    </tr>
+    </table>
+    </td>
+    <td align="right"><a href="/report?link=/new">report an issue</a></td>
+</tr>
+</table>
+
+<div class="section">
+    <div class="title">What is pystream?</div>
+    Pystream is an online service to share data over streams.
+</div>
 
 <div class="section">
     <div class="title">What is a stream?</div>
     A stream is basicaly a web server, is defined by a IP and a port.
+    It can be used to share everything you can imagine ... but only folder for now :P<br/>
     You can easily create a stream by using the <a href="#client">pystream client</a>,
-    doing this, you can share files between computers
-    (on LAN and Internet). Also, you can protect your stream with a
-    password.
+    doing this, you can share files between computers (on LAN and Internet).
+    <br/><br/>
+    There are two types of streams:
+    <ul>
+        <li><b>Public streams</b>: avaliable for everyone, on searches and random.</li>
+        <li><b>Private streams</b>: hidden from searches (except from you LAN) and random.
+        You can also use a password to protect you private stream.</li>
+    </ul>
 </div>
 
 <div class="section">
     <a name="client"></a>
     <div class="title">Where can i get the pystream client?</div>
-    Here :P
+    Pystream is in alpha state, so only a minimal Linux client is ready,
+    for testing purpose only.
     <table align="center">
     <tr>
         <td align="center">
@@ -23,9 +54,9 @@
             <a href="#" onclick="this_is_alpha()">Windows</a>
         </td>
         <td align="center">
-            <a href="#" onclick="this_is_alpha()"><img src="/img/linux.png"/></a>
+            <a href="/client/pystream_linux_client.tar.bz2"><img src="/img/linux.png"/></a>
             <br/>
-            <a href="#" onclick="this_is_alpha()">Linux</a>
+            <a href="/client/pystream_linux_client.tar.bz2">Linux</a>
         </td>
         <td align="center">
             <a href="#" onclick="this_is_alpha()"><img src="/img/mac.png"/></a>
@@ -49,7 +80,7 @@
                     with this data:
                     </td>
                 </tr>
-                <tr><td align="right"><b>version</b>:</td><td>API version.</td></tr>
+                <tr><td align="right"><b>version</b>:</td><td>API version ({{ pystream_version }}).</td></tr>
                 <tr><td align="right"><b>ip</b>:</td><td>Your public IP.</td></tr>
                 <tr><td align="right"><b>port</b>:</td><td>Your public port.</td></tr>
                 <tr>

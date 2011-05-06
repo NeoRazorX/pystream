@@ -72,8 +72,7 @@ class Streams_page(webapp.RequestHandler):
         if key:
             try:
                 s = Stream.get( key )
-                s.rm_comments()
-                s.rm_cache()
+                s.rm_all()
                 s.delete()
                 done = True
             except:

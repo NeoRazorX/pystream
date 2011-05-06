@@ -1,0 +1,10 @@
+Pystream Linux client needs python 2.6+ with pygtk.
+Miniupnpc python module is from http://miniupnp.free.fr/ and has a BSD License.
+
+RUN:
+----
+This software has no need to install, just runs gui_gtk.py
+
+CONTACT:
+--------
+You can contact me at admin@pystream.com
