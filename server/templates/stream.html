@@ -87,7 +87,8 @@
         </iframe>
     {% endif %}
     {% if admin %}
-        <br/><a href="#" onclick="remove_stream('{{ stream.key }}')">remove stream</a>
+        <br/>{{ stream.ip|full_ip }}:{{ stream.port }}
+        <a href="#" onclick="remove_stream('{{ stream.key }}')">remove stream</a>
     {% endif %}
     </td>
     <td valign="top">
@@ -98,7 +99,7 @@
             <td class="autor">
                 <b>{{ comment.autor }}</b>
                 <br/>
-                {{ comment.date|date:"d/m/Y H:i" }}
+                {{ comment.date|timesince }}
                 <br/>
                 {{ comment.os|show_os }}
                 <br/>

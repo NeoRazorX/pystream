@@ -20,20 +20,17 @@ class Main_page(webapp.RequestHandler, ip_item):
         template_values = {
             'title': 'pystream (alpha)',
             'description': 'Data sharing made easy.',
-            'tags': 'share, folder, python, linux, ubuntu',
             'onload': 'document.search.query.focus()',
             'previouss': memcache.get('previous_searches'),
-            'local_streams': self.get_local_streams(),
+            'local_streams': self.near_streams(),
             'admin': users.is_current_user_admin(),
             'logout': users.create_logout_url('/')
         }
         path = os.path.join(os.path.dirname(__file__), 'templates/main.html')
         self.response.out.write( template.render(path, template_values) )
     
-    def get_local_streams(self):
-        ss = db.GqlQuery("SELECT * FROM Stream WHERE ip = :1 ORDER BY date DESC",
-                         self.dottedQuadToNum( self.request.remote_addr ) ).fetch(20)
-        return ss
+    def near_streams(self):
+        return self.order_streams_date( self.get_streams_from_ip( self.request.remote_addr ) )
 
 
 class Stream_page(webapp.RequestHandler, ip_item):
@@ -66,7 +63,6 @@ class Stream_page(webapp.RequestHandler, ip_item):
                 template_values = {
                     'title': 'pystream (alpha) ' + str( s.key().id() ),
                     'description': s.description,
-                    'tags': 'share, folder, python, linux, ubuntu',
                     'stream': s,
                     'local': self.from_local( self.numToDottedQuad( s.ip ) ),
                     'comments': s.get_comments(),
@@ -84,7 +80,6 @@ class Stream_page(webapp.RequestHandler, ip_item):
             template_values = {
                 'title': 'pystream (alpha) - new stream',
                 'description': 'Data sharing made easy.',
-                'tags': 'share, folder, python, linux, ubuntu',
                 'pystream_version': PYSTREAM_VERSION,
                 'admin': users.is_current_user_admin(),
                 'logout': users.create_logout_url('/')
@@ -95,6 +90,7 @@ class Stream_page(webapp.RequestHandler, ip_item):
     # add new stream
     def post(self):
         if self.request.get('version') != PYSTREAM_VERSION: # bad client version
+            self.response.headers['Content-Type'] = 'text/plain'
             self.response.out.write('Bad version! You need to download a new client -> http://www.pystream.com/new')
             logging.warning('Bad client version!')
         elif self.request.get('web') and self.request.get('ip') and self.request.get('port'): # webclient request
@@ -104,43 +100,15 @@ class Stream_page(webapp.RequestHandler, ip_item):
                 s.port = int( self.request.get('port') )
                 s.lan_ip = s.ip
                 s.os = "web"
-                if self.new_stream( s ):
+                if s.new_stream():
                     self.redirect('/s/' + str( s.key().id() ) + '?key=' + str( s.key() ))
                 else:
                     self.redirect('/error/403')
             except:
                 logging.error('Fail to store stream from web -> ' + self.request.get('ip') + ':' + self.request.get('port'))
                 self.redirect('/error/500')
-        elif self.request.get('port') and (self.request.get('ip') or self.request.get('lan_ip')): # client request
-            try:
-                s = Stream()
-                if self.request.get('ip'):
-                    s.ip = self.dottedQuadToNum( self.request.get('ip') )
-                else:
-                    s.ip = self.dottedQuadToNum( self.request.remote_addr )
-                s.port = int( self.request.get('port') )
-                if self.request.get('lan_ip'):
-                    s.lan_ip = self.dottedQuadToNum( self.request.get('lan_ip') )
-                else:
-                    s.lan_ip = s.ip
-                if self.request.get('description'):
-                    s.description = cgi.escape( self.request.get('description').replace("\n", ' ') )[:499]
-                if self.request.get('size'):
-                    s.size = int( self.request.get('size') )
-                if self.request.get('os'):
-                    s.os = cgi.escape( self.request.get('os') )
-                if self.request.get('public') == 'False':
-                    s.public = False
-                if self.new_stream( s ):
-                    self.response.headers['Content-Type'] = 'text/plain'
-                    self.response.out.write('key: ' + str( s.key() ) + ';id: ' + str( s.key().id() ) )
-                else:
-                    self.error(403)
-            except:
-                logging.error('Fail to store stream -> ' + self.request.get('ip') + ':' + self.request.get('port'))
-                self.error(500)
         else: # lost parameters
-            self.error(403)
+            self.redirect('/error/403')
     
     def from_local(self, ip):
         if self.request.remote_addr in [ip, '127.0.0.1']:
@@ -153,15 +121,6 @@ class Stream_page(webapp.RequestHandler, ip_item):
             return True
         else:
             return False
-    
-    def new_stream(self, s):
-        previous = db.GqlQuery("SELECT * FROM Stream WHERE ip = :1 and port = :2 ORDER BY date DESC",
-                               s.ip, s.port).fetch(1)
-        if previous:
-            return False
-        else:
-            s.put()
-            return True
 
 
 class Stream_protected_page(Stream_page):
@@ -184,7 +143,6 @@ class Stream_protected_page(Stream_page):
                 template_values = {
                     'title': 'pystream (alpha) ' + str( s.key().id() ),
                     'description': 'Data sharing made easy.',
-                    'tags': 'share, folder, python, linux, ubuntu',
                     'streamid': s.key().id(),
                     'captcha': chtml,
                     'admin': users.is_current_user_admin(),
@@ -201,7 +159,6 @@ class Stream_protected_page(Stream_page):
                 template_values = {
                     'title': 'pystream (alpha) ' + str( s.key().id() ),
                     'description': s.description,
-                    'tags': 'share, folder, python, linux, ubuntu',
                     'stream': s,
                     'local': self.from_local( self.numToDottedQuad( s.ip ) ),
                     'comments': s.get_comments(),
@@ -248,94 +205,6 @@ class Stream_protected_page(Stream_page):
             return False
 
 
-class Stream_checking_page(webapp.RequestHandler, ip_item):
-    # returns in plain text mixed real and fake streams
-    def get(self):
-        self.response.headers['Content-Type'] = 'text/plain'
-        ss = self.get_streams()
-        for s in ss:
-            self.response.out.write(s + "\n")
-    
-    def post(self):
-        try:
-            self.load_streams_for_results()
-            for n in range(20):
-                self.read_result(self.request.get('stream'+str(n)),
-                                 self.request.get('result'+str(n)))
-        except:
-            self.error(500)
-    
-    def get_streams(self):
-        mix = []
-        finalmix = []
-        # append real public streams
-        query = db.GqlQuery("SELECT * FROM Stream WHERE public = :1 ORDER BY date DESC", True)
-        ss = query.fetch(10, random.randint(0, max(query.count()-10, 0)))
-        for s in ss:
-            # filter near streams
-            if self.numToDottedQuad(s.ip) != self.request.remote_addr:
-                mix.append( self.numToDottedQuad(s.ip) + ':' + str(s.port))
-        # append real near streams
-        query = db.GqlQuery("SELECT * FROM Stream WHERE ip = :1 ORDER BY date DESC",
-                            self.dottedQuadToNum(self.request.remote_addr))
-        ss = query.fetch(10, random.randint(0, max(query.count()-10, 0)))
-        for s in ss:
-            mix.append( self.numToDottedQuad(s.lan_ip) + ':' + str(s.port))
-        # append fake streams
-        if len(mix) < 20:
-            for r in range(len(mix), 20):
-                mix.append( self.random_false_stream() )
-        # mix real and fake streams
-        for f in range(len(mix)):
-            elem = random.choice( mix )
-            finalmix.append( elem )
-            mix.remove( elem )
-        return finalmix
-    
-    def random_false_stream(self):
-        s = str(random.randint(0,254)) + '.'
-        s += str(random.randint(0,254)) + '.'
-        s += str(random.randint(0,254)) + '.'
-        s += str(random.randint(0,254)) + ':'
-        s += str(random.randint(6000, 9000))
-        return s
-    
-    def load_streams_for_results(self):
-        ips = [ self.dottedQuadToNum(self.request.remote_addr) ]
-        for n in range(20):
-            ip = self.dottedQuadToNum( self.request.get('stream'+str(n)).partition(':')[0] )
-            if ip not in ips:
-                ips.append(ip)
-        if ips:
-            self.allss = db.GqlQuery("SELECT * FROM Stream WHERE ip IN :1 ORDER BY date DESC", ips).fetch(100)
-    
-    def read_result(self, stream, result):
-        try:
-            ip = self.dottedQuadToNum( stream.partition(':')[0] )
-            port = int( stream.partition(':')[2] )
-            remote_ip = self.dottedQuadToNum( self.request.remote_addr )
-            near = None
-            
-            if self.allss:
-                r = Stream_check_result()
-                r.ip = self.dottedQuadToNum( self.request.remote_addr )
-                r.result = result
-                
-                for s in self.allss:
-                    if s.ip == remote_ip and s.lan_ip == ip and s.port == port: # near stream
-                        r.stream_id = s.key().id()
-                        r.put()
-                        logging.info('Report saved: ' + stream + ' -> ' + result)
-                    elif s.ip == ip and s.port == port:
-                        r.stream_id = s.key().id()
-                        r.put()
-                        logging.info('Report saved: ' + stream + ' -> ' + result)
-            else:
-                logging.info('Fake stream: ' + stream)
-        except:
-            logging.warning("Error processing result: " + stream + ' -> ' + result)
-
-
 class Modify_stream(Stream_page):
     def get(self):
         self.redirect('/error/403')
@@ -369,6 +238,7 @@ class Modify_stream(Stream_page):
         else: # stream not found
             self.redirect('/error/404')
 
+
 class Random_stream(webapp.RequestHandler):
     def get(self):
         self.streams = self.get_last_streams()
@@ -376,14 +246,13 @@ class Random_stream(webapp.RequestHandler):
         if len( self.streams ) == 1:
             url = '/s/' + str( self.streams[0].key().id() )
         elif len( self.streams ) > 1:
-            url = '/s/' + str( self.streams[ random.randint(0, len( self.streams )-1) ].key().id() )
+            url = '/s/' + str( random.choice( self.streams ).key().id() )
         self.redirect( url )
     
     def get_last_streams(self):
         ss = memcache.get('random_streams')
         if ss is None:
-            ss = db.GqlQuery("SELECT * FROM Stream WHERE online = :1 ORDER BY date DESC",
-                             True).fetch(100)
+            ss = db.GqlQuery("SELECT * FROM Stream WHERE online = :1", True).fetch(100)
             if not memcache.add('random_streams', ss):
                 logging.warning('Cant save random streams to memcache!')
         return ss
@@ -454,7 +323,6 @@ class Report_page(webapp.RequestHandler, ip_item):
         template_values = {
             'title': 'pystream (alpha) - reporting',
             'description': 'Report page',
-            'tags': 'share, folder, python, linux, ubuntu',
             'link': self.request.get('link'),
             'captcha': chtml,
             'admin': users.is_current_user_admin(),
@@ -495,7 +363,6 @@ class Search_page(webapp.RequestHandler, ip_item):
         template_values = {
             'title': 'pystream (alpha) - searching',
             'description': 'Data sharing made easy.',
-            'tags': 'share, folder, python, linux, ubuntu',
             'onload': 'document.search.query.focus()',
             'query': self.request.get('query'),
             'streams': self.search_streams( self.request.get('query') ),
@@ -508,13 +375,13 @@ class Search_page(webapp.RequestHandler, ip_item):
     
     def search_streams(self, query):
         if query:
-            finalss = []
+            mix = []
             ss = Stream.all().search( query ).fetch(100)
             # filtering for online or private near streams
             for s in ss:
                 if s.online or s.ip == self.dottedQuadToNum(self.request.remote_addr):
-                    finalss.append( s )
-            return finalss
+                    mix.append( s )
+            return self.order_streams_date(mix)
         else:
             return None
     
@@ -555,7 +422,6 @@ class Author_page(webapp.RequestHandler):
         template_values = {
             'title': 'pystream - author',
             'description': "Information about Carlos Garcia Gomez, pystream's author",
-            'tags': 'author, share, folder, python, linux, ubuntu',
             'admin': users.is_current_user_admin(),
             'logout': users.create_logout_url('/')
         }
@@ -589,19 +455,17 @@ class Error_page(webapp.RequestHandler):
 
 def main():
     application = webapp.WSGIApplication([('/', Main_page),
-                                         ('/new', Stream_page),
-                                         (r'/s/(.*)', Stream_page),
-                                         (r'/sp/(.*)', Stream_protected_page),
-                                         ('/stream_check', Stream_checking_page),
-                                         ('/mod_stream', Modify_stream),
-                                         ('/random', Random_stream),
-                                         ('/comment', Comment_stream),
-                                         ('/report', Report_page),
-                                         ('/search', Search_page),
-                                         ('/author', Author_page),
-                                         ('/error/(.*)', Error_page),
-                                         ('/.*', Error_page),
-                                         ],
+                                          ('/new', Stream_page),
+                                          (r'/s/(.*)', Stream_page),
+                                          (r'/sp/(.*)', Stream_protected_page),
+                                          ('/mod_stream', Modify_stream),
+                                          ('/random', Random_stream),
+                                          ('/comment', Comment_stream),
+                                          ('/report', Report_page),
+                                          ('/search', Search_page),
+                                          ('/author', Author_page),
+                                          ('/error/(.*)', Error_page),
+                                          ('/.*', Error_page)],
                                          debug=DEBUG_FLAG)
     webapp.template.register_template_library('filters.django_filters')
     run_wsgi_app(application)

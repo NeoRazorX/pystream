@@ -20,7 +20,7 @@
     <td>Description</td>
     <td>Status</td>
     <td>Comments</td>
-    <td align="right">Date</td>
+    <td align="right">uptime</td>
 </tr>
 {% for stream in streams %}
     <tr>
@@ -33,7 +33,7 @@
         <td>{{ stream.description|truncate:80 }}</td>
         <td>{{ stream.status_text }}</td>
         <td>{{ stream.comments }}</td>
-        <td align="right">{{ stream.date|date:"d/m/Y H:i" }}</td>
+        <td align="right">{{ stream.date|timesince }}</td>
     </tr>
 {% empty %}
     <tr><td colspan="9">empty!</td></tr>

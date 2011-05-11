@@ -41,5 +41,5 @@ function remove_report(id)
 
 function this_is_alpha()
 {
-    alert("Pystream is in alpha state, is not ready yet!\nTry again tomorrow...");
+    alert("Pystream is in alpha state, is not ready yet!\nTry again tomorrow...\nOr mail me: admin@pystream.com");
 }

@@ -27,7 +27,7 @@
     <td>Streams nears you</td>
     <td>Size</td>
     <td>Status</td>
-    <td align="right">Date</td>
+    <td align="right">uptime</td>
 </tr>
 {% for stream in local_streams %}
     <tr>
@@ -38,7 +38,7 @@
         </td>
         <td>{{ stream.size|size }}</td>
         <td>{{ stream.status_text }}</td>
-        <td align="right">{{ stream.date|date:"d/m/Y H:i" }}</td>
+        <td align="right">{{ stream.date|timesince }}</td>
     </tr>
 {% endfor %}
 </table>
@@ -64,19 +64,18 @@
 
 <table class="main">
 <tr>
-    <td align="center">
-        <a href="/new"><img src="/img/notebook.png"/></a>
-        <br/>
-        <a href="/new">new stream</a>
-        <br/>
-        The easy way to share data between computers!
+    <td align="center" valign="bottom"><a href="/new"><img src="/img/notebook.png"/></a></td>
+    <td align="center" valign="bottom"><a href="/random"><img src="/img/dados.png"/></a></td>
+</tr>
+<tr>
+    <td align="center" valign="top">
+        <a href="/new">New Stream</a><br/>
+        The easy way to share data between computers, on LAN or Internet.<br/>
+        Perfect for <a href="/new#lanparties">LAN Parties</a>!
     </td>
-    <td align="center">
-        <a href="/random"><img src="/img/dados.png"/></a>
-        <br/>
-        <a href="/random">random stream</a>
-        <br/>
-        Look a random stream. What are people sharing?
+    <td align="center" valign="top">
+        <a href="/random">Random Stream</a><br/>
+        Take a look for a random stream. What are people sharing?
     </td>
 </tr>
 </table>

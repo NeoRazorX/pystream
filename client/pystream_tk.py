@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Pystream client.  If not, see <http://www.gnu.org/licenses/>.
 
-from pystream import *
+from pystream_core import *
 
 try:
     import webbrowser
@@ -30,12 +30,23 @@ except Exception,e:
 class Pystream_tk(Mini_gui):
     def __init__(self):
         Mini_gui.__init__(self)
-        self.folder = ''
+        self.streamid = ''
+        self.key = ''
+        
         self.window = Tk()
         self.window.protocol("WM_DELETE_WINDOW", self.close_event)
         self.window.title('Pystream client')
-        self.window.iconbitmap('@icon.xbm')
+        
+        p_bits, p_os = platform.architecture()
+        if p_os == 'WindowsPE':
+            self.window.iconbitmap('icon.ico')
+        elif p_os == 'ELF':
+            self.window.iconbitmap('@icon.xbm')
         self.window.minsize(500,400)
+        
+        self.b_link = Button(text=self.get_pystream_url(), command=self.open_link)
+        self.b_link.pack(fill=BOTH)
+        self.b_link['state'] = 'disabled'
         self.textlog = Text()
         self.textlog.pack(expand=True, fill=BOTH)
         self.textlog['state'] = 'disabled'
@@ -52,17 +63,20 @@ class Pystream_tk(Mini_gui):
         self.cb_public = Checkbutton(text='public', variable=self.public_var)
         self.cb_public.pack(side=LEFT)
         self.cb_public.select()
-        self.b_start = Button(text="Start sharing!", command=self.start_server)
+        self.b_start = Button(text="start", command=self.start_server)
         self.b_start.pack(side=RIGHT)
     
     def main(self):
+        self.running_gui = True
         self.window.mainloop()
+        self.running_gui = False
         self.run_miniserver = False
         self.quit = True
     
     def close_event(self):
         self.run_miniserver = False
         self.quit = True
+        self.log_mode()
         if self.running_streamchek:
             self.write_to_log("Stream checker running!\n")
             self.window.after(1000, self.close_event)
@@ -70,7 +84,7 @@ class Pystream_tk(Mini_gui):
             self.write_to_log("Mini-server running!\n")
             try:
                 # forces mini server to stop
-                response = urllib2.urlopen('http://localhost:' + str(self.get_port()), timeout=2)
+                response = urllib2.urlopen('http://localhost:' + str(self.get_port()), timeout=1)
             except:
                 self.write_to_log("Can't contact mini-server!\n")
             self.window.after(1000, self.close_event)
@@ -108,12 +122,6 @@ class Pystream_tk(Mini_gui):
     def is_public(self):
         return self.public_var.get() == 1
     
-    def select_folder(self):
-        self.write_to_log("Press start button to select folder and start sharing.\n")
-    
-    def get_folder(self):
-        return self.folder
-    
     def log_mode(self):
         self.port['state'] = 'disabled'
         self.cb_upnp['state'] = 'disabled'
@@ -121,7 +129,15 @@ class Pystream_tk(Mini_gui):
         self.b_start['state'] = 'disabled'
     
     def show_link(self, streamid, key):
-        webbrowser.open(self.PYSTREAM_URL + '/s/' + streamid + '?key=' + key)
+        self.streamid = streamid
+        self.key = key
+        self.window.title('pystream - sharing: ' + self.get_folder())
+        self.b_link['text'] = self.get_pystream_url() + '/s/' + self.streamid
+        self.b_link['state'] = 'normal'
+        self.open_link()
+    
+    def open_link(self):
+        webbrowser.open(self.get_pystream_url() + '/s/' + self.streamid + '?key=' + self.key)
     
     def retry_share(self):
         self.b_start['state'] = 'normal'

@@ -9,15 +9,28 @@
 </center>
 
 {% if stats %}
-    <div class="section">
-        <div class="title">Stats:</div>
-        Streams: {{ stats.streams }}, 
-        Publics: {{ stats.publics }} ({{ stats.public_relation }}%),
-        Online: {{ stats.online }} ({{ stats.online_relation }}%),  
-        Sharing: {{ stats.sharing|size }} ({{ stats.share_relation|size }}/stream), 
-        Comments: {{ stats.comments }} ({{ stats.comments_relation }}/stream), 
-        Reports: {{ stats.reports }}.
-    </div>
+<div class="section">
+    <div class="title">Last stat:</div>
+    Streams: {{ stats.streams }}, 
+    Publics: {{ stats.publics }} ({{ stats.public_relation }}%),
+    Online: {{ stats.online }} ({{ stats.online_relation }}%),  
+    Sharing: {{ stats.sharing|size }} ({{ stats.share_relation|size }}/stream), 
+    Comments: {{ stats.comments }} ({{ stats.comments_relation }}/stream), 
+    Reports: {{ stats.reports }}.
+</div>
+{% endif %}
+
+<br/><br/>
+
+{% if previouss %}
+<div class="section">
+    <div class="title">Searches:</div>
+    <table class="custom">
+    {% for p in previouss %}
+    <tr><td><a href="/search?query={{ p.0 }}">{{ p.0 }}</a></td><td align="right">{{ p.1 }}</td></tr>
+    {% endfor %}
+    </table>
+</div>
 {% endif %}
 
 </div>

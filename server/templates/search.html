@@ -38,7 +38,7 @@
     <td>Streams</td>
     <td>Size</td>
     <td>Status</td>
-    <td align="right">Date</td>
+    <td align="right">uptime</td>
 </tr>
 {% for stream in streams %}
     <tr>
@@ -49,7 +49,7 @@
         </td>
         <td>{{ stream.size|size }}</td>
         <td>{{ stream.status_text }}</td>
-        <td align="right">{{ stream.date|date:"d/m/Y H:i" }}</td>
+        <td align="right">{{ stream.date|timesince }}</td>
     </tr>
 {% empty %}
     <tr><td colspan="5">No streams found!</td></tr>

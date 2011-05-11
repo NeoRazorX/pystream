@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-DEBUG_FLAG = False
+DEBUG_FLAG = True
 RECAPTCHA_PUBLIC_KEY = '6Ldrqb4SAAAAAOowIidxQ3Hc6igXPdqWKec3dL_H'
 RECAPTCHA_PRIVATE_KEY = '6Ldrqb4SAAAAABJ33eyTnkT5t2ll8kKDerqDoNj2'
-PYSTREAM_VERSION = '1'
+PYSTREAM_VERSION = '2'
 RANDOM_CACHE_TIME = 1200
 
 import logging
@@ -11,7 +11,48 @@ from google.appengine.ext import db, search
 from google.appengine.api import memcache
 
 
-class Stream(search.SearchableModel):
+class ip_item:
+    def dottedQuadToNum(self, ip):
+        hexn = ''.join(["%02X" % long(i) for i in ip.split('.')])
+        return long(hexn, 16)
+    
+    def numToDottedQuad(self, n):
+        d = 256 * 256 * 256
+        q = []
+        while d > 0:
+            m,n = divmod(n,d)
+            q.append(str(m))
+            d = d/256
+        return '.'.join(q)
+    
+    def get_streams_from_ip(self, ip):
+        ss = memcache.get( ip )
+        if ss is None:
+            ss = db.GqlQuery("SELECT * FROM Stream WHERE ip = :1",
+                             self.dottedQuadToNum( ip ) ).fetch(50)
+            memcache.add(ip, ss, RANDOM_CACHE_TIME)
+            logging.info('memcache add for ip: ' + ip)
+        else:
+            logging.info('memcache read for ip: ' + ip)
+        return ss
+    
+    def order_streams_date(self, mix):
+        finalmix = []
+        while len(mix) > 0:
+            elem = None
+            for m in mix:
+                if not elem:
+                    elem = m
+                elif m.date > elem.date:
+                    elem = m
+            finalmix.append(elem)
+            mix.remove(elem)
+        return finalmix
+
+
+class Stream(search.SearchableModel, ip_item):
+    unsearchable_properties = ['comments', 'date', 'ip', 'lan_ip', 'online',
+        'os', 'password', 'port', 'public', 'size', 'strikes']
     comments = db.IntegerProperty(default=0)
     date = db.DateTimeProperty(auto_now_add=True)
     description = db.StringProperty(default='no description')
@@ -24,6 +65,23 @@ class Stream(search.SearchableModel):
     public = db.BooleanProperty(default=True) # public/private
     size = db.IntegerProperty(default=0)
     strikes = db.IntegerProperty(default=0) # times offline to /cron/streams.py checker
+    
+    def new_stream(self):
+        found = False
+        previous = self.get_streams_from_ip( self.full_ip() )
+        if previous:
+            for p in previous:
+                if p.port == self.port:
+                    found = True
+        if found:
+            return False
+        else:
+            self.put()
+            memcache.delete( self.full_ip() )
+            return True
+    
+    def full_ip(self):
+        return self.numToDottedQuad( self.ip )
     
     def get_link(self):
         if self.password != '':
@@ -45,7 +103,7 @@ class Stream(search.SearchableModel):
                 except:
                     logging.warning('Cant update the number of comments on stream!')
             if not memcache.add( str(self.key()), comments ):
-                logging.error("Error adding comments to memcache!")
+                logging.warning("Error adding comments to memcache!")
         return comments
     
     def status_text(self):
@@ -64,29 +122,49 @@ class Stream(search.SearchableModel):
                 status += 'private offline'
         return status
     
-    def rm_comments(self):
-        comments = db.GqlQuery("SELECT * FROM Comment WHERE stream_id = :1", self.key().id() )
-        db.delete( comments )
+    def get_results(self):
+        return memcache.get('check_results_' + str(self.key().id()))
     
-    def rm_stream_check_result(self):
-        rep = db.GqlQuery("SELECT * FROM Stream_check_result WHERE stream_id = :1", self.key().id() )
-        db.delete( rep )
+    def rm_comments(self):
+        db.delete( Comment.all().filter('stream_id =', self.key().id()) )
+    
+    def rm_results(self):
+        memcache.delete_multi(['cron_stream_checker',
+                               'check_results_'+str(self.key().id())])
     
     def rm_cache(self):
-        memcache.delete( str(self.key()) )
-        memcache.delete('random_streams')
+        memcache.delete_multi([str(self.key()), 'random_streams', self.full_ip()])
     
     def rm_all(self):
         self.rm_comments()
-        self.rm_stream_check_result()
+        self.rm_results()
         self.rm_cache()
+        db.delete( self.key() )
 
 
-class Stream_check_result(db.Model):
-    date = db.DateTimeProperty(auto_now_add=True)
-    ip = db.IntegerProperty(default=0)
-    stream_id = db.IntegerProperty()
-    result = db.StringProperty(default='none')
+class Stream_check_result():
+    def __init__(self, ip, sid, res):
+        self.ip = int(ip)
+        self.stream_id = int(sid)
+        self.result = res
+    
+    def put(self):
+        results = memcache.get('check_results_'+str(self.stream_id))
+        if results is None:
+            results = [self]
+            memcache.add('check_results_'+str(self.stream_id), results)
+            logging.info('Check results created for stream: '+str(self.stream_id))
+        else:
+            found = False
+            for r in results:
+                if r.ip == self.ip and r.stream_id == self.stream_id:
+                    found = True
+            if not found:
+                results.append(self)
+                memcache.replace('check_results_'+str(self.stream_id), results)
+                logging.info('Check results added for stream: '+str(self.stream_id))
+            else:
+                logging.info('Check results duplicated for stream: '+str(self.stream_id))
 
 
 class Comment(db.Model):
@@ -148,19 +226,4 @@ class Stat_item(db.Model):
             return self.comments/self.streams
         else:
             return 0
-
-
-class ip_item:
-    def dottedQuadToNum(self, ip):
-        hexn = ''.join(["%02X" % long(i) for i in ip.split('.')])
-        return long(hexn, 16)
-    
-    def numToDottedQuad(self, n):
-        d = 256 * 256 * 256
-        q = []
-        while d > 0:
-            m,n = divmod(n,d)
-            q.append(str(m))
-            d = d/256
-        return '.'.join(q)
 

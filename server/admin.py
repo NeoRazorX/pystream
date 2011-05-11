@@ -19,8 +19,8 @@ class Main_page(webapp.RequestHandler):
         template_values = {
             'title': 'pyStream - alpha',
             'description': 'Data sharing made easy.',
-            'tags': 'share, folder, python, linux, ubuntu',
             'stats': self.get_stats(),
+            'previouss': memcache.get('previous_searches'),
             'logout': users.create_logout_url('/'),
             'admin': users.is_current_user_admin()
         }
@@ -35,14 +35,13 @@ class Main_page(webapp.RequestHandler):
             return None
 
 
-class Streams_page(webapp.RequestHandler):
+class Streams_page(webapp.RequestHandler, ip_item):
     def get(self):
         removed = self.remove_stream( self.request.get('rm') )
         ss,pages_data = self.get_streams(self.request.get('p'), 25)
         template_values = {
             'title': 'pyStream - alpha',
             'description': 'Data sharing made easy.',
-            'tags': 'share, folder, python, linux, ubuntu',
             'streams': ss,
             'removed': removed,
             'pages_data': pages_data,
@@ -73,7 +72,7 @@ class Streams_page(webapp.RequestHandler):
             try:
                 s = Stream.get( key )
                 s.rm_all()
-                s.delete()
+                logging.info('Removing stream: ' + s.get_link())
                 done = True
             except:
                 logging.error('Fail to remove stream!')
@@ -87,7 +86,6 @@ class Reports_page(webapp.RequestHandler):
         template_values = {
             'title': 'pyStream - alpha',
             'description': 'Data sharing made easy.',
-            'tags': 'share, folder, python, linux, ubuntu',
             'reports': rr,
             'removed': removed,
             'pages_data': pages_data,
@@ -130,7 +128,6 @@ class Stats_page(webapp.RequestHandler):
         template_values = {
             'title': 'pyStream - alpha',
             'description': 'Data sharing made easy.',
-            'tags': 'share, folder, python, linux, ubuntu',
             'stats': sts,
             'pages_data': pages_data,
             'logout': users.create_logout_url('/'),

@@ -1,5 +1,5 @@
 application: streampy
-version: 1
+version: 2
 runtime: python
 api_version: 1
 
@@ -32,6 +32,9 @@ handlers:
 - url: /cron/stats
   script: cron/stats.py
   login: admin
+
+- url: /api/.*
+  script: api.py
 
 - url: /admin/.*
   script: admin.py

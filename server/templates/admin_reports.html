@@ -22,7 +22,7 @@
         <b>Link</b>: <a href="{{ rep.get_link }}">{{ rep.link }}</a>
         <b>from</b>: {{ rep.ip|full_ip }}
         <b>with</b>: {{ rep.os|show_os }}
-        <b>on</b>: {{ rep.date|date:"d/m/Y H:i" }}
+        <b>about</b> {{ rep.date|timesince }} ago
         | <a href="#" onclick="remove_report('{{ rep.key }}')">remove</a>
         <br/>
         {{ rep.text|safe|linebreaksbr|urlize }}
