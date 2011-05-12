@@ -34,8 +34,8 @@ from base import *
 class Main_page(webapp.RequestHandler, ip_item):
     def get(self):
         template_values = {
-            'title': 'pystream (alpha)',
-            'description': 'Data sharing made easy.',
+            'title': 'pystream',
+            'description': 'Sharing folders made easy.',
             'onload': 'document.search.query.focus()',
             'previouss': memcache.get('previous_searches'),
             'local_streams': self.near_streams(),
@@ -77,7 +77,7 @@ class Stream_page(webapp.RequestHandler, ip_item):
                     use_ssl = False,
                     error = None)
                 template_values = {
-                    'title': 'pystream (alpha) ' + str( s.key().id() ),
+                    'title': 'pystream: ' + str( s.key().id() ),
                     'description': s.description,
                     'stream': s,
                     'local': self.from_local( self.numToDottedQuad( s.ip ) ),
@@ -94,8 +94,8 @@ class Stream_page(webapp.RequestHandler, ip_item):
         else: # no stream selected
             # new stream page
             template_values = {
-                'title': 'pystream (alpha) - new stream',
-                'description': 'Data sharing made easy.',
+                'title': 'pystream: new stream',
+                'description': 'Sharing folders made easy.',
                 'pystream_version': PYSTREAM_VERSION,
                 'admin': users.is_current_user_admin(),
                 'logout': users.create_logout_url('/')
@@ -157,8 +157,8 @@ class Stream_protected_page(Stream_page):
                     use_ssl = False,
                     error = None)
                 template_values = {
-                    'title': 'pystream (alpha) ' + str( s.key().id() ),
-                    'description': 'Data sharing made easy.',
+                    'title': 'pystream: ' + str( s.key().id() ),
+                    'description': 'Sharing folders made easy.',
                     'streamid': s.key().id(),
                     'captcha': chtml,
                     'admin': users.is_current_user_admin(),
@@ -173,7 +173,7 @@ class Stream_protected_page(Stream_page):
                     use_ssl = False,
                     error = None)
                 template_values = {
-                    'title': 'pystream (alpha) ' + str( s.key().id() ),
+                    'title': 'pystream: ' + str( s.key().id() ),
                     'description': s.description,
                     'stream': s,
                     'local': self.from_local( self.numToDottedQuad( s.ip ) ),
@@ -337,8 +337,8 @@ class Report_page(webapp.RequestHandler, ip_item):
             use_ssl = False,
             error = None)
         template_values = {
-            'title': 'pystream (alpha) - reporting',
-            'description': 'Report page',
+            'title': 'pystream: reporting',
+            'description': "Pystream's reporting page.",
             'link': self.request.get('link'),
             'captcha': chtml,
             'admin': users.is_current_user_admin(),
@@ -377,8 +377,8 @@ class Report_page(webapp.RequestHandler, ip_item):
 class Search_page(webapp.RequestHandler, ip_item):
     def get(self):
         template_values = {
-            'title': 'pystream (alpha) - searching',
-            'description': 'Data sharing made easy.',
+            'title': 'pystream: searching',
+            'description': 'Search for public streams and private streams from your LAN.',
             'onload': 'document.search.query.focus()',
             'query': self.request.get('query'),
             'streams': self.search_streams( self.request.get('query') ),
@@ -436,7 +436,7 @@ class Search_page(webapp.RequestHandler, ip_item):
 class Author_page(webapp.RequestHandler):
     def get(self):
         template_values = {
-            'title': 'pystream - author',
+            'title': 'pystream: author',
             'description': "Information about Carlos Garcia Gomez, pystream's author",
             'admin': users.is_current_user_admin(),
             'logout': users.create_logout_url('/')
@@ -463,7 +463,8 @@ class Error_page(webapp.RequestHandler):
             'title': str(code) + ' - pystream',
             'description': derror.get(code, 'Unknown error'),
             'error': merror.get(code, 'Unknown error'),
-            'code': code
+            'code': code,
+            'previouss': memcache.get('previous_searches')
             }
         
         path = os.path.join(os.path.dirname(__file__), 'templates/search.html')

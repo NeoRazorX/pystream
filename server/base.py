@@ -29,8 +29,11 @@ from google.appengine.api import memcache
 
 class ip_item:
     def dottedQuadToNum(self, ip):
-        hexn = ''.join(["%02X" % long(i) for i in ip.split('.')])
-        return long(hexn, 16)
+        try:
+            hexn = ''.join(["%02X" % long(i) for i in ip.split('.')])
+            return long(hexn, 16)
+        except:
+            return 0
     
     def numToDottedQuad(self, n):
         d = 256 * 256 * 256

@@ -33,8 +33,7 @@ from base import *
 class Main_page(webapp.RequestHandler):
     def get(self):
         template_values = {
-            'title': 'pyStream - alpha',
-            'description': 'Data sharing made easy.',
+            'title': 'pyStream: admin',
             'stats': self.get_stats(),
             'previouss': memcache.get('previous_searches'),
             'logout': users.create_logout_url('/'),
@@ -56,8 +55,7 @@ class Streams_page(webapp.RequestHandler, ip_item):
         removed = self.remove_stream( self.request.get('rm') )
         ss,pages_data = self.get_streams(self.request.get('p'), 25)
         template_values = {
-            'title': 'pyStream - alpha',
-            'description': 'Data sharing made easy.',
+            'title': 'pyStream: admin/streams',
             'streams': ss,
             'removed': removed,
             'pages_data': pages_data,
@@ -100,8 +98,7 @@ class Reports_page(webapp.RequestHandler):
         removed = self.remove_report( self.request.get('rm') )
         rr,pages_data = self.get_reports(self.request.get('p'), 25)
         template_values = {
-            'title': 'pyStream - alpha',
-            'description': 'Data sharing made easy.',
+            'title': 'pyStream: admin/reports',
             'reports': rr,
             'removed': removed,
             'pages_data': pages_data,
@@ -142,8 +139,7 @@ class Stats_page(webapp.RequestHandler):
     def get(self):
         sts,pages_data = self.get_stats()
         template_values = {
-            'title': 'pyStream - alpha',
-            'description': 'Data sharing made easy.',
+            'title': 'pyStream: admin/stats',
             'stats': sts,
             'pages_data': pages_data,
             'logout': users.create_logout_url('/'),

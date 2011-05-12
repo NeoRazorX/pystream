@@ -131,7 +131,8 @@ class Pystream_tk(Mini_gui):
     def show_link(self, streamid, key):
         self.streamid = streamid
         self.key = key
-        self.window.title('pystream - sharing: ' + self.get_folder())
+        # this hangs on Windows
+        #self.window.title('pystream - sharing: ' + self.get_folder())
         self.b_link['text'] = self.get_pystream_url() + '/s/' + self.streamid
         self.b_link['state'] = 'normal'
         self.open_link()

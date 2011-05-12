@@ -29,8 +29,9 @@ class Stream_check(ip_item):
         if ss is None:
             query = db.GqlQuery("SELECT * FROM Stream")
             ss = query.fetch(100, random.randint(0, max(query.count()-CHECKS_EACH_RUN,0)))
-            memcache.add('cron_stream_checker', ss)
-            logging.info('memcache add!')
+            if ss:
+                memcache.add('cron_stream_checker', ss)
+                logging.info('memcache add!')
         else:
             logging.info('memcache read!')
         if ss:

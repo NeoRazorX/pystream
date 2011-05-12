@@ -104,7 +104,6 @@ class Mini_server(threading.Thread):
     def __init__(self, gui):
         threading.Thread.__init__(self)
         self.gui = gui
-        self.gui.running_miniserver = True
         self.port = random.randint(6000, 9000)
         self.gui.set_port( self.port )
         self.initial_folder = self.target_folder = os.getcwd()
@@ -143,6 +142,9 @@ class Mini_server(threading.Thread):
             print text
     
     def run(self):
+        self.gui.running_miniserver = True
+        while not self.gui.running_gui:
+            time.sleep(1)
         if self.upnp_loaded:
             self.upnpc.discover()
             try:
