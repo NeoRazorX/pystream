@@ -33,5 +33,16 @@
 </div>
 {% endif %}
 
+{% if machines %}
+<div class="section">
+    <div class="title">Machines:</div>
+    <table class="custom">
+    {% for m in machines %}
+    <tr><td>{{ m.0|capfirst }}</td><td align="right">{{ m.1 }}</td></tr>
+    {% endfor %}
+    </table>
+</div>
+{% endif %}
+
 </div>
 {% include "footer.html" %}

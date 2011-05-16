@@ -30,14 +30,17 @@ from google.appengine.api import users
 from base import *
 
 
-class Main_page(webapp.RequestHandler):
+class Main_page(webapp.RequestHandler, Basic_tools):
     def get(self):
+        m = Machines()
         template_values = {
             'title': 'pyStream: admin',
             'stats': self.get_stats(),
             'previouss': memcache.get('previous_searches'),
+            'machines': m.get(),
             'logout': users.create_logout_url('/'),
-            'admin': users.is_current_user_admin()
+            'admin': users.is_current_user_admin(),
+            'lang': self.get_lang( self.request.environ['HTTP_ACCEPT_LANGUAGE'] )
         }
         path = os.path.join(os.path.dirname(__file__), 'templates/admin.html')
         self.response.out.write( template.render(path, template_values) )
@@ -50,17 +53,18 @@ class Main_page(webapp.RequestHandler):
             return None
 
 
-class Streams_page(webapp.RequestHandler, ip_item):
+class Streams_page(webapp.RequestHandler, Basic_tools):
     def get(self):
         removed = self.remove_stream( self.request.get('rm') )
-        ss,pages_data = self.get_streams(self.request.get('p'), 25)
+        ss,pages_data = self.get_streams(self.request.get('p'), 30)
         template_values = {
             'title': 'pyStream: admin/streams',
             'streams': ss,
             'removed': removed,
             'pages_data': pages_data,
             'logout': users.create_logout_url('/'),
-            'admin': users.is_current_user_admin()
+            'admin': users.is_current_user_admin(),
+            'lang': self.get_lang( self.request.environ['HTTP_ACCEPT_LANGUAGE'] )
         }
         path = os.path.join(os.path.dirname(__file__), 'templates/admin_streams.html')
         self.response.out.write( template.render(path, template_values) )
@@ -93,17 +97,18 @@ class Streams_page(webapp.RequestHandler, ip_item):
         return done
 
 
-class Reports_page(webapp.RequestHandler):
+class Reports_page(webapp.RequestHandler, Basic_tools):
     def get(self):
         removed = self.remove_report( self.request.get('rm') )
-        rr,pages_data = self.get_reports(self.request.get('p'), 25)
+        rr,pages_data = self.get_reports(self.request.get('p'), 20)
         template_values = {
             'title': 'pyStream: admin/reports',
             'reports': rr,
             'removed': removed,
             'pages_data': pages_data,
             'logout': users.create_logout_url('/'),
-            'admin': users.is_current_user_admin()
+            'admin': users.is_current_user_admin(),
+            'lang': self.get_lang( self.request.environ['HTTP_ACCEPT_LANGUAGE'] )
         }
         path = os.path.join(os.path.dirname(__file__), 'templates/admin_reports.html')
         self.response.out.write( template.render(path, template_values) )
@@ -135,15 +140,16 @@ class Reports_page(webapp.RequestHandler):
         return done
 
 
-class Stats_page(webapp.RequestHandler):
+class Stats_page(webapp.RequestHandler, Basic_tools):
     def get(self):
-        sts,pages_data = self.get_stats()
+        sts,pages_data = self.get_stats(self.request.get('p'), 30)
         template_values = {
             'title': 'pyStream: admin/stats',
             'stats': sts,
             'pages_data': pages_data,
             'logout': users.create_logout_url('/'),
-            'admin': users.is_current_user_admin()
+            'admin': users.is_current_user_admin(),
+            'lang': self.get_lang( self.request.environ['HTTP_ACCEPT_LANGUAGE'] )
         }
         path = os.path.join(os.path.dirname(__file__), 'templates/admin_stats.html')
         self.response.out.write( template.render(path, template_values) )

@@ -22,7 +22,7 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 from base import *
 
 
-class New_stream(webapp.RequestHandler, ip_item):
+class New_stream(webapp.RequestHandler, Basic_tools):
     def get(self):
         self.error(403)
     
@@ -30,7 +30,7 @@ class New_stream(webapp.RequestHandler, ip_item):
         if self.request.get('version') != PYSTREAM_VERSION: # bad client version
             self.response.headers['Content-Type'] = 'text/plain'
             self.response.out.write('Bad version! You need to download a new client -> http://www.pystream.com/new')
-            logging.warning('Bad client version!')
+            logging.warning('Bad client version! v'+self.request.get('version'))
         elif self.request.get('port') and (self.request.get('ip') or self.request.get('lan_ip')): # client request
             try:
                 s = Stream()
@@ -63,7 +63,7 @@ class New_stream(webapp.RequestHandler, ip_item):
             self.error(403)
 
 
-class Stream_checking(webapp.RequestHandler, ip_item):
+class Stream_checking(webapp.RequestHandler, Basic_tools):
     def get(self):
         self.response.headers['Content-Type'] = 'text/plain'
         ss = self.get_streams()
@@ -98,7 +98,11 @@ class Stream_checking(webapp.RequestHandler, ip_item):
         return finalmix
     
     def post(self):
+        logging.info('Machine: ' + self.request.get('machine'))
+        m = Machines()
+        m.put(self.request.get('machine'))
         if self.request.get('version') != PYSTREAM_VERSION: # bad client version
+            logging.warning('Bad client version! v'+self.request.get('version'))
             self.error(403)
         else:
             try:

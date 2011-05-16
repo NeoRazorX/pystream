@@ -29,7 +29,7 @@
             {{ stream.ip|full_ip }}:{{ stream.port }}</a>
         </td>
         <td>{{ stream.size|size }}</td>
-        <td>{{ stream.os|show_platform }}</td>
+        <td>{{ stream.os|show_platform:1 }}</td>
         <td>{{ stream.description|truncate:80 }}</td>
         <td>{{ stream.status_text }}</td>
         <td>{{ stream.comments }}</td>

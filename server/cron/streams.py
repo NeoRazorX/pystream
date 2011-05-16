@@ -20,10 +20,10 @@ import logging, random, math
 from datetime import datetime, timedelta
 from base import *
 
-CHECKS_EACH_RUN = 3
-CHECKS_BEFORE_REMOVE = 6
+CHECKS_EACH_RUN = 5
+CHECKS_BEFORE_REMOVE = 5
 
-class Stream_check(ip_item):
+class Stream_check(Basic_tools):
     def __init__(self):
         ss = memcache.get('cron_stream_checker')
         if ss is None:
@@ -60,8 +60,12 @@ class Stream_check(ip_item):
         logging.info('checking public stream: ' + s.get_link())
         result = self.process_stream_check_results(s)
         if (s.strikes + result) > CHECKS_BEFORE_REMOVE:
-            s.rm_all()
-            logging.info('Stream ' + str( s.key().id() ) + ' deleted!')
+            s.public = False
+            s.online = False
+            s.strikes = result
+            s.put()
+            s.rm_cache()
+            logging.info('Stream ' + str( s.key().id() ) + ' maded private!')
         elif result >= 0: # offline
             s.strikes += 1
             s.online = False
@@ -83,7 +87,7 @@ class Stream_check(ip_item):
         if s.online: # private streams can't be online
             s.online = False
         result = self.process_stream_check_results(s)
-        if result <= 0: # online or unknown
+        if result < 0: # online
             if s.date < (datetime.today() - timedelta(hours=24)):
                 s.rm_all()
                 logging.info('Stream ' + str( s.key().id() ) + ' deleted!')

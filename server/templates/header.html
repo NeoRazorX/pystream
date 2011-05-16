@@ -22,12 +22,12 @@
 </head>
 <body onload="{{ onload }}">
 <div class="top_right">
-    <a href="/new">new</a>
-    | <a href="/random">random</a>
-    | <a href="/search">search</a>
+    <a href="/new">{{ lang|translation:0 }}</a>
+    | <a href="/random">{{ lang|translation:1 }}</a>
+    | <a href="/search">{{ lang|translation:2 }}</a>
     {% if admin %}
-        | <a href="/admin/">admin</a>
-        | <a href="{{ logout }}">logout</a>
+        | <a href="/admin/">{{ lang|translation:3 }}</a>
+        | <a href="{{ logout }}">{{ lang|translation:4 }}</a>
     {% endif %}
 </div>
 <div class="header">

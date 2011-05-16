@@ -20,14 +20,14 @@ DEBUG_FLAG = True
 RECAPTCHA_PUBLIC_KEY = ''
 RECAPTCHA_PRIVATE_KEY = ''
 PYSTREAM_VERSION = '2'
-RANDOM_CACHE_TIME = 1200
+RANDOM_CACHE_TIME = 1500
 
 import logging
 from google.appengine.ext import db, search
 from google.appengine.api import memcache
 
 
-class ip_item:
+class Basic_tools:
     def dottedQuadToNum(self, ip):
         try:
             hexn = ''.join(["%02X" % long(i) for i in ip.split('.')])
@@ -67,9 +67,22 @@ class ip_item:
             finalmix.append(elem)
             mix.remove(elem)
         return finalmix
+    
+    def get_os(self, data):
+        os = 'unknown'
+        for aux in ['mac', 'iphone', 'ipad', 'ipod', 'windows', 'linux', 'android']:
+            if data.lower().find( aux ) != -1:
+                os = aux
+        return os
+    
+    def get_lang(self, data):
+        if data.lower().find('es') != -1:
+            return 'es'
+        else:
+            return 'en'
 
 
-class Stream(search.SearchableModel, ip_item):
+class Stream(search.SearchableModel, Basic_tools):
     unsearchable_properties = ['comments', 'date', 'ip', 'lan_ip', 'online',
         'os', 'password', 'port', 'public', 'size', 'strikes']
     comments = db.IntegerProperty(default=0)
@@ -184,6 +197,33 @@ class Stream_check_result():
                 logging.info('Check results added for stream: '+str(self.stream_id))
             else:
                 logging.info('Check results duplicated for stream: '+str(self.stream_id))
+
+
+class Machines():
+    def __init__(self):
+        self.all = memcache.get('all_pystream_machines')
+    
+    def put(self, machine):
+        if machine != '':
+            os = 'unknown'
+            for aux in ['mac', 'iphone', 'ipad', 'ipod', 'windows', 'linux', 'android']:
+                if machine.lower().find( aux ) != -1:
+                    os = aux
+            if self.all:
+                found = False
+                for m in self.all:
+                    if m[0] == os:
+                        m[1] += 1
+                        found = True
+                if not found:
+                    self.all.append([os, 1])
+                memcache.replace('all_pystream_machines', self.all)
+            else:
+                self.all = [[os, 1]]
+                memcache.add('all_pystream_machines', self.all)
+    
+    def get(self):
+        return self.all
 
 
 class Comment(db.Model):

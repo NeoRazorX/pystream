@@ -17,7 +17,7 @@
     </tr>
     </table>
     </td>
-    <td align="right"><a href="/report?link=/">report an issue</a></td>
+    <td align="right"><a href="/report?link=/">{{ lang|translation:6 }}</a></td>
 </tr>
 </table>
 
@@ -50,7 +50,7 @@
 <div class="search">
     <form name="search" action="/search" method="get">
         <input class="search_box" type="text" name="query" value=""/>
-        <input type="submit" value="search"/>
+        <input type="submit" value="{{ lang|translation:2 }}"/>
     </form>
 </div>
 
@@ -64,18 +64,18 @@
 
 <table class="main">
 <tr>
-    <td align="center" valign="bottom"><a href="/new"><img src="/img/notebook.png"/></a></td>
-    <td align="center" valign="bottom"><a href="/random"><img src="/img/dados.png"/></a></td>
+    <td align="center" valign="bottom"><a href="/new"><img src="/img/notebook.png" alt="{{ lang|translation:7 }}"/></a></td>
+    <td align="center" valign="bottom"><a href="/random"><img src="/img/dados.png" alt="{{ lang|translation:8 }}"/></a></td>
 </tr>
 <tr>
     <td align="center" valign="top">
-        <a href="/new">New Stream</a><br/>
-        The easy way to share data between computers, on LAN or Internet.<br/>
-        Perfect for <a href="/new#lanparties">LAN Parties</a>!
+        <a href="/new">{{ lang|translation:7 }}</a>:<br/>
+        {{ lang|translation:9 }}.<br/>
+        {{ lang|translation:10 }} <a href="/new#lanparties">{{ lang|translation:11 }}</a>!
     </td>
     <td align="center" valign="top">
-        <a href="/random">Random Stream</a><br/>
-        Take a look for a random stream. What are people sharing?
+        <a href="/random">{{ lang|translation:8 }}</a>:<br/>
+        {{ lang|translation:12 }}
     </td>
 </tr>
 </table>

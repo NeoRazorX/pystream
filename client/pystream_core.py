@@ -29,6 +29,8 @@ except ImportError:
 PYSTREAM_URL = ''
 PYSTREAM_VERSION = '2'
 MYHANDLER_LOG_LINE = ''
+MYHANDLER_VIEWS = 0
+STREAM_CHECKER_PRINTS = False
 
 class Mini_gui():
     def __init__(self):
@@ -51,21 +53,34 @@ class Mini_gui():
     def get_pystream_url(self):
         return PYSTREAM_URL
     
+    def get_views(self):
+        return MYHANDLER_VIEWS
+    
+    def show_views(self):
+        print MYHANDLER_VIEWS
+    
     def write_to_log(self, text):
         print text
     
     def set_port(self, port):
         pass
+    
     def get_port(self):
-        pass
+        return 8081
+    
     def enable_upnp(self):
         pass
     def set_active_upnp(self, value=False):
         pass
-    def is_upnp_avaliable(self):
-        pass
+    
+    def is_upnp_active(self):
+        return False
+    
     def is_public(self):
-        pass
+        return False
+    
+    def is_offline(self):
+        return True
     
     def select_folder(self):
         self.write_to_log("Press start button, select a folder and start sharing.\n")
@@ -75,7 +90,7 @@ class Mini_gui():
     
     def log_mode(self):
         pass
-    def show_link(self, streamid, key):
+    def show_link(self, streamid='', key=''):
         pass
     def retry_share(self):
         pass
@@ -104,11 +119,10 @@ class Mini_server(threading.Thread):
     def __init__(self, gui):
         threading.Thread.__init__(self)
         self.gui = gui
-        self.port = random.randint(6000, 9000)
+        self.port = random.randint(8081, 9000)
         self.gui.set_port( self.port )
         self.initial_folder = self.target_folder = os.getcwd()
         self.local_ip = self.external_ip = ''
-        self.write_to_log("Starting pystream client...\n")
         #
         # upnp checking
         self.upnp_loaded = False
@@ -143,8 +157,10 @@ class Mini_server(threading.Thread):
     
     def run(self):
         self.gui.running_miniserver = True
-        while not self.gui.running_gui:
+        if not self.gui.running_gui:
             time.sleep(1)
+        self.write_to_log("Starting pystream client...\n")
+        upnp_works = False
         if self.upnp_loaded:
             self.upnpc.discover()
             try:
@@ -155,6 +171,7 @@ class Mini_server(threading.Thread):
                 self.write_to_log("Local IP : " + self.local_ip + "\n")
                 self.gui.enable_upnp()
                 self.gui.set_active_upnp(True)
+                upnp_works = True
             except Exception, e:
                 print 'Exception :', e
                 self.gui.set_active_upnp(False)
@@ -162,7 +179,7 @@ class Mini_server(threading.Thread):
         else:
             self.gui.set_active_upnp(False)
             self.write_to_log("Can't use UPnP!\n")
-        if not self.upnp_loaded or not self.gui.is_upnp_avaliable():
+        if not self.upnp_loaded or not upnp_works:
                 self.write_to_log("Using alternate mode...\n")
                 self.alternate_get_ip()
                 self.write_to_log("Local IP : " + self.local_ip + "\n")
@@ -178,11 +195,15 @@ class Mini_server(threading.Thread):
                 # disabling user control
                 self.gui.log_mode()
                 
-                if self.gui.is_upnp_avaliable():
+                if self.gui.is_upnp_active() and not self.gui.is_offline():
                     self.set_upnp()
                 os.chdir( self.target_folder )
                 
-                if self.add_stream():
+                if self.gui.is_offline():
+                    self.write_to_log("offline stream\n")
+                    self.gui.show_link()
+                    self.run_webserver()
+                elif self.add_stream():
                     self.write_to_log("pystream request done!\n")
                     self.write_to_log("key: " + self.stream_key + "\n")
                     self.gui.show_link(self.stream_id, self.stream_key)
@@ -193,7 +214,7 @@ class Mini_server(threading.Thread):
                     self.gui.retry_share()
                 
                 os.chdir( self.initial_folder )
-                if self.gui.is_upnp_avaliable():
+                if self.gui.is_upnp_active() and not self.gui.is_offline():
                     self.unset_upnp()
             else:
                 time.sleep(0.2)
@@ -207,7 +228,7 @@ class Mini_server(threading.Thread):
             self.local_ip = s.getsockname()[0]
             s.close()
         except:
-            self.write_to_log("Fatal error: no internet connection\n")
+            self.write_to_log("No internet connection!\n")
     
     def run_webserver(self):
         global MYHANDLER_LOG_LINE
@@ -220,6 +241,7 @@ class Mini_server(threading.Thread):
             while MYHANDLER_LOG_LINE != '':
                 self.write_to_log( MYHANDLER_LOG_LINE )
                 MYHANDLER_LOG_LINE = ''
+            self.gui.show_views()
         self.write_to_log("Web server closed!\n")
     
     def add_stream(self):
@@ -346,12 +368,9 @@ class MyHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         else:
             return str(n/1000000000000) + ' TiB'
     
-    def log_request(self, code=200, size=0):
-        global MYHANDLER_LOG_LINE
-        MYHANDLER_LOG_LINE += self.log_date_time_string() + ', ' + self.address_string() + ' looking for ' + self.path + ' - ' + str(code) + "\n"
-    
     def log_request(self, code='-', size='-'):
-        global MYHANDLER_LOG_LINE
+        global MYHANDLER_LOG_LINE, MYHANDLER_VIEWS
+        MYHANDLER_VIEWS += 1
         MYHANDLER_LOG_LINE += "%s - %s -> %s\n" % (self.log_date_time_string(),
                                                    self.address_string(),
                                                    self.path)
@@ -367,9 +386,6 @@ class MyHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
             return value[:length] + "..."
         else:
             return value
-    
-    def LogErr(self, s):
-        pass
 
 
 class Stream_checker(threading.Thread):
@@ -380,8 +396,12 @@ class Stream_checker(threading.Thread):
         self.streams = []
         self.results = {}
     
+    def printer(self, text):
+        if STREAM_CHECKER_PRINTS:
+            print text
+    
     def run(self):
-        print 'Running stream checker...'
+        self.printer('Running stream checker...')
         sleeps = 0
         while not self.gui.quit:
             if sleeps > 0:
@@ -400,7 +420,7 @@ class Stream_checker(threading.Thread):
     
     def request_more_streams(self):
         try:
-            print "Requesting streams to check..."
+            self.printer('Requesting streams to check...')
             response = urllib2.urlopen(PYSTREAM_URL + '/api/check')
             resp_code = response.getcode()
             if resp_code == 200:
@@ -430,15 +450,16 @@ class Stream_checker(threading.Thread):
             print "Error: " + str( e.code )
         except urllib2.URLError, e:
             self.results['result'+num] = 'error'
-        print 'checking stream: ' + self.results['stream'+num] + ' -> ' + self.results['result'+num]
+        self.printer('checking stream: ' + self.results['stream'+num] + ' -> ' + self.results['result'+num])
     
     def send_results(self):
         try:
             self.results['version'] = PYSTREAM_VERSION
+            self.results['machine'] = platform.uname()
             data = urllib.urlencode( self.results )
             response = urllib2.urlopen( urllib2.Request(PYSTREAM_URL + '/api/check', data), timeout=5)
             if response.getcode() == 200:
-                print "Results reported"
+                self.printer('Results reported')
         except urllib2.HTTPError, e:
             if e.code == 403:
                 print "Server said results are bad!"

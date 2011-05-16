@@ -3,7 +3,7 @@
 <div class="body">
 
 <table class="social_buttons">
-<tr><td align="right"><a href="/report?link=/">report an issue</a></td></tr>
+<tr><td align="right"><a href="/report?link=/">{{ lang|translation:6 }}</a></td></tr>
 </table>
 
 {% if error %}
@@ -20,7 +20,7 @@
 <div class="search">
     <form name="search" action="/search" method="get">
         <input class="search_box" type="text" name="query" value="{{ query }}"/>
-        <input type="submit" value="search"/>
+        <input type="submit" value="{{ lang|translation:2 }}"/>
     </form>
 </div>
 

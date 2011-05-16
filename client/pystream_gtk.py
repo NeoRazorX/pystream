@@ -21,7 +21,6 @@ from pystream_core import *
 try:
     import webbrowser
     import pygtk
-    pygtk.require('2.0')
     import gtk, gobject
 except Exception,e:
 	print 'Lost dependency:', e
@@ -64,6 +63,7 @@ class Pystream_gtk(Mini_gui):
         menubar.append(root_menu)
         
         self.lb_status = gtk.LinkButton(self.get_pystream_url(), label=self.get_pystream_url())
+        self.label_views = gtk.Label(str(self.get_views()) + ' views ')
         self.text_log = gtk.TextView()
         self.text_log.set_editable(False)
         self.text_log.set_cursor_visible(False)
@@ -78,28 +78,35 @@ class Pystream_gtk(Mini_gui):
         self.sb_port.set_digits(0)
         self.cb_upnp = gtk.CheckButton(label='use UPnP')
         self.cb_upnp.set_sensitive(False)
-        self.cb_public = gtk.CheckButton(label='public stream')
-        self.cb_public.set_active(True)
+        self.cb_types = gtk.combo_box_new_text()
+        self.cb_types.append_text('public stream')
+        self.cb_types.append_text('private stream')
+        self.cb_types.append_text('offline stream')
+        self.cb_types.set_active(1)
         self.b_start = gtk.Button('start')
         self.b_start.connect("clicked", self.start_server, None)
         
-        self.hbox_top = gtk.HBox(homogeneous=False, spacing=5)
-        self.hbox_top.pack_start(self.label_port, False, False)
-        self.hbox_top.pack_start(self.sb_port, False, False)
-        self.hbox_top.pack_start(self.cb_upnp, False, False)
-        self.hbox_top.pack_start(self.cb_public, True, True)
-        self.hbox_top.pack_start(self.b_start, False, False)
+        self.hbox_up = gtk.HBox(homogeneous=False, spacing=5)
+        self.hbox_up.pack_start(self.lb_status, True, True)
+        self.hbox_up.pack_start(self.label_views, False, False)
+        
+        self.hbox_down = gtk.HBox(homogeneous=False, spacing=5)
+        self.hbox_down.pack_start(self.label_port, False, False)
+        self.hbox_down.pack_start(self.sb_port, False, False)
+        self.hbox_down.pack_start(self.cb_upnp, False, False)
+        self.hbox_down.pack_start(self.cb_types, True, True)
+        self.hbox_down.pack_start(self.b_start, False, False)
         
         self.vbox = gtk.VBox(homogeneous=False, spacing=0)
         self.vbox.pack_start(menubar, False, False, 0)
-        self.vbox.pack_start(self.lb_status, False, False, 0)
+        self.vbox.pack_start(self.hbox_up, False, False, 0)
         self.vbox.pack_start(self.scroll, True, True, 0)
-        self.vbox.pack_start(self.hbox_top, False, False, 0)
+        self.vbox.pack_start(self.hbox_down, False, False, 0)
         
         self.window.add(self.vbox)
         self.window.resize(640, 480)
         self.window.show_all()
-        self.lb_status.hide()
+        self.hbox_up.hide()
     
     def main(self):
         self.running_gui = True
@@ -184,25 +191,36 @@ class Pystream_gtk(Mini_gui):
     def set_active_upnp(self, value=False):
         self.cb_upnp.set_active(value)
     
-    def is_upnp_avaliable(self):
+    def is_upnp_active(self):
         return self.cb_upnp.get_active()
     
     def is_public(self):
-        return self.cb_public.get_active()
+        return self.cb_types.get_active() == 0
+    
+    def is_offline(self):
+        return self.cb_types.get_active() == 2
     
     def log_mode(self):
-        self.sb_port.set_sensitive(False)
-        self.cb_upnp.set_sensitive(False)
-        self.cb_public.set_sensitive(False)
-        self.b_start.set_sensitive(False)
+        self.hbox_down.hide()
     
-    def show_link(self, streamid, key):
-        webbrowser.open(self.get_pystream_url() + '/s/' + streamid + '?key=' + key)
-        self.lb_status.set_uri(self.get_pystream_url() + '/s/' + streamid)
-        self.lb_status.set_label(self.get_pystream_url() + '/s/' + streamid)
-        self.lb_status.show()
-        self.window.set_title('pystream - sharing: ' + self.get_folder())
-        self.mi_status.set_label("Status: sharing")
+    def show_views(self):
+        self.label_views.set_label(str(self.get_views()) + ' views ')
+    
+    def show_link(self, streamid='', key=''):
+        if streamid == '' or key == '': #offline
+            webbrowser.open('http://localhost:' + str( self.get_port() ))
+            self.lb_status.set_uri('http://localhost:' + str( self.get_port() ))
+            self.lb_status.set_label('http://localhost:' + str( self.get_port() ))
+            self.hbox_up.show()
+            self.window.set_title('pystream - sharing: ' + self.get_folder())
+            self.mi_status.set_label("Status: sharing offline")
+        else:
+            webbrowser.open(self.get_pystream_url() + '/s/' + streamid + '?key=' + key)
+            self.lb_status.set_uri(self.get_pystream_url() + '/s/' + streamid)
+            self.lb_status.set_label(self.get_pystream_url() + '/s/' + streamid)
+            self.hbox_up.show()
+            self.window.set_title('pystream - sharing: ' + self.get_folder())
+            self.mi_status.set_label("Status: sharing")
         if self.have_notify:
             n = pynotify.Notification('pystream-client', message='sharing!')
             n.set_icon_from_pixbuf( self.icon )
@@ -210,14 +228,14 @@ class Pystream_gtk(Mini_gui):
     
     def retry_share(self):
         self.window.set_title('pystream')
-        self.b_start.set_sensitive(True)
+        self.hbox_down.show()
 
 
 if __name__ == "__main__":
     gui = Pystream_gtk()
     server = Mini_server( gui )
-    server.start()
     stream_checker = Stream_checker( gui )
+    server.start()
     stream_checker.start()
     
     try:
@@ -242,10 +260,3 @@ if __name__ == "__main__":
         pass
     
     gui.main()
-    while stream_checker.is_alive():
-        print 'stream_checker alive!'
-        time.sleep(1)
-    while server.is_alive():
-        print 'mini-server alive!'
-        time.sleep(1)
-

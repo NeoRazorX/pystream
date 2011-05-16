@@ -27,6 +27,11 @@ img {
     border-width: 0;
 }
 
+img.preview {
+    margin: 20px;
+    border: 1px outset #191919;
+}
+
 textarea {
     width: 99%;
     border: 1px solid #191919;

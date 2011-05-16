@@ -31,7 +31,7 @@ from recaptcha.client import captcha
 from base import *
 
 
-class Main_page(webapp.RequestHandler, ip_item):
+class Main_page(webapp.RequestHandler, Basic_tools):
     def get(self):
         template_values = {
             'title': 'pystream',
@@ -40,7 +40,8 @@ class Main_page(webapp.RequestHandler, ip_item):
             'previouss': memcache.get('previous_searches'),
             'local_streams': self.near_streams(),
             'admin': users.is_current_user_admin(),
-            'logout': users.create_logout_url('/')
+            'logout': users.create_logout_url('/'),
+            'lang': self.get_lang( self.request.environ['HTTP_ACCEPT_LANGUAGE'] )
         }
         path = os.path.join(os.path.dirname(__file__), 'templates/main.html')
         self.response.out.write( template.render(path, template_values) )
@@ -49,7 +50,7 @@ class Main_page(webapp.RequestHandler, ip_item):
         return self.order_streams_date( self.get_streams_from_ip( self.request.remote_addr ) )
 
 
-class Stream_page(webapp.RequestHandler, ip_item):
+class Stream_page(webapp.RequestHandler, Basic_tools):
     def get(self, ids=None):
         try:
             s = Stream.get_by_id( int( ids ) )
@@ -85,7 +86,8 @@ class Stream_page(webapp.RequestHandler, ip_item):
                     'captcha': chtml,
                     'admin': users.is_current_user_admin(),
                     'logout': users.create_logout_url('/'),
-                    'publisher': self.is_publisher( s.key() )
+                    'publisher': self.is_publisher( s.key() ),
+                    'lang': self.get_lang( self.request.environ['HTTP_ACCEPT_LANGUAGE'] )
                 }
                 path = os.path.join(os.path.dirname(__file__), 'templates/stream.html')
                 self.response.out.write( template.render(path, template_values) )
@@ -98,7 +100,9 @@ class Stream_page(webapp.RequestHandler, ip_item):
                 'description': 'Sharing folders made easy.',
                 'pystream_version': PYSTREAM_VERSION,
                 'admin': users.is_current_user_admin(),
-                'logout': users.create_logout_url('/')
+                'logout': users.create_logout_url('/'),
+                'user_os': self.get_os( self.request.environ['HTTP_USER_AGENT'] ),
+                'lang': self.get_lang( self.request.environ['HTTP_ACCEPT_LANGUAGE'] )
             }
             path = os.path.join(os.path.dirname(__file__), 'templates/new.html')
             self.response.out.write( template.render(path, template_values) )
@@ -139,7 +143,7 @@ class Stream_page(webapp.RequestHandler, ip_item):
             return False
 
 
-class Stream_protected_page(Stream_page):
+class Stream_protected_page(Stream_page, Basic_tools):
     def get(self, ids=None):
         try:
             s = Stream.get_by_id( int( ids ) )
@@ -162,7 +166,8 @@ class Stream_protected_page(Stream_page):
                     'streamid': s.key().id(),
                     'captcha': chtml,
                     'admin': users.is_current_user_admin(),
-                    'logout': users.create_logout_url('/')
+                    'logout': users.create_logout_url('/'),
+                    'lang': self.get_lang( self.request.environ['HTTP_ACCEPT_LANGUAGE'] )
                 }
                 path = os.path.join(os.path.dirname(__file__), 'templates/stream_ask_password.html')
                 self.response.out.write( template.render(path, template_values) )
@@ -181,7 +186,8 @@ class Stream_protected_page(Stream_page):
                     'captcha': chtml,
                     'admin': users.is_current_user_admin(),
                     'logout': users.create_logout_url('/'),
-                    'publisher': self.is_publisher( s.key() )
+                    'publisher': self.is_publisher( s.key() ),
+                    'lang': self.get_lang( self.request.environ['HTTP_ACCEPT_LANGUAGE'] )
                 }
                 path = os.path.join(os.path.dirname(__file__), 'templates/stream.html')
                 self.response.out.write( template.render(path, template_values) )
@@ -274,7 +280,7 @@ class Random_stream(webapp.RequestHandler):
         return ss
 
 
-class Comment_stream(webapp.RequestHandler, ip_item):
+class Comment_stream(webapp.RequestHandler, Basic_tools):
     # remove comment
     def get(self):
         if users.is_current_user_admin() and self.request.get('rm'):
@@ -330,7 +336,7 @@ class Comment_stream(webapp.RequestHandler, ip_item):
             return False
 
 
-class Report_page(webapp.RequestHandler, ip_item):
+class Report_page(webapp.RequestHandler, Basic_tools):
     def get(self):
         chtml = captcha.displayhtml(
             public_key = RECAPTCHA_PUBLIC_KEY,
@@ -342,7 +348,8 @@ class Report_page(webapp.RequestHandler, ip_item):
             'link': self.request.get('link'),
             'captcha': chtml,
             'admin': users.is_current_user_admin(),
-            'logout': users.create_logout_url('/')
+            'logout': users.create_logout_url('/'),
+            'lang': self.get_lang( self.request.environ['HTTP_ACCEPT_LANGUAGE'] )
         }
         path = os.path.join(os.path.dirname(__file__), 'templates/report.html')
         self.response.out.write( template.render(path, template_values) )
@@ -374,7 +381,7 @@ class Report_page(webapp.RequestHandler, ip_item):
             self.redirect('/error/403')
 
 
-class Search_page(webapp.RequestHandler, ip_item):
+class Search_page(webapp.RequestHandler, Basic_tools):
     def get(self):
         template_values = {
             'title': 'pystream: searching',
@@ -384,7 +391,8 @@ class Search_page(webapp.RequestHandler, ip_item):
             'streams': self.search_streams( self.request.get('query') ),
             'previouss': self.previous_searches( self.request.get('query') ),
             'admin': users.is_current_user_admin(),
-            'logout': users.create_logout_url('/')
+            'logout': users.create_logout_url('/'),
+            'lang': self.get_lang( self.request.environ['HTTP_ACCEPT_LANGUAGE'] )
         }
         path = os.path.join(os.path.dirname(__file__), 'templates/search.html')
         self.response.out.write( template.render(path, template_values) )
@@ -433,19 +441,20 @@ class Search_page(webapp.RequestHandler, ip_item):
         return schs
 
 
-class Author_page(webapp.RequestHandler):
+class Author_page(webapp.RequestHandler, Basic_tools):
     def get(self):
         template_values = {
             'title': 'pystream: author',
             'description': "Information about Carlos Garcia Gomez, pystream's author",
             'admin': users.is_current_user_admin(),
-            'logout': users.create_logout_url('/')
+            'logout': users.create_logout_url('/'),
+            'lang': self.get_lang( self.request.environ['HTTP_ACCEPT_LANGUAGE'] )
         }
         path = os.path.join(os.path.dirname(__file__), 'templates/author.html')
         self.response.out.write( template.render(path, template_values) )
 
 
-class Error_page(webapp.RequestHandler):
+class Error_page(webapp.RequestHandler, Basic_tools):
     def get(self, code='404'):
         derror = {
             '403': 'Permission dennied',
@@ -464,7 +473,8 @@ class Error_page(webapp.RequestHandler):
             'description': derror.get(code, 'Unknown error'),
             'error': merror.get(code, 'Unknown error'),
             'code': code,
-            'previouss': memcache.get('previous_searches')
+            'previouss': memcache.get('previous_searches'),
+            'lang': self.get_lang( self.request.environ['HTTP_ACCEPT_LANGUAGE'] )
             }
         
         path = os.path.join(os.path.dirname(__file__), 'templates/search.html')

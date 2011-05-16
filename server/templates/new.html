@@ -17,45 +17,58 @@
     </tr>
     </table>
     </td>
-    <td align="right"><a href="/report?link=/new">report an issue</a></td>
+    <td align="right"><a href="/report?link=/new">{{ lang|translation:6 }}</a></td>
 </tr>
 </table>
 
 <div class="section">
     <a name="streams"></a>
-    <div class="title">What is pystream?</div>
-    Pystream is a web service for sharing files between computers.
-    You can easily create a stream by using the <a href="#client">pystream client</a>
-    <br/><br/>
-    There are two types of streams:
+    <div class="title">{{ lang|translation:13 }}</div>
+    {{ lang|translation:14 }}.
+    {{ lang|translation:15 }} <a href="#client">{{ lang|translation:16 }}</a>.<br/>
+    {{ lang|translation:17 }}:
     <ul>
-        <li><b>Public streams</b>: avaliable for everyone, on searches and random.
-        The easiest way to share files with everyone.</li>
-        <li><b>Private streams</b>: hidden from searches (except from you LAN) and random,
-        perfect for local sharing or <a href="#lanparties">LAN Parties</a>.<br/>
-        You can also use a password to protect you private stream.</li>
+        <li><b>{{ lang|translation:18 }}</b>: {{ lang|translation:19 }}.
+        {{ lang|translation:20 }}.</li>
+        <li><b>{{ lang|translation:21 }}</b>: {{ lang|translation:22 }}
+        <a href="#lanparties">{{ lang|translation:11 }}</a>.<br/>
+        {{ lang|translation:23 }}.</li>
+        <li><b>{{ lang|translation:24 }}</b>: {{ lang|translation:25 }}.</li>
     </ul>
 </div>
 
 <div class="section">
     <a name="lanparties"></a>
-    <div class="title">LAN Parties:</div>
-    Download the <a href="#client">pystream client</a>, create the streams and enjoy.<br/>
-    All streams (public or private) from your LAN will be shown on the <a href="/">main page</a>,
-    and will be avaliable for searches (from you LAN).
+    <div class="title">{{ lang|translation:11 }}:</div>
+    {{ lang|translation:26 }} <a href="#client">{{ lang|translation:16 }}</a>, {{ lang|translation:27 }}.
+    {{ lang|translation:28 }} <a href="/">{{ lang|translation:29 }}</a>, {{ lang|translation:30 }}.
 </div>
 
 <div class="section">
     <a name="client"></a>
-    <div class="title">Where can I get the pystream client?</div>
-    Pystream is in alpha state!
+    <div class="title">{{ lang|translation:31 }}</div>
+    {{ lang|translation:32 }}
     <ul>
-        <li>Only Linux version have <a href="http://en.wikipedia.org/wiki/Universal_Plug_and_Play" target="_Blank">UPnP</a>
-        support, so you will need to manually open a TCP port in Windows/Mac version.</li>
-        <li>Windows and Mac versions are untested, so please <a href="/report?link=/new">report</a> me any issue.</li>
-        <li>Source code <a href="http://github.com/NeoRazorX/pystream" target="_Blank">here</a>.</li>
+        <li>{{ lang|translation:33 }} <a href="http://en.wikipedia.org/wiki/Universal_Plug_and_Play" target="_Blank">UPnP</a>
+        {{ lang|translation:34 }}, {{ lang|translation:35 }}.</li>
+        <li>{{ lang|translation:36 }}.</li>
+        <li>{{ lang|translation:37 }}
+        <a href="http://github.com/NeoRazorX/pystream" target="_Blank">{{ lang|translation:38 }}</a>.</li>
     </ul>
-    <a href="/report?link=/new">Report</a> any issue you have.
+    {{ lang|translation:39 }}.
+    
+    {% if user_os = 'linux' %}
+        <center><img class="preview" src="/img/pystream-linux-client.png" title="Linux client"/></center>
+    {% endif %}
+    
+    {% if user_os = 'windows' %}
+        <center><img class="preview" src="/img/pystream-windows-client.png" title="Windows client"/></center>
+    {% endif %}
+    
+    {% if user_os = 'mac' %}
+        <center><img class="preview" src="/img/pystream-mac-client.png" title="Windows client"/></center>
+    {% endif %}
+    
     <table align="center">
     <tr>
         <td align="center"><a href="https://github.com/downloads/NeoRazorX/pystream/pystream-win32-client.exe" target="_Blank" onclick="this_is_alpha()"><img src="/img/windows.png"/></a></td>
@@ -63,11 +76,7 @@
         <td align="center"><a href="/client/pystream-unix-client.tar.gz" onclick="this_is_alpha()"><img src="/img/mac.png"/></a></td>
     </tr>
     <tr>
-        <td align="center" valign="top">
-            <b>Windows</b><br/>
-            <a href="https://github.com/downloads/NeoRazorX/pystream/pystream-win32-client.exe" target="_Blank" onclick="this_is_alpha()">mirror 1</a><br/>
-            <a href="http://www.megaupload.com/?d=LQKI7UFH" target="_Blank" onclick="this_is_alpha()">mirror 2</a>
-        </td>
+        <td align="center" valign="top"><a href="https://github.com/downloads/NeoRazorX/pystream/pystream-win32-client.exe" target="_Blank" onclick="this_is_alpha()">Windows</a></td>
         <td align="center" valign="top"><a href="/client/pystream-unix-client.tar.gz">Linux</a></td>
         <td align="center" valign="top"><a href="/client/pystream-unix-client.tar.gz" onclick="this_is_alpha()">Mac</a></td>
     </tr>
@@ -75,26 +84,26 @@
 </div>
 
 <div class="section">
-    <div class="title">Can I develop my own client?</div>
+    <div class="title">{{ lang|translation:40 }}</div>
     <table width="100%">
     <tr>
         <td valign="top">
             <table>
                 <tr>
                     <td colspan="2">
-                    Off course! To create a stream you only need to send a POST request to
+                    {{ lang|translation:41 }} {{ lang|translation:42 }}
                     <a href="/new">http://www.pystream.com/new</a>
-                    with this data:
+                    {{ lang|translation:43 }}:
                     </td>
                 </tr>
-                <tr><td align="right"><b>version</b>:</td><td>API version ({{ pystream_version }}).</td></tr>
-                <tr><td align="right"><b>ip</b>:</td><td>Your public IP.</td></tr>
-                <tr><td align="right"><b>port</b>:</td><td>Your public port.</td></tr>
+                <tr><td align="right"><b>version</b>:</td><td>{{ lang|translation:44 }} ({{ pystream_version }}).</td></tr>
+                <tr><td align="right"><b>ip</b>:</td><td>{{ lang|translation:45 }}.</td></tr>
+                <tr><td align="right"><b>port</b>:</td><td>{{ lang|translation:46 }}.</td></tr>
                 <tr>
                     <td colspan="2">
                     <br/>
-                    If you develop a new client, please <a href="mailto:admin@pystream.com">tell me</a>
-                    and i'll put it here.
+                    {{ lang|translation:47 }} <a href="mailto:admin@pystream.com">{{ lang|translation:48 }}</a>
+                    {{ lang|translation:49 }}.
                     </td>
                 </tr>
             </table>
@@ -106,7 +115,7 @@
             <table>
                 <tr>
                     <td colspan="2" align="center">
-                    ... or you can use this form. Show your creativity!
+                    {{ lang|translation:50 }} {{ lang|translation:51 }}
                     </td>
                 </tr>
                 <tr>
@@ -119,7 +128,7 @@
                 </tr>
                 <tr>
                     <td></td>
-                    <td><input type="submit" value="send"/></td>
+                    <td><input type="submit" value="{{ lang|translation:52 }}"/></td>
                 </tr>
             </table>
             </form>

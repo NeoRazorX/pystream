@@ -44,25 +44,33 @@ class Pystream_tk(Mini_gui):
             self.window.iconbitmap('@icon.xbm')
         self.window.minsize(500,400)
         
-        self.b_link = Button(text=self.get_pystream_url(), command=self.open_link)
-        self.b_link.pack(fill=BOTH)
+        self.frame_up = Frame(self.window)
+        self.frame_up.pack(fill=BOTH)
+        self.b_link = Button(self.frame_up, text=self.get_pystream_url(), command=self.open_link)
+        self.b_link.pack(side=LEFT, expand=True, fill=BOTH)
         self.b_link['state'] = 'disabled'
+        self.label_views = Label(self.frame_up, text=str(self.get_views())+' views ')
+        self.label_views.pack(side=RIGHT)
         self.textlog = Text()
         self.textlog.pack(expand=True, fill=BOTH)
         self.textlog['state'] = 'disabled'
-        laberport = Label(text='Port:')
-        laberport.pack(side=LEFT)
+        labelport = Label(text='Port:')
+        labelport.pack(side=LEFT)
         self.port_var = StringVar()
-        self.port = Spinbox(width=4, from_=6000, to=9000, textvariable=self.port_var)
+        self.port = Spinbox(width=5, from_=1024, to=65535, textvariable=self.port_var)
         self.port.pack(side=LEFT)
         self.upnp_var = IntVar()
         self.cb_upnp = Checkbutton(text='use UPnP', variable=self.upnp_var)
         self.cb_upnp.pack(side=LEFT)
         self.cb_upnp['state'] = 'disabled'
-        self.public_var = IntVar()
-        self.cb_public = Checkbutton(text='public', variable=self.public_var)
-        self.cb_public.pack(side=LEFT)
-        self.cb_public.select()
+        self.stream_type = IntVar()
+        self.stream_type.set(2)
+        self.rb_public = Radiobutton(text="public", variable=self.stream_type, value=1)
+        self.rb_public.pack(side=LEFT)
+        self.rb_private = Radiobutton(text="private", variable=self.stream_type, value=2)
+        self.rb_private.pack(side=LEFT)
+        self.rb_offline = Radiobutton(text="offline", variable=self.stream_type, value=3)
+        self.rb_offline.pack(side=LEFT)
         self.b_start = Button(text="start", command=self.start_server)
         self.b_start.pack(side=RIGHT)
     
@@ -116,29 +124,43 @@ class Pystream_tk(Mini_gui):
         else:
             self.cb_upnp.deselect()
     
-    def is_upnp_avaliable(self):
+    def is_upnp_active(self):
         return self.upnp_var.get() == 1
     
     def is_public(self):
-        return self.public_var.get() == 1
+        return self.stream_type.get() == 1
+    
+    def is_offline(self):
+        return self.stream_type.get() == 3
     
     def log_mode(self):
         self.port['state'] = 'disabled'
         self.cb_upnp['state'] = 'disabled'
-        self.cb_public['state'] = 'disabled'
+        self.rb_public['state'] = 'disabled'
+        self.rb_private['state'] = 'disabled'
+        self.rb_offline['state'] = 'disabled'
         self.b_start['state'] = 'disabled'
     
-    def show_link(self, streamid, key):
+    def show_views(self):
+        self.label_views['text'] = str(self.get_views())+' views '
+    
+    def show_link(self, streamid='', key=''):
         self.streamid = streamid
         self.key = key
-        # this hangs on Windows
-        #self.window.title('pystream - sharing: ' + self.get_folder())
-        self.b_link['text'] = self.get_pystream_url() + '/s/' + self.streamid
-        self.b_link['state'] = 'normal'
-        self.open_link()
+        if streamid == '' or key == '': #offline
+            self.b_link['text'] = 'http://localhost:'+str(self.get_port())
+            self.b_link['state'] = 'normal'
+            self.open_link()
+        else:
+            self.b_link['text'] = self.get_pystream_url() + '/s/' + self.streamid
+            self.b_link['state'] = 'normal'
+            self.open_link()
     
     def open_link(self):
-        webbrowser.open(self.get_pystream_url() + '/s/' + self.streamid + '?key=' + self.key)
+        if self.streamid == '' or self.key == '': #offline
+            webbrowser.open('http://localhost:'+str(self.get_port()))
+        else:
+            webbrowser.open(self.get_pystream_url() + '/s/' + self.streamid + '?key=' + self.key)
     
     def retry_share(self):
         self.b_start['state'] = 'normal'
@@ -151,14 +173,7 @@ class Pystream_tk(Mini_gui):
 if __name__ == "__main__":
     gui = Pystream_tk()
     server = Mini_server( gui )
-    server.start()
     stream_checker = Stream_checker( gui )
+    server.start()
     stream_checker.start()
     gui.main()
-    while stream_checker.is_alive():
-        print 'stream_checker alive!'
-        time.sleep(1)
-    while server.is_alive():
-        print 'mini-server alive!'
-        time.sleep(1)
-

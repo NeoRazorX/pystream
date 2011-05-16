@@ -7,7 +7,7 @@
 
 <table class="social_buttons">
 <tr>
-    <td>Sharing: {{ stream.size|size }}</td>
+    <td>{{ lang|translation:53 }}: {{ stream.size|size }}</td>
     <td align="center">
     <table>
     <tr>
@@ -17,7 +17,7 @@
     </tr>
     </table>
     </td>
-    <td align="right"><a href="/report?link={{ stream.get_link }}">report an issue</a></td>
+    <td align="right"><a href="/report?link={{ stream.get_link }}">{{ lang|translation:6 }}</a></td>
 </tr>
 </table>
 
@@ -60,7 +60,7 @@
     &nbsp;&nbsp;&nbsp;&nbsp;
     password (optional): 
     <input type="password" name="password" size='15' maxlength='15' value="{{ stream.password }}"/>
-    <input type="submit" value="send"/>
+    <input type="submit" value="{{ lang|translation:52 }}"/>
     </form>
 </div>
 {% else %}
@@ -131,7 +131,7 @@
             <input type="hidden" name="stream_id" value="{{ stream.key.id }}"/>
             <textarea name="text" rows="6" cols="60">Leave a comment!</textarea>
             <br/>{{ captcha|safe }}
-            <input type="submit" value="send"/>
+            <input type="submit" value="{{ lang|translation:52 }}"/>
             </form>
             </td>
         </tr>
