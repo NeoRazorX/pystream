@@ -17,45 +17,47 @@
     </tr>
     </table>
     </td>
-    <td align="right"><a href="/report?link=/new">{{ lang|translation:6 }}</a></td>
+    <td align="right"><a href="/report?link=/new">{{ lang|translation:'report' }}</a></td>
 </tr>
 </table>
 
 <div class="section">
     <a name="streams"></a>
-    <div class="title">{{ lang|translation:13 }}</div>
-    {{ lang|translation:14 }}.
-    {{ lang|translation:15 }} <a href="#client">{{ lang|translation:16 }}</a>.<br/>
-    {{ lang|translation:17 }}:
+    <div class="title">{{ lang|translation:'whatpys' }}</div>
+    {{ lang|translation:'whatpys1' }}.
+    {{ lang|translation:'whatpys2' }} <a href="#client">{{ lang|translation:'pystreamcli' }}</a>.<br/>
+    {{ lang|translation:'whatpys3' }}:
     <ul>
-        <li><b>{{ lang|translation:18 }}</b>: {{ lang|translation:19 }}.
-        {{ lang|translation:20 }}.</li>
-        <li><b>{{ lang|translation:21 }}</b>: {{ lang|translation:22 }}
-        <a href="#lanparties">{{ lang|translation:11 }}</a>.<br/>
-        {{ lang|translation:23 }}.</li>
-        <li><b>{{ lang|translation:24 }}</b>: {{ lang|translation:25 }}.</li>
+        <li><b>{{ lang|translation:'whatpys4' }}</b>: {{ lang|translation:'whatpys5' }}.
+        {{ lang|translation:'whatpys6' }}.</li>
+        <li><b>{{ lang|translation:'whatpys7' }}</b>: {{ lang|translation:'whatpys8' }}
+        <a href="#lanparties">{{ lang|translation:'lanparties' }}</a>.<br/>
+        {{ lang|translation:'whatpys9' }}.</li>
+        <li><b>{{ lang|translation:'whatpys10' }}</b>: {{ lang|translation:'whatpys11' }}.</li>
     </ul>
 </div>
 
 <div class="section">
     <a name="lanparties"></a>
-    <div class="title">{{ lang|translation:11 }}:</div>
-    {{ lang|translation:26 }} <a href="#client">{{ lang|translation:16 }}</a>, {{ lang|translation:27 }}.
-    {{ lang|translation:28 }} <a href="/">{{ lang|translation:29 }}</a>, {{ lang|translation:30 }}.
+    <div class="title">{{ lang|translation:'lanparties' }}:</div>
+    {{ lang|translation:'lanparties1' }} <a href="#client">{{ lang|translation:'pystreamcli' }}</a>,
+    {{ lang|translation:'lanparties2' }}.
+    {{ lang|translation:'lanparties3' }} <a href="/">{{ lang|translation:'lanparties' }}</a>,
+    {{ lang|translation:'lanparties4' }}.
 </div>
 
 <div class="section">
     <a name="client"></a>
-    <div class="title">{{ lang|translation:31 }}</div>
-    {{ lang|translation:32 }}
+    <div class="title">{{ lang|translation:'wherecli' }}</div>
+    {{ lang|translation:'wherecli1' }}
     <ul>
-        <li>{{ lang|translation:33 }} <a href="http://en.wikipedia.org/wiki/Universal_Plug_and_Play" target="_Blank">UPnP</a>
-        {{ lang|translation:34 }}, {{ lang|translation:35 }}.</li>
-        <li>{{ lang|translation:36 }}.</li>
-        <li>{{ lang|translation:37 }}
-        <a href="http://github.com/NeoRazorX/pystream" target="_Blank">{{ lang|translation:38 }}</a>.</li>
+        <li>{{ lang|translation:'wherecli2' }}
+        <a href="http://en.wikipedia.org/wiki/Universal_Plug_and_Play" target="_Blank">UPnP</a>
+        {{ lang|translation:'wherecli3' }}, {{ lang|translation:'wherecli4' }}.</li>
+        <li>{{ lang|translation:'wherecli5' }}.</li>
+        <li>{{ lang|translation:'wherecli6' }}
+        <a href="http://github.com/NeoRazorX/pystream" target="_Blank">{{ lang|translation:'here' }}</a>.</li>
     </ul>
-    {{ lang|translation:39 }}.
     
     {% if user_os = 'linux' %}
         <center><img class="preview" src="/img/pystream-linux-client.png" title="Linux client"/></center>
@@ -71,39 +73,39 @@
     
     <table align="center">
     <tr>
-        <td align="center"><a href="https://github.com/downloads/NeoRazorX/pystream/pystream-win32-client.exe" target="_Blank" onclick="this_is_alpha()"><img src="/img/windows.png"/></a></td>
-        <td align="center"><a href="/client/pystream-unix-client.tar.gz"><img src="/img/linux.png"/></a></td>
-        <td align="center"><a href="/client/pystream-unix-client.tar.gz" onclick="this_is_alpha()"><img src="/img/mac.png"/></a></td>
+        <td align="center"><a href="https://github.com/downloads/NeoRazorX/pystream/pystream.exe" target="_Blank"><img src="/img/windows.png"/></a></td>
+        <td align="center"><a href="https://github.com/downloads/NeoRazorX/pystream/pystream-linux-client.tar.gz"><img src="/img/linux.png"/></a></td>
+        <td align="center"><a href="https://github.com/downloads/NeoRazorX/pystream/pystream-mac-client.tar.gz"><img src="/img/mac.png"/></a></td>
     </tr>
     <tr>
-        <td align="center" valign="top"><a href="https://github.com/downloads/NeoRazorX/pystream/pystream-win32-client.exe" target="_Blank" onclick="this_is_alpha()">Windows</a></td>
-        <td align="center" valign="top"><a href="/client/pystream-unix-client.tar.gz">Linux</a></td>
-        <td align="center" valign="top"><a href="/client/pystream-unix-client.tar.gz" onclick="this_is_alpha()">Mac</a></td>
+        <td align="center" valign="top"><a href="https://github.com/downloads/NeoRazorX/pystream/pystream.exe" target="_Blank">Windows</a></td>
+        <td align="center" valign="top"><a href="https://github.com/downloads/NeoRazorX/pystream/pystream-linux-client.tar.gz">Linux</a></td>
+        <td align="center" valign="top"><a href="https://github.com/downloads/NeoRazorX/pystream/pystream-mac-client.tar.gz">Mac</a></td>
     </tr>
     </table>
 </div>
 
 <div class="section">
-    <div class="title">{{ lang|translation:40 }}</div>
+    <div class="title">{{ lang|translation:'cancli' }}</div>
     <table width="100%">
     <tr>
         <td valign="top">
             <table>
                 <tr>
                     <td colspan="2">
-                    {{ lang|translation:41 }} {{ lang|translation:42 }}
+                    {{ lang|translation:'cancli1' }} {{ lang|translation:'cancli2' }}
                     <a href="/new">http://www.pystream.com/new</a>
-                    {{ lang|translation:43 }}:
+                    {{ lang|translation:'cancli3' }}:
                     </td>
                 </tr>
-                <tr><td align="right"><b>version</b>:</td><td>{{ lang|translation:44 }} ({{ pystream_version }}).</td></tr>
-                <tr><td align="right"><b>ip</b>:</td><td>{{ lang|translation:45 }}.</td></tr>
-                <tr><td align="right"><b>port</b>:</td><td>{{ lang|translation:46 }}.</td></tr>
+                <tr><td align="right"><b>version</b>:</td><td>{{ lang|translation:'cancli4' }} ({{ pystream_version }}).</td></tr>
+                <tr><td align="right"><b>ip</b>:</td><td>{{ lang|translation:'cancli5' }}.</td></tr>
+                <tr><td align="right"><b>port</b>:</td><td>{{ lang|translation:'cancli6' }}.</td></tr>
                 <tr>
                     <td colspan="2">
                     <br/>
-                    {{ lang|translation:47 }} <a href="mailto:admin@pystream.com">{{ lang|translation:48 }}</a>
-                    {{ lang|translation:49 }}.
+                    {{ lang|translation:'cancli7' }} <a href="mailto:admin@pystream.com">{{ lang|translation:'tellme' }}</a>
+                    {{ lang|translation:'cancli8' }}.
                     </td>
                 </tr>
             </table>
@@ -115,7 +117,7 @@
             <table>
                 <tr>
                     <td colspan="2" align="center">
-                    {{ lang|translation:50 }} {{ lang|translation:51 }}
+                    {{ lang|translation:'cancli9' }} {{ lang|translation:'cancli10' }}
                     </td>
                 </tr>
                 <tr>
@@ -128,7 +130,7 @@
                 </tr>
                 <tr>
                     <td></td>
-                    <td><input type="submit" value="{{ lang|translation:52 }}"/></td>
+                    <td><input type="submit" value="{{ lang|translation:'send' }}"/></td>
                 </tr>
             </table>
             </form>

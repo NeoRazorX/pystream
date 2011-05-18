@@ -1,0 +1,5 @@
+- Server:
+-- No comments option for streams.
+- Client:
+-- Windows tray icon support.
+-- Windows notification support.

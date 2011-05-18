@@ -81,7 +81,6 @@ class Stream_page(webapp.RequestHandler, Basic_tools):
                     'title': 'pystream: ' + str( s.key().id() ),
                     'description': s.description,
                     'stream': s,
-                    'local': self.from_local( self.numToDottedQuad( s.ip ) ),
                     'comments': s.get_comments(),
                     'captcha': chtml,
                     'admin': users.is_current_user_admin(),
@@ -130,12 +129,6 @@ class Stream_page(webapp.RequestHandler, Basic_tools):
         else: # lost parameters
             self.redirect('/error/403')
     
-    def from_local(self, ip):
-        if self.request.remote_addr in [ip, '127.0.0.1']:
-            return True
-        else:
-            return False
-    
     def is_publisher(self, key):
         if self.request.cookies.get('key' + str( key.id() ), '') == str(key):
             return True
@@ -181,7 +174,6 @@ class Stream_protected_page(Stream_page, Basic_tools):
                     'title': 'pystream: ' + str( s.key().id() ),
                     'description': s.description,
                     'stream': s,
-                    'local': self.from_local( self.numToDottedQuad( s.ip ) ),
                     'comments': s.get_comments(),
                     'captcha': chtml,
                     'admin': users.is_current_user_admin(),
@@ -421,10 +413,9 @@ class Search_page(webapp.RequestHandler, Basic_tools):
                     if s[0] == query:
                         s[1] += 1
                         found = True
-                if not found:
-                    schs.append([query, 1])
-                # short
+                # short and limit to 19
                 if schs:
+                    total = 0
                     aux = []
                     elem = None
                     while schs != []:
@@ -433,10 +424,14 @@ class Search_page(webapp.RequestHandler, Basic_tools):
                                 elem = s
                             elif s[1] > elem[1]:
                                 elem = s
-                        aux.append(elem)
+                        if total < 19:
+                            aux.append(elem)
+                            total += 1
                         schs.remove(elem)
                         elem = None
                     schs = aux
+                if not found:
+                    schs.append([query, 1])
                 memcache.replace('previous_searches', schs)
         return schs
 
@@ -491,7 +486,7 @@ def main():
                                           ('/report', Report_page),
                                           ('/search', Search_page),
                                           ('/author', Author_page),
-                                          ('/error/(.*)', Error_page),
+                                          (r'/error/(.*)', Error_page),
                                           ('/.*', Error_page)],
                                          debug=DEBUG_FLAG)
     webapp.template.register_template_library('filters.django_filters')

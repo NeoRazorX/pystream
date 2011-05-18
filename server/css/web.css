@@ -1,9 +1,12 @@
 body {
-    background-color: #C6DDED;
-    background: -moz-linear-gradient(top, #C6DDED 0%, #61B2E8 50%, #C6DDED 100%); /* firefox */
-    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#C6DDED), color-stop(50%,#61B2E8), color-stop(100%,#C6DDED)); /* webkit */
-    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#C6DDED', endColorstr='#C6DDED',GradientType=0 ); /* ie */
-    background: -o-linear-gradient(top, #C6DDED 0%,#61B2E8 50%,#C6DDED 100%); /* opera */
+    background-color: #C7DDED;
+    background: -moz-linear-gradient(left, #c7dded 0%, #5ea0d6 50%, #c7dded 100%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, right top, color-stop(0%,#c7dded), color-stop(50%,#5ea0d6), color-stop(100%,#c7dded)); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(left, #c7dded 0%,#5ea0d6 50%,#c7dded 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(left, #c7dded 0%,#5ea0d6 50%,#c7dded 100%); /* Opera11.10+ */
+    background: -ms-linear-gradient(left, #c7dded 0%,#5ea0d6 50%,#c7dded 100%); /* IE10+ */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#C7DDED', endColorstr='#C7DDED',GradientType=1 ); /* IE6-9 */
+    background: linear-gradient(left, #c7dded 0%,#5ea0d6 50%,#c7dded 100%); /* W3C */
     font-family: Arial, Helvetica, sans-serif;
     font-size: 13px;
     margin-top: 0px;
@@ -179,7 +182,7 @@ div.section {
     margin-top: 20px;
     margin-left: auto;
     margin-right: auto;
-    margin-bottom: 10px;
+    margin-bottom: 30px;
 }
 
 div.title {
@@ -218,7 +221,7 @@ table.comments {
 }
 
 table.comments tr.comment:hover {
-    background-color: #EFEFEF;
+    background-color: #C7DDED
 }
 
 table.comments td {
@@ -247,7 +250,7 @@ table.custom tr.top td {
 }
 
 table.custom tr:hover {
-    background-color: #EFEFEF;
+    background-color: #C7DDED
 }
 
 div.pages {

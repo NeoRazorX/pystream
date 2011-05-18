@@ -22,12 +22,12 @@
 </head>
 <body onload="{{ onload }}">
 <div class="top_right">
-    <a href="/new">{{ lang|translation:0 }}</a>
-    | <a href="/random">{{ lang|translation:1 }}</a>
-    | <a href="/search">{{ lang|translation:2 }}</a>
+    <a href="/new">{{ lang|translation:'new' }}</a>
+    | <a href="/random">{{ lang|translation:'random' }}</a>
+    | <a href="/search">{{ lang|translation:'search' }}</a>
     {% if admin %}
-        | <a href="/admin/">{{ lang|translation:3 }}</a>
-        | <a href="{{ logout }}">{{ lang|translation:4 }}</a>
+        | <a href="/admin/">{{ lang|translation:'admin' }}</a>
+        | <a href="{{ logout }}">{{ lang|translation:'logout' }}</a>
     {% endif %}
 </div>
 <div class="header">
@@ -36,6 +36,6 @@
         &nbsp; <a href="/s/{{ stream.key.id }}">{{ stream.key.id }}</a>
     {% endif %}
     {% if stream.password %}
-        <img src="/img/mini-lock.png" alt="locked" title="password protected"/>
+        <img src="/img/mini-lock.png" alt="locked" title="{{ lang|translation:'passwp' }}"/>
     {% endif %}
 </div>

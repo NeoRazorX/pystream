@@ -36,7 +36,7 @@ class Pystream_gtk(Mini_gui):
         
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.set_title('pystream')
-        self.icon = gtk.gdk.pixbuf_new_from_file('icon.png')
+        self.icon = gtk.gdk.pixbuf_new_from_file('img/icon.png')
         self.window.set_icon_list( self.icon )
         self.window.connect("delete_event", self.delete_event)
         self.window.connect("destroy", gtk.main_quit)
@@ -246,7 +246,7 @@ if __name__ == "__main__":
     
     if gui.have_indicator:
         appind = appindicator.Indicator("pystream-client",
-                                        os.getcwd() + "/icon.png",
+                                        os.getcwd() + "/img/appindicator.png",
                                         appindicator.CATEGORY_APPLICATION_STATUS)
         appind.set_status(appindicator.STATUS_ACTIVE)
         appind.set_attention_icon("nm-adhoc")

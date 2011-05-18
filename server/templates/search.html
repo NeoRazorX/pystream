@@ -3,7 +3,7 @@
 <div class="body">
 
 <table class="social_buttons">
-<tr><td align="right"><a href="/report?link=/">{{ lang|translation:6 }}</a></td></tr>
+<tr><td align="right"><a href="/report?link=/">{{ lang|translation:'report' }}</a></td></tr>
 </table>
 
 {% if error %}
@@ -20,7 +20,7 @@
 <div class="search">
     <form name="search" action="/search" method="get">
         <input class="search_box" type="text" name="query" value="{{ query }}"/>
-        <input type="submit" value="{{ lang|translation:2 }}"/>
+        <input type="submit" value="{{ lang|translation:'search' }}"/>
     </form>
 </div>
 
@@ -52,7 +52,7 @@
         <td align="right">{{ stream.date|timesince }}</td>
     </tr>
 {% empty %}
-    <tr><td colspan="5">No streams found!</td></tr>
+    <tr><td colspan="5">No streams found! Help us to grow by using the <a href="/new#client">pystream client</a>.</td></tr>
 {% endfor %}
 </table>
 {% endif %}

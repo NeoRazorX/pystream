@@ -19,4 +19,10 @@
 from distutils.core import setup
 import py2exe
 
-setup(console=['pystream_tk.py'])
+setup(name = "Pystream client",
+      version = "0.1",
+      author = "Carlos Garcia Gomez",
+      windows=[{'script': 'pystream_tk.py',
+                'icon_resources': [(1,'img/icon.ico')]
+                }]
+      )

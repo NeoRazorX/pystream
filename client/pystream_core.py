@@ -30,7 +30,6 @@ PYSTREAM_URL = ''
 PYSTREAM_VERSION = '2'
 MYHANDLER_LOG_LINE = ''
 MYHANDLER_VIEWS = 0
-STREAM_CHECKER_PRINTS = False
 
 class Mini_gui():
     def __init__(self):
@@ -375,6 +374,9 @@ class MyHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
                                                    self.address_string(),
                                                    self.path)
     
+    def log_error(self, *args):
+        pass
+    
     def truncate(self, value, arg):
         try:
             length = int(arg)
@@ -396,12 +398,8 @@ class Stream_checker(threading.Thread):
         self.streams = []
         self.results = {}
     
-    def printer(self, text):
-        if STREAM_CHECKER_PRINTS:
-            print text
-    
     def run(self):
-        self.printer('Running stream checker...')
+        print 'Running stream checker...'
         sleeps = 0
         while not self.gui.quit:
             if sleeps > 0:
@@ -420,7 +418,7 @@ class Stream_checker(threading.Thread):
     
     def request_more_streams(self):
         try:
-            self.printer('Requesting streams to check...')
+            print 'Requesting streams to check...'
             response = urllib2.urlopen(PYSTREAM_URL + '/api/check')
             resp_code = response.getcode()
             if resp_code == 200:
@@ -450,7 +448,7 @@ class Stream_checker(threading.Thread):
             print "Error: " + str( e.code )
         except urllib2.URLError, e:
             self.results['result'+num] = 'error'
-        self.printer('checking stream: ' + self.results['stream'+num] + ' -> ' + self.results['result'+num])
+        print 'checking stream: ' + self.results['stream'+num] + ' -> ' + self.results['result'+num]
     
     def send_results(self):
         try:
@@ -459,7 +457,7 @@ class Stream_checker(threading.Thread):
             data = urllib.urlencode( self.results )
             response = urllib2.urlopen( urllib2.Request(PYSTREAM_URL + '/api/check', data), timeout=5)
             if response.getcode() == 200:
-                self.printer('Results reported')
+                print 'Results reported'
         except urllib2.HTTPError, e:
             if e.code == 403:
                 print "Server said results are bad!"

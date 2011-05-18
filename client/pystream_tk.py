@@ -34,23 +34,22 @@ class Pystream_tk(Mini_gui):
         self.key = ''
         
         self.window = Tk()
-        self.window.protocol("WM_DELETE_WINDOW", self.close_event)
-        self.window.title('Pystream client')
-        
         p_bits, p_os = platform.architecture()
         if p_os == 'WindowsPE':
-            self.window.iconbitmap('icon.ico')
+            self.window.iconbitmap('img/icon.ico')
         elif p_os == 'ELF':
-            self.window.iconbitmap('@icon.xbm')
+            self.window.iconbitmap('@img/icon.xbm')
+        self.window.protocol("WM_DELETE_WINDOW", self.close_event)
+        self.window.title('Pystream client')
         self.window.minsize(500,400)
         
         self.frame_up = Frame(self.window)
         self.frame_up.pack(fill=BOTH)
         self.b_link = Button(self.frame_up, text=self.get_pystream_url(), command=self.open_link)
-        self.b_link.pack(side=LEFT, expand=True, fill=BOTH)
+        #self.b_link.pack(side=LEFT, expand=True, fill=BOTH)
         self.b_link['state'] = 'disabled'
         self.label_views = Label(self.frame_up, text=str(self.get_views())+' views ')
-        self.label_views.pack(side=RIGHT)
+        #self.label_views.pack(side=RIGHT)
         self.textlog = Text()
         self.textlog.pack(expand=True, fill=BOTH)
         self.textlog['state'] = 'disabled'
@@ -155,6 +154,8 @@ class Pystream_tk(Mini_gui):
             self.b_link['text'] = self.get_pystream_url() + '/s/' + self.streamid
             self.b_link['state'] = 'normal'
             self.open_link()
+        self.b_link.pack(side=LEFT, expand=True, fill=BOTH)
+        self.label_views.pack(side=RIGHT)
     
     def open_link(self):
         if self.streamid == '' or self.key == '': #offline

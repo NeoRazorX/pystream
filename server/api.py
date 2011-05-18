@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import cgi, os, random, math
+from google.appengine.api import users
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 from base import *
@@ -163,9 +164,49 @@ class Stream_checking(webapp.RequestHandler, Basic_tools):
             logging.warning("Error processing result: " + stream + ' -> ' + result)
 
 
+class Redir_stream(webapp.RequestHandler, Basic_tools):
+    def get(self, ids=None):
+        try:
+            s = Stream.get_by_id( int( ids ) )
+        except:
+            s = None
+        if s:
+            if s.password == '':
+                self.redir(s)
+            elif self.user_give_password(s):
+                self.redir(s)
+            elif self.is_publisher( s.key() ):
+                self.redir(s)
+            elif users.is_current_user_admin():
+                self.redir(s)
+            else:
+                self.error(403)
+        else:
+            self.error(404)
+    
+    def redir(self, stream):
+        if self.request.remote_addr in [stream.full_ip(), '127.0.0.1']:
+            self.redirect('http://127.0.0.1:' + str(stream.port))
+        else:
+            self.redirect('http://' + self.numToDottedQuad(stream.lan_ip) + ':' + str(stream.port))
+    
+    def user_give_password(self, stream):
+        if self.request.cookies.get('pass' + str( stream.key().id() ), '') == stream.password:
+            return True
+        else:
+            return False
+    
+    def is_publisher(self, key):
+        if self.request.cookies.get('key' + str( key.id() ), '') == str(key):
+            return True
+        else:
+            return False
+
+
 def main():
     application = webapp.WSGIApplication([('/api/new', New_stream),
-                                          ('/api/check', Stream_checking)],
+                                          ('/api/check', Stream_checking),
+                                          (r'/api/redir/(.*)', Redir_stream)],
                                          debug=DEBUG_FLAG)
     run_wsgi_app(application)
 

@@ -7,7 +7,7 @@
 
 <table class="social_buttons">
 <tr>
-    <td>{{ lang|translation:53 }}: {{ stream.size|size }}</td>
+    <td>{{ lang|translation:'sharing' }}: {{ stream.size|size }}</td>
     <td align="center">
     <table>
     <tr>
@@ -17,7 +17,7 @@
     </tr>
     </table>
     </td>
-    <td align="right"><a href="/report?link={{ stream.get_link }}">{{ lang|translation:6 }}</a></td>
+    <td align="right"><a href="/report?link={{ stream.get_link }}">{{ lang|translation:'report' }}</a></td>
 </tr>
 </table>
 
@@ -33,34 +33,34 @@
 <div class="stream_description">
     <form name="stream" action="/mod_stream" method="post">
     <input type="hidden" name="key" value="{{ stream.key }}"/>
-    Description:<br/>
+    {{ lang|translation:'descript' }}:<br/>
     <textarea name="description" rows="4" cols="60">{{ stream.description|safe }}</textarea>
     <br/>
     {% if stream.public %}
         <input type="radio" name="public" value="True" checked="True"
          title="will be avaliable for everyone on the internet"
          onclick="set_public_stream()"/>
-        <span title="will be avaliable for everyone on the internet">public</span>
+        <span title="will be avaliable for everyone on the internet">{{ lang|translation:'public' }}</span>
         &nbsp;
         <input type="radio" name="public" value="False"
          title="will be removed after 24 hours"
          onclick="set_private_stream()"/>
-        <span title="will be removed after 24 hours">private</span>
+        <span title="will be removed after 24 hours">{{ lang|translation:'private' }}</span>
     {% else %}
         <input type="radio" name="public" value="True"
          title="will be avaliable for everyone on the internet"
          onclick="set_public_stream()"/>
-        <span title="will be avaliable for everyone on the internet">public</span>
+        <span title="will be avaliable for everyone on the internet">{{ lang|translation:'public' }}</span>
         &nbsp;
         <input type="radio" name="public" value="False" checked="True"
          title="will be removed after 24 hours"
          onclick="set_private_stream()"/>
-        <span title="will be removed after 24 hours">private</span>
+        <span title="will be removed after 24 hours">{{ lang|translation:'private' }}</span>
     {% endif %}
     &nbsp;&nbsp;&nbsp;&nbsp;
-    password (optional): 
+    {{ lang|translation:'passwo' }}: 
     <input type="password" name="password" size='15' maxlength='15' value="{{ stream.password }}"/>
-    <input type="submit" value="{{ lang|translation:52 }}"/>
+    <input type="submit" value="{{ lang|translation:'send' }}"/>
     </form>
 </div>
 {% else %}
@@ -77,22 +77,16 @@
 <table width="100%">
 <tr>
     <td width="40%" valign="top">
-    {% if local %}
-        <iframe src="http://{{ stream.lan_ip|full_ip }}:{{ stream.port }}" width="100%" height="800" frameborder="0">
-            You need a new browser -&gt; <a href="http://www.google.com/chrome">Google Chrome</a>
-        </iframe>
-    {% else %}
-        <iframe src="http://{{ stream.ip|full_ip }}:{{ stream.port }}" width="100%" height="800" frameborder="0">
-            You need a new browser -&gt; <a href="http://www.google.com/chrome">Google Chrome</a>
-        </iframe>
-    {% endif %}
+    <iframe src="/api/redir/{{ stream.key.id }}" width="100%" height="800" frameborder="0">
+        You need a new browser -&gt; <a href="http://www.google.com/chrome">Google Chrome</a>
+    </iframe>
     {% if admin %}
         <br/>{{ stream.ip|full_ip }}:{{ stream.port }}
         <a href="#" onclick="remove_stream('{{ stream.key }}')">remove stream</a>
     {% endif %}
     </td>
     <td valign="top">
-        <div class="title">Comments ({{ stream.comments }}):</div>
+        <div class="title">{{ lang|translation:'comments' }} ({{ stream.comments }}):</div>
         <table class="comments">
         {% for comment in comments %}
         <tr class="comment">
@@ -129,9 +123,9 @@
             <td>
             <form name="comment" action="/comment" method="post">
             <input type="hidden" name="stream_id" value="{{ stream.key.id }}"/>
-            <textarea name="text" rows="6" cols="60">Leave a comment!</textarea>
+            <textarea name="text" rows="6" cols="60">{{ lang|translation:'leavecom' }}</textarea>
             <br/>{{ captcha|safe }}
-            <input type="submit" value="{{ lang|translation:52 }}"/>
+            <input type="submit" value="{{ lang|translation:'send' }}"/>
             </form>
             </td>
         </tr>

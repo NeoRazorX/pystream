@@ -1,0 +1,14 @@
+18-05-2011:
+- Client:
+-- Added log_error function to myHandler.
+-- New appindicator icon.
+-- New icons.
+-- Icons moved to img/ folder.
+-- New clients built.
+- Server:
+-- New redir page in API.
+-- Improved the translation django filter.
+
+17-05-2011:
+- Server:
+-- Added redirect stream feature on API.

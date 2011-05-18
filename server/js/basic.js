@@ -38,8 +38,3 @@ function remove_report(id)
         window.location.href = '/admin/reports?rm=' + id;
     }
 }
-
-function this_is_alpha()
-{
-    alert("Pystream is in alpha state!\nMail me if you have issues: admin@pystream.com");
-}
