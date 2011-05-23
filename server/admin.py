@@ -24,13 +24,12 @@ from google.appengine.dist import use_library
 use_library('django', '1.2')
 from google.appengine.ext.webapp import template
 
-from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.api import users
 from base import *
 
 
-class Main_page(webapp.RequestHandler, Basic_tools):
+class Main_page(Basic_page, Basic_tools):
     def get(self):
         m = Machines()
         template_values = {
@@ -40,7 +39,7 @@ class Main_page(webapp.RequestHandler, Basic_tools):
             'machines': m.get(),
             'logout': users.create_logout_url('/'),
             'admin': users.is_current_user_admin(),
-            'lang': self.get_lang( self.request.environ['HTTP_ACCEPT_LANGUAGE'] )
+            'lang': self.get_lang()
         }
         path = os.path.join(os.path.dirname(__file__), 'templates/admin.html')
         self.response.out.write( template.render(path, template_values) )
@@ -53,7 +52,7 @@ class Main_page(webapp.RequestHandler, Basic_tools):
             return None
 
 
-class Streams_page(webapp.RequestHandler, Basic_tools):
+class Streams_page(Basic_page, Basic_tools):
     def get(self):
         removed = self.remove_stream( self.request.get('rm') )
         ss,pages_data = self.get_streams(self.request.get('p'), 30)
@@ -64,7 +63,7 @@ class Streams_page(webapp.RequestHandler, Basic_tools):
             'pages_data': pages_data,
             'logout': users.create_logout_url('/'),
             'admin': users.is_current_user_admin(),
-            'lang': self.get_lang( self.request.environ['HTTP_ACCEPT_LANGUAGE'] )
+            'lang': self.get_lang()
         }
         path = os.path.join(os.path.dirname(__file__), 'templates/admin_streams.html')
         self.response.out.write( template.render(path, template_values) )
@@ -97,7 +96,7 @@ class Streams_page(webapp.RequestHandler, Basic_tools):
         return done
 
 
-class Reports_page(webapp.RequestHandler, Basic_tools):
+class Reports_page(Basic_page, Basic_tools):
     def get(self):
         removed = self.remove_report( self.request.get('rm') )
         rr,pages_data = self.get_reports(self.request.get('p'), 20)
@@ -108,7 +107,7 @@ class Reports_page(webapp.RequestHandler, Basic_tools):
             'pages_data': pages_data,
             'logout': users.create_logout_url('/'),
             'admin': users.is_current_user_admin(),
-            'lang': self.get_lang( self.request.environ['HTTP_ACCEPT_LANGUAGE'] )
+            'lang': self.get_lang()
         }
         path = os.path.join(os.path.dirname(__file__), 'templates/admin_reports.html')
         self.response.out.write( template.render(path, template_values) )
@@ -140,7 +139,7 @@ class Reports_page(webapp.RequestHandler, Basic_tools):
         return done
 
 
-class Stats_page(webapp.RequestHandler, Basic_tools):
+class Stats_page(Basic_page, Basic_tools):
     def get(self):
         sts,pages_data = self.get_stats(self.request.get('p'), 30)
         template_values = {
@@ -149,7 +148,7 @@ class Stats_page(webapp.RequestHandler, Basic_tools):
             'pages_data': pages_data,
             'logout': users.create_logout_url('/'),
             'admin': users.is_current_user_admin(),
-            'lang': self.get_lang( self.request.environ['HTTP_ACCEPT_LANGUAGE'] )
+            'lang': self.get_lang()
         }
         path = os.path.join(os.path.dirname(__file__), 'templates/admin_stats.html')
         self.response.out.write( template.render(path, template_values) )

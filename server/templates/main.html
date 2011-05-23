@@ -1,52 +1,9 @@
 {% include "header.html" %}
-
-<script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
-<script type="text/javascript" src="http://www.google.com/buzz/api/button.js"></script>
-
 <div class="arrow" id="main"></div>
 <div class="body">
 
-<table class="social_buttons">
-<tr>
-    <td>
-    <table>
-    <tr>
-        <td><a title="Share on Google Buzz" class="google-buzz-button" href="http://www.google.com/buzz/post" data-button-style="small-count" data-locale="es"></a></td>
-        <td><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal">Tweet</a></td>
-        <td><iframe src="http://www.facebook.com/plugins/like.php?href&amp;send=true&amp;layout=button_count&amp;width=150&amp;show_faces=false&amp;action=like&amp;colorscheme=light&amp;font&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:150px; height:21px;" allowTransparency="true"></iframe></td>
-    </tr>
-    </table>
-    </td>
-    <td align="right"><a href="/report?link=/">{{ lang|translation:'report' }}</a></td>
-</tr>
-</table>
-
-{% if local_streams %}
-<table class="custom">
-<tr class="top">
-    <td>Streams nears you</td>
-    <td>Size</td>
-    <td>Status</td>
-    <td align="right">uptime</td>
-</tr>
-{% for stream in local_streams %}
-    <tr>
-        <td>
-            <a href="{{ stream.get_link }}" title="Stream: {{ stream.key.id }}">
-            {{ stream.description|truncate:70 }}
-            </a>
-        </td>
-        <td>{{ stream.size|size }}</td>
-        <td>{{ stream.status_text }}</td>
-        <td align="right">{{ stream.date|timesince }}</td>
-    </tr>
-{% endfor %}
-</table>
+<div class="message">{{ lang|translation:'needtesters' }} <a href="/new#client">{{ lang|translation:'pystreamcli' }}</a>.</div>
 <br/>
-{% endif %}
-
-<br/>
-
 <div class="search">
     <form name="search" action="/search" method="get">
         <input class="search_box" type="text" name="query" value=""/>
@@ -79,6 +36,30 @@
     </td>
 </tr>
 </table>
+
+{% if local_streams %}
+<br/>
+<table class="custom">
+<tr class="top">
+    <td>Streams nears you</td>
+    <td>Size</td>
+    <td>Status</td>
+    <td align="right">uptime</td>
+</tr>
+{% for stream in local_streams %}
+    <tr>
+        <td>
+            <a href="{{ stream.get_link }}" title="Stream: {{ stream.key.id }}">
+            {{ stream.description|truncate:70 }}
+            </a>
+        </td>
+        <td>{{ stream.size|size }}</td>
+        <td>{{ stream.status_text }}</td>
+        <td align="right">{{ stream.date|timesince }}</td>
+    </tr>
+{% endfor %}
+</table>
+{% endif %}
 
 </div>
 {% include "footer.html" %}

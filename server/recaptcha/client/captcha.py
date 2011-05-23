@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import urllib2, urllib
 
 API_SSL_SERVER="https://www.google.com/recaptcha/api"

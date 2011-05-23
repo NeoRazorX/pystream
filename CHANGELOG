@@ -1,3 +1,16 @@
+23-05-2011:
+- Client:
+-- Working on Stream_cloner class.
+- Server:
+-- Hide stream when it has > 1 strikes.
+
+19-05-2011:
+- Client:
+-- Moved pystream_core to pystream package.
+- Server:
+-- Fixed bug in new redir API function.
+-- Fixed bug in language detection.
+
 18-05-2011:
 - Client:
 -- Added log_error function to myHandler.

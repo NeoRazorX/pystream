@@ -21,9 +21,12 @@ RECAPTCHA_PUBLIC_KEY = ''
 RECAPTCHA_PRIVATE_KEY = ''
 PYSTREAM_VERSION = '2'
 RANDOM_CACHE_TIME = 1500
+WINDOWS_CLIENT_URL = 'https://github.com/downloads/NeoRazorX/pystream/pystream.exe'
+LINUX_CLIENT_URL = 'https://github.com/downloads/NeoRazorX/pystream/pystream-linux-client.tar.gz'
+MAC_CLIENT_URL = 'https://github.com/downloads/NeoRazorX/pystream/pystream-mac-client.tar.gz'
 
 import logging
-from google.appengine.ext import db, search
+from google.appengine.ext import webapp, db, search
 from google.appengine.api import memcache
 
 
@@ -74,11 +77,16 @@ class Basic_tools:
             if data.lower().find( aux ) != -1:
                 os = aux
         return os
-    
-    def get_lang(self, data):
-        if data.lower().find('es') != -1:
-            return 'es'
-        else:
+
+
+class Basic_page(webapp.RequestHandler):
+    def get_lang(self):
+        try:
+            if self.request.environ['HTTP_ACCEPT_LANGUAGE'].lower().find('es') != -1:
+                return 'es'
+            else:
+                return 'en'
+        except:
             return 'en'
 
 
@@ -243,7 +251,7 @@ class Comment(db.Model):
 
 
 class Report(db.Model):
-    link = db.LinkProperty()
+    link = db.LinkProperty(default='/')
     text = db.TextProperty()
     date = db.DateTimeProperty(auto_now_add=True)
     ip = db.IntegerProperty(default=0)

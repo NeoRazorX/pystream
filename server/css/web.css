@@ -161,6 +161,16 @@ div.message {
     font-size: 15px;
 }
 
+div.warning {
+    text-align: center;
+    background-color: #feffc0;
+    border: 1px solid #e1e16e;
+    margin: 10px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    font-size: 15px;
+}
+
 div.error {
     text-align: center;
     background-color: #ED989C;

@@ -18,7 +18,6 @@
 
 import cgi, os, random, math
 from google.appengine.api import users
-from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 from base import *
 
@@ -186,9 +185,9 @@ class Redir_stream(webapp.RequestHandler, Basic_tools):
     
     def redir(self, stream):
         if self.request.remote_addr in [stream.full_ip(), '127.0.0.1']:
-            self.redirect('http://127.0.0.1:' + str(stream.port))
-        else:
             self.redirect('http://' + self.numToDottedQuad(stream.lan_ip) + ':' + str(stream.port))
+        else:
+            self.redirect('http://' + self.numToDottedQuad(stream.ip) + ':' + str(stream.port))
     
     def user_give_password(self, stream):
         if self.request.cookies.get('pass' + str( stream.key().id() ), '') == stream.password:

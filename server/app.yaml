@@ -19,9 +19,6 @@ handlers:
 - url: /js
   static_dir: js
 
-- url: /client
-  static_dir: client
-
 - url: /robots.txt
   script: robots.py
 

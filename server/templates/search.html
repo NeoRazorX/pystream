@@ -6,8 +6,8 @@
 <tr><td align="right"><a href="/report?link=/">{{ lang|translation:'report' }}</a></td></tr>
 </table>
 
-{% if error %}
-    <div class="error">{{ error|safe|urlize }}</div>
+{% if code %}
+    <div class="error">{{ lang|translation:code }}</div>
     <br/>
 {% else %}
     <br/>
@@ -52,7 +52,13 @@
         <td align="right">{{ stream.date|timesince }}</td>
     </tr>
 {% empty %}
-    <tr><td colspan="5">No streams found! Help us to grow by using the <a href="/new#client">pystream client</a>.</td></tr>
+    <tr>
+        <td colspan="5">
+            {{ lang|translation:'nostreamsfound' }}
+            {{ lang|translation:'needtesters' }}
+            <a href="/new#client">{{ lang|translation:'pystreamcli' }}</a>.
+        </td>
+    </tr>
 {% endfor %}
 </table>
 {% endif %}

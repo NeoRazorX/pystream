@@ -16,7 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Pystream client.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys, random, string, platform, re
+from checker import *
+from cloner import *
+import os, random, string, platform, re
 import SimpleHTTPServer, BaseHTTPServer, SocketServer, socket, cgi
 import urllib, urllib2
 import threading, time
@@ -32,25 +34,31 @@ MYHANDLER_LOG_LINE = ''
 MYHANDLER_VIEWS = 0
 
 class Mini_gui():
-    def __init__(self):
+    def __init__(self, argv):
         global PYSTREAM_URL
         self.quit = False
         self.run_miniserver = False
         self.running_miniserver = False
         self.running_streamchek = False
+        self.running_streamcloner = False
         self.running_gui = False
         self.folder = os.getcwd()
-        if len(sys.argv) == 1:
+        self.url_to_clone = ''
+        self.start_clone = False
+        if len(argv) == 1:
             PYSTREAM_URL = 'http://www.pystream.com'
-        elif len(sys.argv) == 2 and sys.argv[1] == '-l':
+        elif len(argv) == 2 and argv[1] == '-l':
             PYSTREAM_URL = 'http://localhost:8080'
-        elif len(sys.argv) == 3 and sys.argv[1] == '-l':
-            PYSTREAM_URL = 'http://' + sys.argv[2]
+        elif len(argv) == 3 and argv[1] == '-l':
+            PYSTREAM_URL = 'http://' + argv[2]
         else:
             PYSTREAM_URL = 'http://www.pystream.com'
     
     def get_pystream_url(self):
         return PYSTREAM_URL
+    
+    def get_pystream_version(self):
+        return PYSTREAM_VERSION
     
     def get_views(self):
         return MYHANDLER_VIEWS
@@ -104,11 +112,9 @@ class ThreadedHTTPServer(SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer)
             self.finish_request(request, client_address)
             self.close_request(request)
         except socket.timeout:
-            print 'Timeout during processing of request from',
-            print client_address
+            pass
         except socket.error, e:
-            print e, 'during processing of request from',
-            print client_address
+            pass
         except:
             self.handle_error(request, client_address)
             self.close_request(request)
@@ -169,7 +175,7 @@ class Mini_server(threading.Thread):
                 self.write_to_log("External IP : " + self.external_ip + "\n")
                 self.write_to_log("Local IP : " + self.local_ip + "\n")
                 self.gui.enable_upnp()
-                self.gui.set_active_upnp(True)
+                #self.gui.set_active_upnp(True)
                 upnp_works = True
             except Exception, e:
                 print 'Exception :', e
@@ -314,7 +320,7 @@ class Mini_server(threading.Thread):
 
 class MyHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
     def setup(self):
-        self.request.settimeout(10)
+        self.request.settimeout(2)
         SimpleHTTPServer.SimpleHTTPRequestHandler.setup(self)
     
     def list_directory(self, path):
@@ -338,11 +344,12 @@ class MyHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
             if os.path.isdir(fullname):
                 displayname += "/"
                 linkname = name + "/"
-                filesize = '-'
-            if os.path.islink(fullname):
-                displayname += "@"
-                filesize = '-'
-            f.write('<tr><td class="file"><a href="%s" title="%s">%s</a></td><td class="size">%s</td></tr>\n'
+                f.write('<tr><td class="file"><a href="%s" title="%s" target="_Blank">%s</a></td><td class="size">-</td></tr>\n'
+                    % (urllib.quote(linkname), linkname, cgi.escape(displayname)))
+            elif os.path.islink(fullname):
+                pass
+            else:
+                f.write('<tr><td class="file"><a href="%s" title="%s">%s</a></td><td class="size">%s</td></tr>\n'
                     % (urllib.quote(linkname), linkname, cgi.escape(displayname), self.show_size(filesize)))
         f.write('</table>\n</body>\n</html>\n')
         length = f.tell()
@@ -388,81 +395,3 @@ class MyHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
             return value[:length] + "..."
         else:
             return value
-
-
-class Stream_checker(threading.Thread):
-    def __init__(self, gui):
-        threading.Thread.__init__(self)
-        self.gui = gui
-        self.gui.running_streamchek = True
-        self.streams = []
-        self.results = {}
-    
-    def run(self):
-        print 'Running stream checker...'
-        sleeps = 0
-        while not self.gui.quit:
-            if sleeps > 0:
-                sleeps -= 1
-            elif not self.streams and self.results:
-                self.send_results()
-                sleeps = 600
-            elif not self.streams:
-                self.request_more_streams()
-                if not self.streams:
-                    sleeps = 600
-            else:
-                self.check( self.streams.pop() )
-            time.sleep(1)
-        self.gui.running_streamchek = False
-    
-    def request_more_streams(self):
-        try:
-            print 'Requesting streams to check...'
-            response = urllib2.urlopen(PYSTREAM_URL + '/api/check')
-            resp_code = response.getcode()
-            if resp_code == 200:
-                re_stream = re.compile("\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\:\d{1,5}")
-                for line in response.readlines():
-                    if re_stream.match( line.strip() ):
-                        self.streams.append( line.strip() )
-        except urllib2.HTTPError, e:
-            print 'Response code: ' + str(e.code)
-            print "Can't contact to pystream server. Try again later"
-        except urllib2.URLError, e:
-            print 'Response: ' + str(e.args)
-            print "Can't contact to pystream server. Try again later"
-            
-    
-    def check(self, s):
-        if len( self.results ) == 0:
-            num = '0'
-        else:
-            num = str( len(self.results)/2 )
-        self.results['stream'+num] = s
-        try:
-            if urllib2.urlopen(url='http://'+s, timeout=2).getcode() == 200:
-                self.results['result'+num] = 'online'
-        except urllib2.HTTPError, e:
-            self.results['result'+num] = 'offline'
-            print "Error: " + str( e.code )
-        except urllib2.URLError, e:
-            self.results['result'+num] = 'error'
-        print 'checking stream: ' + self.results['stream'+num] + ' -> ' + self.results['result'+num]
-    
-    def send_results(self):
-        try:
-            self.results['version'] = PYSTREAM_VERSION
-            self.results['machine'] = platform.uname()
-            data = urllib.urlencode( self.results )
-            response = urllib2.urlopen( urllib2.Request(PYSTREAM_URL + '/api/check', data), timeout=5)
-            if response.getcode() == 200:
-                print 'Results reported'
-        except urllib2.HTTPError, e:
-            if e.code == 403:
-                print "Server said results are bad!"
-            else:
-                print "Error sending results! " + str(e.code)
-        except urllib2.URLError, e:
-            print e.args
-        self.results = {}

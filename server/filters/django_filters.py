@@ -140,10 +140,11 @@ def translation(lang, tag):
         'report': 'report an issue',
         'lanparties': 'LAN Parties',
         'newstream': 'New stream',
-        'newstream1': 'The easy way to share data between computers, on LAN or Internet',
+        'newstream1': 'The easy way to share folders between computers, on LAN or Internet',
         'newstream2': 'Perfect for',
         'randstream': 'Random stream',
         'randstream1': 'Take a look for a random stream. What are people sharing?',
+        'needtesters': 'We need testers, help us testing the',
         'pystreamcli': 'pystream client',
         'here': 'here',
         'tellme': 'tell me',
@@ -192,7 +193,13 @@ def translation(lang, tag):
         'cancli9': '... or you can use this form.',
         'cancli10': 'Show your creativity!',
         'reportingi': 'Reporting issues',
-        'reportingi1': 'Explain your issue here'
+        'reportingi1': 'Explain your issue here',
+        'nostreamsfound': 'No streams found!',
+        'nocomments': 'No comments yet!',
+        '403': 'Permission dennied!',
+        '403c': 'You fail captcha!',
+        '404': 'Page not found!',
+        '500': 'Internal server error!'
     }
     spanish = {
         'new': 'nuevo',
@@ -205,11 +212,12 @@ def translation(lang, tag):
         'report': 'reportar un problema',
         'lanparties': 'LAN Parties',
         'newstream': 'Nuevo stream',
-        'newstream1': 'La forma más sencilla de compartir datos entre ordenadores, en LAN o Internet',
+        'newstream1': 'La forma más sencilla de compartir carpetas entre ordenadores, en LAN o Internet',
         'newstream2': '¡Perfecto para',
         'randstream': 'Stream aleatorio',
         'randstream1': 'Echa un vistazo a un stream aletorio ¿Qué está compartiendo la gente?',
-        'pystreamcli': 'client pystream',
+        'needtesters': 'Necesitamos testers, ayúdanos probando el',
+        'pystreamcli': 'cliente pystream',
         'here': 'aquí',
         'tellme': 'dímelo',
         'sharing': 'Compartiendo',
@@ -222,7 +230,7 @@ def translation(lang, tag):
         'leavecom': '¡Deja un comentario!',
         'whatpys': '¿Qué es pystream?',
         'whatpys1': 'Pystream es un servicio web para compartir carpetas entre ordenadores',
-        'whatpys2': 'Puedes crear un stream muy facilmente mediante el',
+        'whatpys2': 'Puedes crear un stream muy fácilmente mediante el',
         'whatpys3': 'Hay tres tipos de streams',
         'whatpys4': 'Públicos',
         'whatpys5': 'visibles para todo el mundo, en búsquedas y aleatorios',
@@ -256,7 +264,13 @@ def translation(lang, tag):
         'cancli9': '... o bien puedes usar este formulario.',
         'cancli10': '¡Muéstranos tu creatividad!',
         'reportingi': 'Reportar un problema',
-        'reportingi1': 'Explica el problema aquí'
+        'reportingi1': 'Explica el problema aquí',
+        'nostreamsfound': '¡No se encontraron streams!',
+        'nocomments': '¡Sin comentarios!',
+        '403': '¡Permiso denegado!',
+        '403c': '¡Has fallado el captcha!',
+        '404': '¡Página no encontrada!',
+        '500': '¡Error interno del servidor!'
     }
     if lang == 'es':
         return spanish.get(tag, '¡Error de traducción!')

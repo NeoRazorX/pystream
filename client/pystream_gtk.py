@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Pystream client.  If not, see <http://www.gnu.org/licenses/>.
 
-from pystream_core import *
+import sys, os, pystream, urllib2
 
 try:
     import webbrowser
@@ -28,9 +28,9 @@ except Exception,e:
 
 gobject.threads_init()
 
-class Pystream_gtk(Mini_gui):
-    def __init__(self):
-        Mini_gui.__init__(self)
+class Pystream_gtk(pystream.Mini_gui):
+    def __init__(self, argv):
+        pystream.Mini_gui.__init__(self, argv)
         self.have_indicator = False
         self.have_notify = False
         
@@ -47,16 +47,19 @@ class Pystream_gtk(Mini_gui):
         mi_client.set_sensitive(False)
         self.mi_status = gtk.MenuItem("Status: ready")
         self.mi_status.set_sensitive(False)
+        self.mi_clone = gtk.ImageMenuItem('Clone...')
+        self.mi_clone.connect("activate", self.clone)
+        mi_sep = gtk.SeparatorMenuItem()
         self.mi_show = gtk.CheckMenuItem("Show")
         self.mi_show.set_active(True)
         self.mi_show.connect("activate", self.show_window)
-        mi_sep = gtk.SeparatorMenuItem()
         mi_exit = gtk.ImageMenuItem(gtk.STOCK_QUIT)
         mi_exit.connect("activate", self.file_exit)
         self.filemenu.append(mi_client)
         self.filemenu.append(self.mi_status)
-        self.filemenu.append(self.mi_show)
+        #self.filemenu.append(self.mi_clone)
         self.filemenu.append(mi_sep)
+        self.filemenu.append(self.mi_show)
         self.filemenu.append(mi_exit)
         root_menu = gtk.MenuItem("Pystream")
         root_menu.set_submenu(self.filemenu)
@@ -160,6 +163,9 @@ class Pystream_gtk(Mini_gui):
         else:
             self.window.hide()
     
+    def clone(self, widget, data=None):
+        self.write_to_log('clone!')
+    
     def start_server(self, widget, data=None):
         fc_folder = gtk.FileChooserDialog('Choose a folder to share',
                                           None,
@@ -232,9 +238,9 @@ class Pystream_gtk(Mini_gui):
 
 
 if __name__ == "__main__":
-    gui = Pystream_gtk()
-    server = Mini_server( gui )
-    stream_checker = Stream_checker( gui )
+    gui = Pystream_gtk( sys.argv )
+    server = pystream.Mini_server( gui )
+    stream_checker = pystream.Stream_checker( gui )
     server.start()
     stream_checker.start()
     

@@ -6,7 +6,7 @@
     <div class="title">{{ lang|translation:'reportingi' }}:</div>
     <form name="report" action="/report" method="post">
         <input type="hidden" name="link" value="http://www.pystream.com{{ link }}"/>
-        <textarea name="text" rows="6" cols="60">{{ lang|translation:'reportingi1' }}.</textarea>
+        <textarea name="text" rows="12" cols="60">{{ lang|translation:'reportingi1' }}.</textarea>
         <br/>{{ captcha|safe }}
         <input type="submit" value="{{ lang|translation:'send' }}"/>
     </form>

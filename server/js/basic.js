@@ -38,3 +38,9 @@ function remove_report(id)
         window.location.href = '/admin/reports?rm=' + id;
     }
 }
+
+function show_stream(id)
+{
+    document.getElementById('stframe').src = '/api/redir/' + id;
+    document.getElementById('stwarning').style.display = 'none';
+}

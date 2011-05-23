@@ -42,7 +42,7 @@
     <div class="title">{{ lang|translation:'lanparties' }}:</div>
     {{ lang|translation:'lanparties1' }} <a href="#client">{{ lang|translation:'pystreamcli' }}</a>,
     {{ lang|translation:'lanparties2' }}.
-    {{ lang|translation:'lanparties3' }} <a href="/">{{ lang|translation:'lanparties' }}</a>,
+    {{ lang|translation:'lanparties3' }} <a href="/">{{ lang|translation:'mainpage' }}</a>,
     {{ lang|translation:'lanparties4' }}.
 </div>
 
@@ -60,27 +60,27 @@
     </ul>
     
     {% if user_os = 'linux' %}
-        <center><img class="preview" src="/img/pystream-linux-client.png" title="Linux client"/></center>
+        <center><a href="{{ linux_client_url }}" target="_Blank"><img class="preview" src="/img/pystream-linux-client.png" alt="Linux client"/></a></center>
     {% endif %}
     
     {% if user_os = 'windows' %}
-        <center><img class="preview" src="/img/pystream-windows-client.png" title="Windows client"/></center>
+        <center><a href="{{ windows_client_url }}" target="_Blank"><img class="preview" src="/img/pystream-windows-client.png" alt="Windows client"/></a></center>
     {% endif %}
     
     {% if user_os = 'mac' %}
-        <center><img class="preview" src="/img/pystream-mac-client.png" title="Windows client"/></center>
+        <center><a href="{{ mac_client_url }}" target="_Blank"><img class="preview" src="/img/pystream-mac-client.png" alt="Windows client"/></a></center>
     {% endif %}
     
     <table align="center">
     <tr>
-        <td align="center"><a href="https://github.com/downloads/NeoRazorX/pystream/pystream.exe" target="_Blank"><img src="/img/windows.png"/></a></td>
-        <td align="center"><a href="https://github.com/downloads/NeoRazorX/pystream/pystream-linux-client.tar.gz"><img src="/img/linux.png"/></a></td>
-        <td align="center"><a href="https://github.com/downloads/NeoRazorX/pystream/pystream-mac-client.tar.gz"><img src="/img/mac.png"/></a></td>
+        <td align="center"><a href="{{ windows_client_url }}" target="_Blank"><img src="/img/windows.png" alt="windows"/></a></td>
+        <td align="center"><a href="{{ linux_client_url }}"><img src="/img/linux.png" alt="linux"/></a></td>
+        <td align="center"><a href="{{ mac_client_url }}"><img src="/img/mac.png" alt="mac"/></a></td>
     </tr>
     <tr>
-        <td align="center" valign="top"><a href="https://github.com/downloads/NeoRazorX/pystream/pystream.exe" target="_Blank">Windows</a></td>
-        <td align="center" valign="top"><a href="https://github.com/downloads/NeoRazorX/pystream/pystream-linux-client.tar.gz">Linux</a></td>
-        <td align="center" valign="top"><a href="https://github.com/downloads/NeoRazorX/pystream/pystream-mac-client.tar.gz">Mac</a></td>
+        <td align="center" valign="top"><a href="{{ windows_client_url }}" target="_Blank">Windows</a></td>
+        <td align="center" valign="top"><a href="{{ linux_client_url }}">Linux</a></td>
+        <td align="center" valign="top"><a href="{{ mac_client_url }}">Mac</a></td>
     </tr>
     </table>
 </div>
