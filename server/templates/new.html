@@ -31,7 +31,7 @@
         <li><b>{{ lang|translation:'whatpys4' }}</b>: {{ lang|translation:'whatpys5' }}.
         {{ lang|translation:'whatpys6' }}.</li>
         <li><b>{{ lang|translation:'whatpys7' }}</b>: {{ lang|translation:'whatpys8' }}
-        <a href="#lanparties">{{ lang|translation:'lanparties' }}</a>.<br/>
+        <a href="#lanparties">{{ lang|translation:'lanparties' }}</a>.
         {{ lang|translation:'whatpys9' }}.</li>
         <li><b>{{ lang|translation:'whatpys10' }}</b>: {{ lang|translation:'whatpys11' }}.</li>
     </ul>
@@ -60,15 +60,15 @@
     </ul>
     
     {% if user_os = 'linux' %}
-        <center><a href="{{ linux_client_url }}" target="_Blank"><img class="preview" src="/img/pystream-linux-client.png" alt="Linux client"/></a></center>
+        <center><a href="{{ linux_client_url }}" target="_Blank"><img src="/img/pystream-linux-client.png" alt="Linux client"/></a></center>
     {% endif %}
     
     {% if user_os = 'windows' %}
-        <center><a href="{{ windows_client_url }}" target="_Blank"><img class="preview" src="/img/pystream-windows-client.png" alt="Windows client"/></a></center>
+        <center><a href="{{ windows_client_url }}" target="_Blank"><img src="/img/pystream-windows-client.png" alt="Windows client"/></a></center>
     {% endif %}
     
     {% if user_os = 'mac' %}
-        <center><a href="{{ mac_client_url }}" target="_Blank"><img class="preview" src="/img/pystream-mac-client.png" alt="Windows client"/></a></center>
+        <center><a href="{{ mac_client_url }}" target="_Blank"><img src="/img/pystream-mac-client.png" alt="Windows client"/></a></center>
     {% endif %}
     
     <table align="center">

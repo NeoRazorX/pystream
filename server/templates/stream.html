@@ -21,6 +21,10 @@
 </tr>
 </table>
 
+{% if not stream.public %}
+    <div class="message">{{ stream.date|stream_time_left:stream.strikes }}</div>
+{% endif  %}
+
 {% if publisher or admin %}
 <div class="stream_description">
     <form name="stream" action="/mod_stream" method="post">
@@ -72,17 +76,16 @@
     {% if stream.public %}
         {% if stream.strikes > 0 %}
         <div class="warning" id='stwarning'>
-            This stream is not working propertly.<br/>
-            It has <b>{{ stream.strikes }}</b> strikes.<br/>
-            Clic <a href="#" onclick="show_stream('{{ stream.key.id }}')">here</a> to show.
+            {{ lang|translation:'stnotwork' }}.<br/>
+            {{ lang|translation:'ithas' }} <b>{{ stream.strikes }}</b> strikes.<br/>
+            Clic <a href="#" onclick="show_stream('{{ stream.key.id }}')">{{ lang|translation:'here' }}</a>
+            {{ lang|translation:'toshow' }}.
             {% if publisher %}
                 <br/><br/><br/>
-                You are using port: <b>{{ stream.port }}</b>.
-                Pystream client can use UPnP to open your port on your router, but if it fails,
-                or if UPnP support is not avaliable, you will need to manually open your port
-                on you router.
+                {{ lang|translation:'usingport' }}: <b>{{ stream.port }}</b>.
+                {{ lang|translation:'stnotwork1' }}.
                 <br/><br/>
-                You can check if you port is open <a href="http://canyouseeme.org">here</a>.
+                <a href="/report?link={{ stream.get_link }}">{{ lang|translation:'report' }}</a>
             {% endif %}
         </div>
         <iframe id="stframe" src="" width="100%" height="700" frameborder="0">
@@ -94,10 +97,28 @@
         </iframe>
         {% endif %}
     {% else %}
-        <div class="message">{{ stream.date|stream_time_left:stream.strikes }}</div>
-        <iframe id="stframe" src="/api/redir/{{ stream.key.id }}" width="100%" height="700" frameborder="0">
-            You need a new browser -&gt; <a href="http://www.google.com/chrome">Google Chrome</a>
-        </iframe>
+        {% if stream.strikes > 0 %}
+            <div class="warning" id='stwarning'>
+                {{ lang|translation:'stnotwork' }}.<br/>
+                {{ lang|translation:'ithas' }} <b>{{ stream.strikes }}</b> strikes.<br/>
+                Clic <a href="#" onclick="show_stream('{{ stream.key.id }}')">{{ lang|translation:'here' }}</a>
+                {{ lang|translation:'toshow' }}.
+                {% if publisher %}
+                    <br/><br/><br/>
+                    {{ lang|translation:'usingport' }}: <b>{{ stream.port }}</b>.<br/>
+                    {{ lang|translation:'checkpycli' }}.<br/>
+                    <br/>
+                    <a href="/report?link={{ stream.get_link }}">{{ lang|translation:'report' }}</a>
+                {% endif %}
+            </div>
+            <iframe id="stframe" src="" width="100%" height="700" frameborder="0">
+                You need a new browser -&gt; <a href="http://www.google.com/chrome">Google Chrome</a>
+            </iframe>
+        {% else %}
+            <iframe id="stframe" src="/api/redir/{{ stream.key.id }}" width="100%" height="700" frameborder="0">
+                You need a new browser -&gt; <a href="http://www.google.com/chrome">Google Chrome</a>
+            </iframe>
+        {% endif %}
     {% endif %}
     
     {% if admin %}

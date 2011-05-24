@@ -84,8 +84,8 @@ class Pystream_gtk(pystream.Mini_gui):
         self.cb_types = gtk.combo_box_new_text()
         self.cb_types.append_text('public stream')
         self.cb_types.append_text('private stream')
-        self.cb_types.append_text('offline stream')
-        self.cb_types.set_active(1)
+        self.cb_types.append_text('LAN only')
+        self.cb_types.set_active(2)
         self.b_start = gtk.Button('start')
         self.b_start.connect("clicked", self.start_server, None)
         
@@ -112,13 +112,13 @@ class Pystream_gtk(pystream.Mini_gui):
         self.hbox_up.hide()
     
     def main(self):
-        self.running_gui = True
         gtk.gdk.threads_enter()
+        self.running_gui = True
         gtk.main()
-        gtk.gdk.threads_leave()
         self.running_gui = False
         self.run_miniserver = False
         self.quit = True
+        gtk.gdk.threads_leave()
     
     def delete_event(self, widget, event, data=None):
         if self.have_indicator:
@@ -130,6 +130,7 @@ class Pystream_gtk(pystream.Mini_gui):
                 n.show()
         else:
             self.mi_status.set_label("Status: closing")
+            self.running_gui = False
             self.run_miniserver = False
             self.quit = True
             self.close()
@@ -137,6 +138,7 @@ class Pystream_gtk(pystream.Mini_gui):
     
     def file_exit(self, widget, data=None):
         self.mi_status.set_label("Status: closing")
+        self.running_gui = False
         self.run_miniserver = False
         self.quit = True
         self.close()
@@ -181,9 +183,14 @@ class Pystream_gtk(pystream.Mini_gui):
         fc_folder.destroy()
     
     def write_to_log(self, text):
-        buff = self.text_log.get_buffer()
-        buff.insert(buff.get_end_iter(), text)
-        self.text_log.scroll_mark_onscreen( buff.get_insert() )
+        gtk.gdk.threads_enter()
+        try:
+            buff = self.text_log.get_buffer()
+            buff.insert(buff.get_end_iter(), text)
+            self.text_log.scroll_mark_onscreen( buff.get_insert() )
+        except:
+            print text
+        gtk.gdk.threads_leave()
     
     def set_port(self, port):
         self.sb_port.set_value( port )

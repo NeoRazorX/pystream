@@ -16,14 +16,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-DEBUG_FLAG = True
+DEBUG_FLAG = False
 RECAPTCHA_PUBLIC_KEY = ''
 RECAPTCHA_PRIVATE_KEY = ''
 PYSTREAM_VERSION = '2'
 RANDOM_CACHE_TIME = 1500
-WINDOWS_CLIENT_URL = 'https://github.com/downloads/NeoRazorX/pystream/pystream.exe'
+WINDOWS_CLIENT_URL = 'https://github.com/downloads/NeoRazorX/pystream/pystream-windows-client.exe'
 LINUX_CLIENT_URL = 'https://github.com/downloads/NeoRazorX/pystream/pystream-linux-client.tar.gz'
-MAC_CLIENT_URL = 'https://github.com/downloads/NeoRazorX/pystream/pystream-mac-client.tar.gz'
+MAC_CLIENT_URL = 'https://github.com/downloads/NeoRazorX/pystream/pystream-mac-client.zip'
 
 import logging
 from google.appengine.ext import webapp, db, search

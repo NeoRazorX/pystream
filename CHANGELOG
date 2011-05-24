@@ -1,3 +1,10 @@
+24-05-2011:
+- Server:
+-- New main page.
+-- More translations.
+- Client:
+-- LAN only and no UPnP by default.
+
 23-05-2011:
 - Client:
 -- Working on Stream_cloner class.

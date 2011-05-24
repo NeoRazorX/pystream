@@ -2,46 +2,17 @@
 <div class="arrow" id="main"></div>
 <div class="body">
 
-<div class="message">{{ lang|translation:'needtesters' }} <a href="/new#client">{{ lang|translation:'pystreamcli' }}</a>.</div>
-<br/>
+{% if local_streams %}
 <div class="search">
     <form name="search" action="/search" method="get">
-        <input class="search_box" type="text" name="query" value=""/>
+        <input class="search_box" type="text" name="query" value="{{ query }}"/>
         <input type="submit" value="{{ lang|translation:'search' }}"/>
     </form>
 </div>
-
-{% if previouss %}
-<center>
-{% for p in previouss %}
-    <a href="/search?query={{ p.0 }}" title="{{ p.1 }}">{{ p.0 }}</a> &nbsp;
-{% endfor %}
-</center><br/>
-{% endif %}
-
-<table class="main">
-<tr>
-    <td align="center" valign="bottom"><a href="/new"><img src="/img/notebook.png" alt="{{ lang|translation:7 }}"/></a></td>
-    <td align="center" valign="bottom"><a href="/random"><img src="/img/dados.png" alt="{{ lang|translation:8 }}"/></a></td>
-</tr>
-<tr>
-    <td align="center" valign="top">
-        <a href="/new">{{ lang|translation:'newstream' }}</a>:<br/>
-        {{ lang|translation:'newstream1' }}.<br/>
-        {{ lang|translation:'newstream2' }} <a href="/new#lanparties">{{ lang|translation:'lanparties' }}</a>!
-    </td>
-    <td align="center" valign="top">
-        <a href="/random">{{ lang|translation:'randstream' }}</a>:<br/>
-        {{ lang|translation:'randstream1' }}
-    </td>
-</tr>
-</table>
-
-{% if local_streams %}
 <br/>
 <table class="custom">
 <tr class="top">
-    <td>Streams nears you</td>
+    <td>{{ lang|translation:'stnears' }}</td>
     <td>Size</td>
     <td>Status</td>
     <td align="right">uptime</td>
@@ -59,7 +30,52 @@
     </tr>
 {% endfor %}
 </table>
+<br/>
+<hr/>
+<br/>
 {% endif %}
+
+<table class="main">
+<tr>
+{% if user_os = 'linux' %}
+    <td rowspan="2">
+        <img src="/img/pystream-linux-client.png" alt="Linux client"/>
+    </td>
+    <td>
+        <div class="download">
+            <a href="{{ linux_client_url }}" target="_Blank">{{ lang|translation:'downlinux' }}</a>
+        </div>
+        <a class="download2" href="/new#client">{{ lang|translation:'allvers' }}</a>
+    </td>
+{% else %}
+    {% if user_os = 'windows' %}
+        <td rowspan="2">
+            <img src="/img/pystream-windows-client.png" alt="Windows client"/>
+        </td>
+        <td>
+            <div class="download">
+                <a href="{{ windows_client_url }}" target="_Blank">{{ lang|translation:'downwindow' }}</a>
+            </div>
+            <a class="download2" href="/new#client">{{ lang|translation:'allvers' }}</a>
+        </td>
+    {% else %}
+        <td>
+            <img src="/img/notebook.png" alt="unknown platform"/>
+            <div class="download"><a href="/new#client">{{ lang|translation:'download' }}</a></div>
+        </td>
+    {% endif %}
+{% endif %}
+</tr>
+<tr>
+    <td>
+        <br/>{{ lang|translation:'main1' }}.<br/>{{ lang|translation:'main2' }}
+        <a href="/new#lanparties">{{ lang|translation:'lanparties' }}</a>!
+        <br/><br/>
+        {{ lang|translation:'iwantknow' }} <a href="/new">{{ lang|translation:'more' }}</a>...<br/>
+        {{ lang|translation:'ihave' }} <a href="/report?link=/">{{ lang|translation:'suggest' }}</a>.<br/>
+    </td>
+</tr>
+</table>
 
 </div>
 {% include "footer.html" %}

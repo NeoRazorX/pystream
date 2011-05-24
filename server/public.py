@@ -35,8 +35,10 @@ class Main_page(Basic_page, Basic_tools):
         template_values = {
             'title': 'pystream',
             'description': 'Sharing folders made easy.',
-            'onload': 'document.search.query.focus()',
-            'previouss': memcache.get('previous_searches'),
+            'user_os': self.get_os( self.request.environ['HTTP_USER_AGENT'] ),
+            'windows_client_url': WINDOWS_CLIENT_URL,
+            'linux_client_url': LINUX_CLIENT_URL,
+            'mac_client_url': MAC_CLIENT_URL,
             'local_streams': self.near_streams(),
             'admin': users.is_current_user_admin(),
             'logout': users.create_logout_url('/'),

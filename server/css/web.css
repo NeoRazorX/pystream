@@ -30,11 +30,6 @@ img {
     border-width: 0;
 }
 
-img.preview {
-    margin: 20px;
-    border: 1px outset #191919;
-}
-
 textarea {
     width: 99%;
     border: 1px solid #191919;
@@ -146,8 +141,34 @@ div.search input.search_box {
 
 table.main {
     width: 100%;
-    margin-top: 25px;
+    margin-top: 10px;
     font-size: 18px;
+}
+
+table.main td {
+    vertical-align: top;
+    text-align: center;
+}
+
+table.main td div.download {
+    background-color: #1D81B9;
+    border: 2px outset #1D81B9;
+    width: 290px;
+    padding: 5px;
+    margin-top: 25px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+table.main td div.download a {
+    font-size: 16px;
+    color: white;
+    font-weight: bold;
+}
+
+table.main td a.download2 {
+    font-size: 12px;
+    font-weight: bold;
 }
 
 div.message {
@@ -295,3 +316,4 @@ div.footer {
 div.footer a {
     color: black;
 }
+
