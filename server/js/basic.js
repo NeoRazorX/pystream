@@ -41,6 +41,25 @@ function remove_report(id)
 
 function show_stream(id)
 {
-    document.getElementById('stframe').src = '/api/redir/' + id;
     document.getElementById('stwarning').style.display = 'none';
+    document.getElementById('stframe').height = 400;
+    document.getElementById('stframe').src = '/api/redir/' + id;
 }
+
+function send_comment(defm, respm)
+{
+    if( document.comment.text.value == trim(defm) )
+    {
+        alert(respm);
+    }
+    else
+    {
+        document.comment.submit();
+    }
+}
+
+function trim(s)
+{
+    return s.replace(/^\s*|\s*$/g,'');
+}
+

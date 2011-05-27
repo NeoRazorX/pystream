@@ -257,7 +257,7 @@ class Modify_stream(Stream_page):
             self.redirect('/error/404')
 
 
-class Random_stream(webapp.RequestHandler):
+class Random_stream(webapp.RequestHandler, Basic_tools):
     def get(self):
         self.streams = self.get_last_streams()
         url = '/new'
@@ -273,6 +273,12 @@ class Random_stream(webapp.RequestHandler):
             ss = db.GqlQuery("SELECT * FROM Stream WHERE online = :1", True).fetch(100)
             if not memcache.add('random_streams', ss):
                 logging.warning('Cant save random streams to memcache!')
+        ss2 = self.get_streams_from_ip( self.request.remote_addr )
+        if ss and ss2:
+            for s in ss2:
+                ss.append(s)
+        elif ss2:
+            ss = ss2
         return ss
 
 
@@ -316,7 +322,7 @@ class Comment_stream(webapp.RequestHandler, Basic_tools):
                         c.autor = 'admin'
                     c.put()
                     s.rm_cache()
-                    self.redirect( s.get_link() )
+                    self.redirect(s.get_link() + '#' + str(c.key().id()))
                 except:
                     logging.error('Cant save comment!')
                     self.redirect('/error/500')
@@ -341,6 +347,7 @@ class Report_page(Basic_page, Basic_tools):
         template_values = {
             'title': 'pystream: reporting',
             'description': "Pystream's reporting page.",
+            'onload': 'document.report.text.focus()',
             'link': self.request.get('link'),
             'captcha': chtml,
             'admin': users.is_current_user_admin(),
@@ -362,7 +369,8 @@ class Report_page(Basic_page, Basic_tools):
             if cResponse.is_valid:
                 try:
                     r = Report()
-                    r.link = self.request.get('link')
+                    if self.request.get('link') != '':
+                        r.link = self.request.get('link')
                     r.text = cgi.escape( self.request.get('text') )
                     r.ip = self.dottedQuadToNum( self.request.remote_addr )
                     r.os = self.request.environ['HTTP_USER_AGENT']

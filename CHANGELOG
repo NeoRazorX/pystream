@@ -1,3 +1,18 @@
+27-05-2011:
+- Client:
+-- Merged Min_gui and Mini_server class.
+-- Code clean.
+- Server:
+-- New css style for client.
+
+25-05-2011:
+- Server:
+-- Fixed bug in Report_page.
+-- Improved Randome_stream page, now includes nears streams.
+-- Stream page now in vertical order.
+- Client:
+-- Fixed bug in MyHandler request class. New blank page for each directory instead of file.
+
 24-05-2011:
 - Server:
 -- New main page.

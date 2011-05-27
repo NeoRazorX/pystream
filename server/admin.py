@@ -33,7 +33,7 @@ class Main_page(Basic_page, Basic_tools):
     def get(self):
         m = Machines()
         template_values = {
-            'title': 'pyStream: admin',
+            'title': 'pystream: admin',
             'stats': self.get_stats(),
             'previouss': memcache.get('previous_searches'),
             'machines': m.get(),
@@ -57,7 +57,7 @@ class Streams_page(Basic_page, Basic_tools):
         removed = self.remove_stream( self.request.get('rm') )
         ss,pages_data = self.get_streams(self.request.get('p'), 30)
         template_values = {
-            'title': 'pyStream: admin/streams',
+            'title': 'pystream: admin/streams',
             'streams': ss,
             'removed': removed,
             'pages_data': pages_data,
@@ -101,7 +101,7 @@ class Reports_page(Basic_page, Basic_tools):
         removed = self.remove_report( self.request.get('rm') )
         rr,pages_data = self.get_reports(self.request.get('p'), 20)
         template_values = {
-            'title': 'pyStream: admin/reports',
+            'title': 'pystream: admin/reports',
             'reports': rr,
             'removed': removed,
             'pages_data': pages_data,
@@ -143,7 +143,7 @@ class Stats_page(Basic_page, Basic_tools):
     def get(self):
         sts,pages_data = self.get_stats(self.request.get('p'), 30)
         template_values = {
-            'title': 'pyStream: admin/stats',
+            'title': 'pystream: admin/stats',
             'stats': sts,
             'pages_data': pages_data,
             'logout': users.create_logout_url('/'),

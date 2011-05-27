@@ -6,10 +6,16 @@
     <div class="title">{{ lang|translation:'reportingi' }}:</div>
     <form name="report" action="/report" method="post">
         <input type="hidden" name="link" value="http://www.pystream.com{{ link }}"/>
-        <textarea name="text" rows="12" cols="60">{{ lang|translation:'reportingi1' }}.</textarea>
+        <textarea name="text" rows="12" cols="60" onfocus="this.select()">{{ lang|translation:'reportingi1' }}.</textarea>
         <br/>{{ captcha|safe }}
         <input type="submit" value="{{ lang|translation:'send' }}"/>
     </form>
+</div>
+
+<div class="section">
+    <div class="title">{{ lang|translation:'reportingi2' }}</div>
+    {{ lang|translation:'reportingi3' }}
+    <a href="mailto:admin@pystream.com">{{ lang|translation:'here' }}</a>.
 </div>
 
 </div>

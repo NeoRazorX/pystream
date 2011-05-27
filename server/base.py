@@ -16,13 +16,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-DEBUG_FLAG = False
+DEBUG_FLAG = True
 RECAPTCHA_PUBLIC_KEY = ''
 RECAPTCHA_PRIVATE_KEY = ''
 PYSTREAM_VERSION = '2'
-RANDOM_CACHE_TIME = 1500
 WINDOWS_CLIENT_URL = 'https://github.com/downloads/NeoRazorX/pystream/pystream-windows-client.exe'
-LINUX_CLIENT_URL = 'https://github.com/downloads/NeoRazorX/pystream/pystream-linux-client.tar.gz'
+LINUX_CLIENT_URL = 'https://github.com/downloads/NeoRazorX/pystream/pystream-linux-client.tar.bz2'
 MAC_CLIENT_URL = 'https://github.com/downloads/NeoRazorX/pystream/pystream-mac-client.zip'
 
 import logging
@@ -52,7 +51,7 @@ class Basic_tools:
         if ss is None:
             ss = db.GqlQuery("SELECT * FROM Stream WHERE ip = :1",
                              self.dottedQuadToNum( ip ) ).fetch(50)
-            memcache.add(ip, ss, RANDOM_CACHE_TIME)
+            memcache.add(ip, ss)
             logging.info('memcache add for ip: ' + ip)
         else:
             logging.info('memcache read for ip: ' + ip)
@@ -251,7 +250,7 @@ class Comment(db.Model):
 
 
 class Report(db.Model):
-    link = db.LinkProperty(default='/')
+    link = db.LinkProperty(default='http://www.pystream.com')
     text = db.TextProperty()
     date = db.DateTimeProperty(auto_now_add=True)
     ip = db.IntegerProperty(default=0)

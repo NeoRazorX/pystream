@@ -26,7 +26,6 @@ class Stream_checker(threading.Thread):
         self.results = {}
     
     def run(self):
-        self.gui.running_streamchek = True
         print 'Running stream checker...'
         sleeps = 0
         while not self.gui.quit:
@@ -42,7 +41,6 @@ class Stream_checker(threading.Thread):
             else:
                 self.check( self.streams.pop() )
             time.sleep(1)
-        self.gui.running_streamchek = False
     
     def request_more_streams(self):
         try:
@@ -73,9 +71,8 @@ class Stream_checker(threading.Thread):
                 self.results['result'+num] = 'online'
         except urllib2.HTTPError, e:
             self.results['result'+num] = 'offline'
-            print "Error: " + str( e.code )
         except urllib2.URLError, e:
-            self.results['result'+num] = 'error'
+            self.results['result'+num] = 'offline'
         except:
             self.results['result'+num] = 'error'
         print 'checking stream: ' + self.results['stream'+num] + ' -> ' + self.results['result'+num]
@@ -94,8 +91,7 @@ class Stream_checker(threading.Thread):
             else:
                 print "Error sending results! " + str(e.code)
         except urllib2.URLError, e:
-            print e.args
+            print str(e.args)
         except:
             pass
         self.results = {}
-

@@ -16,22 +16,21 @@
 # You should have received a copy of the GNU General Public License
 # along with Pystream client.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, platform, pystream, urllib2
+import sys, platform, pystream
 
 try:
     import webbrowser
     from Tkinter import *
     import tkFileDialog
+    import tkMessageBox
 except Exception,e:
 	print 'Lost dependency:', e
 	sys.exit(1)
 
 
-class Pystream_tk(pystream.Mini_gui):
+class Pystream_tk(pystream.Pystream):
     def __init__(self, argv):
-        pystream.Mini_gui.__init__(self, argv)
-        self.streamid = ''
-        self.key = ''
+        pystream.Pystream.__init__(self, argv)
         
         self.window = Tk()
         p_bits, p_os = platform.architecture()
@@ -45,14 +44,6 @@ class Pystream_tk(pystream.Mini_gui):
         
         frame_up = Frame(self.window)
         frame_up.pack(fill=BOTH)
-        
-        url_clone = StringVar()
-        self.entry_clone = Entry(frame_up, textvariable=url_clone)
-        self.entry_clone.insert(0, 'http://boards.4chan.org/b/')
-        self.b_clone = Button(frame_up, text="clone", command=self.clone)
-        #self.entry_clone.pack(side=LEFT, expand=True, fill=BOTH)
-        #self.b_clone.pack(side=RIGHT)
-        
         self.b_link = Button(frame_up, text=self.get_pystream_url(), command=self.open_link)
         self.b_link['state'] = 'disabled'
         self.label_views = Label(frame_up, text=str(self.get_views())+' views ')
@@ -80,40 +71,19 @@ class Pystream_tk(pystream.Mini_gui):
         self.b_start.pack(side=RIGHT)
     
     def main(self):
-        self.running_gui = True
+        pystream.Pystream.main(self)
         self.window.mainloop()
-        self.running_gui = False
-        self.run_miniserver = False
         self.quit = True
     
     def close_event(self):
-        self.run_miniserver = False
+        self.stop_webserver()
         self.quit = True
         self.log_mode()
-        if self.running_streamchek:
-            self.write_to_log("Stream checker running!\n")
-            self.window.after(1000, self.close_event)
-        elif self.running_streamcloner:
-            self.write_to_log("Stream cloner running!\n")
-            self.window.after(1000, self.close_event)
-        elif self.running_miniserver:
-            self.write_to_log("Mini-server running!\n")
-            try:
-                # forces mini server to stop
-                response = urllib2.urlopen('http://localhost:' + str(self.get_port()), timeout=1)
-            except:
-                self.write_to_log("Can't contact mini-server!\n")
-            self.window.after(1000, self.close_event)
-        else:
-            self.window.destroy()
-    
-    def clone(self):
-        self.url_to_clone = self.entry_clone.get()
-        self.start_clone = True
+        self.window.destroy()
     
     def write_to_log(self, text):
         self.textlog['state'] = 'normal'
-        self.textlog.insert(END, text)
+        self.textlog.insert(END, text+"\n")
         self.textlog.yview(END)
         self.textlog['state'] = 'disabled'
     
@@ -139,10 +109,10 @@ class Pystream_tk(pystream.Mini_gui):
     def is_upnp_active(self):
         return self.upnp_var.get() == 1
     
-    def is_public(self):
+    def is_stream_public(self):
         return self.stream_type.get() == 1
     
-    def is_offline(self):
+    def is_stream_offline(self):
         return self.stream_type.get() == 3
     
     def log_mode(self):
@@ -152,47 +122,52 @@ class Pystream_tk(pystream.Mini_gui):
         self.rb_private['state'] = 'disabled'
         self.rb_offline['state'] = 'disabled'
         self.b_start['state'] = 'disabled'
-        #self.entry_clone.pack_forget()
-        #self.b_clone.pack_forget()
     
     def show_views(self):
         self.label_views['text'] = str(self.get_views())+' views '
     
     def show_link(self, streamid='', key=''):
-        self.streamid = streamid
-        self.key = key
         if streamid == '' or key == '': #offline
             self.b_link['text'] = 'http://localhost:'+str(self.get_port())
             self.b_link['state'] = 'normal'
             self.open_link()
         else:
-            self.b_link['text'] = self.get_pystream_url() + '/s/' + self.streamid
+            self.b_link['text'] = self.get_pystream_url() + '/s/' + self.stream_id
             self.b_link['state'] = 'normal'
             self.open_link()
         self.b_link.pack(side=LEFT, expand=True, fill=BOTH)
         self.label_views.pack(side=RIGHT)
     
     def open_link(self):
-        if self.streamid == '' or self.key == '': #offline
+        if self.stream_id == '' or self.stream_key == '': #offline
             webbrowser.open('http://localhost:'+str(self.get_port()))
         else:
-            webbrowser.open(self.get_pystream_url() + '/s/' + self.streamid + '?key=' + self.key)
+            webbrowser.open(self.get_pystream_url() + '/s/' + self.stream_id)
     
     def retry_share(self):
         self.b_start['state'] = 'normal'
     
     def start_server(self):
-        self.folder = tkFileDialog.askdirectory(initialdir="/", title='Please select a folder to share')
-        if self.folder not in ['', '/']:
-            self.run_miniserver = True
+        folder = tkFileDialog.askdirectory(initialdir="/", title='Please select a folder to share')
+        if folder not in ['', '/']:
+            self.target_folder = folder
+            self.start_webserver()
+            self.window.after(1000, self.check_log)
+    
+    def check_log(self):
+        pystream.Pystream.check_log(self)
+        self.window.after(1000, self.check_log)
+    
+    def ask_user_upnp(self):
+        answer = False
+        if self.upnp_loaded and not self.upnp_up:
+            if tkMessageBox.askyesno("UPnP", "Do you want to open your port " + str(self.get_port()) + " with UPnP?"):
+                answer = True
+        return answer
 
 
 if __name__ == "__main__":
     gui = Pystream_tk( sys.argv )
-    server = pystream.Mini_server( gui )
     stream_checker = pystream.Stream_checker( gui )
-    #stream_cloner = pystream.Stream_cloner( gui )
-    server.start()
     stream_checker.start()
-    #stream_cloner.start()
     gui.main()

@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Pystream client.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, os, pystream, urllib2
+import sys, os, pystream
 
 try:
     import webbrowser
@@ -28,9 +28,9 @@ except Exception,e:
 
 gobject.threads_init()
 
-class Pystream_gtk(pystream.Mini_gui):
+class Pystream_gtk(pystream.Pystream):
     def __init__(self, argv):
-        pystream.Mini_gui.__init__(self, argv)
+        pystream.Pystream.__init__(self, argv)
         self.have_indicator = False
         self.have_notify = False
         
@@ -41,14 +41,15 @@ class Pystream_gtk(pystream.Mini_gui):
         self.window.connect("delete_event", self.delete_event)
         self.window.connect("destroy", gtk.main_quit)
         
+        # main menu (used in appindicator too)
         menubar = gtk.MenuBar()
         self.filemenu = gtk.Menu()
         mi_client = gtk.MenuItem("Pystream client")
         mi_client.set_sensitive(False)
         self.mi_status = gtk.MenuItem("Status: ready")
         self.mi_status.set_sensitive(False)
-        self.mi_clone = gtk.ImageMenuItem('Clone...')
-        self.mi_clone.connect("activate", self.clone)
+        self.mi_views = gtk.MenuItem("Views: 0")
+        self.mi_views.set_sensitive(False)
         mi_sep = gtk.SeparatorMenuItem()
         self.mi_show = gtk.CheckMenuItem("Show")
         self.mi_show.set_active(True)
@@ -57,13 +58,25 @@ class Pystream_gtk(pystream.Mini_gui):
         mi_exit.connect("activate", self.file_exit)
         self.filemenu.append(mi_client)
         self.filemenu.append(self.mi_status)
-        #self.filemenu.append(self.mi_clone)
+        self.filemenu.append(self.mi_views)
         self.filemenu.append(mi_sep)
         self.filemenu.append(self.mi_show)
         self.filemenu.append(mi_exit)
-        root_menu = gtk.MenuItem("Pystream")
+        root_menu = gtk.MenuItem("Service")
         root_menu.set_submenu(self.filemenu)
         menubar.append(root_menu)
+        
+        # help menu
+        helpmenu = gtk.Menu()
+        mi_report = gtk.MenuItem("Report issues or suggestions")
+        mi_report.connect("activate", self.help_report)
+        mi_about = gtk.MenuItem("Author")
+        mi_about.connect("activate", self.help_author)
+        helpmenu.append(mi_report)
+        helpmenu.append(mi_about)
+        help_menu = gtk.MenuItem("Help")
+        help_menu.set_submenu(helpmenu)
+        menubar.append(help_menu)
         
         self.lb_status = gtk.LinkButton(self.get_pystream_url(), label=self.get_pystream_url())
         self.label_views = gtk.Label(str(self.get_views()) + ' views ')
@@ -74,7 +87,7 @@ class Pystream_gtk(pystream.Mini_gui):
         self.scroll.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         self.scroll.add(self.text_log)
         
-        self.label_port = gtk.Label('Port:')
+        label_port = gtk.Label('Port:')
         self.sb_port = gtk.SpinButton()
         self.sb_port.set_range(1024, 65535)
         self.sb_port.set_increments(1, 50)
@@ -94,7 +107,7 @@ class Pystream_gtk(pystream.Mini_gui):
         self.hbox_up.pack_start(self.label_views, False, False)
         
         self.hbox_down = gtk.HBox(homogeneous=False, spacing=5)
-        self.hbox_down.pack_start(self.label_port, False, False)
+        self.hbox_down.pack_start(label_port, False, False)
         self.hbox_down.pack_start(self.sb_port, False, False)
         self.hbox_down.pack_start(self.cb_upnp, False, False)
         self.hbox_down.pack_start(self.cb_types, True, True)
@@ -113,10 +126,8 @@ class Pystream_gtk(pystream.Mini_gui):
     
     def main(self):
         gtk.gdk.threads_enter()
-        self.running_gui = True
+        pystream.Pystream.main(self)
         gtk.main()
-        self.running_gui = False
-        self.run_miniserver = False
         self.quit = True
         gtk.gdk.threads_leave()
     
@@ -130,43 +141,27 @@ class Pystream_gtk(pystream.Mini_gui):
                 n.show()
         else:
             self.mi_status.set_label("Status: closing")
-            self.running_gui = False
-            self.run_miniserver = False
+            self.stop_webserver()
             self.quit = True
             self.close()
         return True
     
     def file_exit(self, widget, data=None):
         self.mi_status.set_label("Status: closing")
-        self.running_gui = False
-        self.run_miniserver = False
+        self.stop_webserver()
         self.quit = True
         self.close()
     
     def close(self):
         self.log_mode()
-        if self.running_streamchek:
-            self.write_to_log("Stream checker running!\n")
-            gobject.timeout_add_seconds(1, self.close)
-        elif self.running_miniserver:
-            self.write_to_log("Mini-server running!\n")
-            try:
-                # forces mini server to stop
-                response = urllib2.urlopen('http://localhost:' + str(self.get_port()), timeout=1)
-            except:
-                self.write_to_log("Can't contact mini-server!\n")
-            gobject.timeout_add_seconds(1, self.close)
-        else:
-            gtk.main_quit()
+        gtk.main_quit()
     
     def show_window(self, widget, data=None):
-        if widget.active: 
-            self.window.show()
-        else:
-            self.window.hide()
-    
-    def clone(self, widget, data=None):
-        self.write_to_log('clone!')
+        if self.have_indicator:
+            if widget.active: 
+                self.window.show()
+            else:
+                self.window.hide()
     
     def start_server(self, widget, data=None):
         fc_folder = gtk.FileChooserDialog('Choose a folder to share',
@@ -178,19 +173,34 @@ class Pystream_gtk(pystream.Mini_gui):
         fc_folder.set_action(gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER)
         fc_folder.set_local_only(True)
         if fc_folder.run() == gtk.RESPONSE_OK:
-            self.folder = fc_folder.get_filename()
-            self.run_miniserver = True
-        fc_folder.destroy()
+            self.target_folder = fc_folder.get_filename()
+            fc_folder.destroy()
+            self.start_webserver()
+            gobject.timeout_add_seconds(1, self.check_log)
+        else:
+            fc_folder.destroy()
+    
+    def ask_user_upnp(self):
+        answer = False
+        if self.upnp_loaded and not self.upnp_up:
+            md = gtk.MessageDialog(self.window, 
+                gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_QUESTION, 
+                gtk.BUTTONS_YES_NO, "Do you want to open your port " + str(self.get_port()) + " with UPnP?")
+            if md.run() == gtk.RESPONSE_YES:
+                answer = True
+            md.destroy()
+        return answer
+    
+    def help_report(self, widget, data=None):
+        webbrowser.open(self.get_pystream_url() + '/report')
+    
+    def help_author(self, widget, data=None):
+        webbrowser.open(self.get_pystream_url() + '/author')
     
     def write_to_log(self, text):
-        gtk.gdk.threads_enter()
-        try:
-            buff = self.text_log.get_buffer()
-            buff.insert(buff.get_end_iter(), text)
-            self.text_log.scroll_mark_onscreen( buff.get_insert() )
-        except:
-            print text
-        gtk.gdk.threads_leave()
+        buff = self.text_log.get_buffer()
+        buff.insert(buff.get_end_iter(), text+"\n")
+        self.text_log.scroll_mark_onscreen( buff.get_insert() )
     
     def set_port(self, port):
         self.sb_port.set_value( port )
@@ -207,17 +217,24 @@ class Pystream_gtk(pystream.Mini_gui):
     def is_upnp_active(self):
         return self.cb_upnp.get_active()
     
-    def is_public(self):
+    def is_stream_public(self):
         return self.cb_types.get_active() == 0
     
-    def is_offline(self):
+    def is_stream_offline(self):
         return self.cb_types.get_active() == 2
     
     def log_mode(self):
-        self.hbox_down.hide()
+        self.sb_port.set_sensitive(False)
+        self.cb_upnp.set_sensitive(False)
+        self.cb_types.set_sensitive(False)
+        self.b_start.set_sensitive(False)
+    
+    def retry_share(self):
+        self.b_start.set_sensitive(True)
     
     def show_views(self):
         self.label_views.set_label(str(self.get_views()) + ' views ')
+        self.mi_views.set_label('Views: ' + str(self.get_views()))
     
     def show_link(self, streamid='', key=''):
         if streamid == '' or key == '': #offline
@@ -238,18 +255,12 @@ class Pystream_gtk(pystream.Mini_gui):
             n = pynotify.Notification('pystream-client', message='sharing!')
             n.set_icon_from_pixbuf( self.icon )
             n.show()
-    
-    def retry_share(self):
-        self.window.set_title('pystream')
-        self.hbox_down.show()
 
 
 if __name__ == "__main__":
     gui = Pystream_gtk( sys.argv )
-    server = pystream.Mini_server( gui )
-    stream_checker = pystream.Stream_checker( gui )
-    server.start()
-    stream_checker.start()
+    checker = pystream.Stream_checker( gui )
+    checker.start()
     
     try:
         import appindicator

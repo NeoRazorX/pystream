@@ -1,5 +1,5 @@
 application: streampy
-version: 3
+version: 4
 runtime: python
 api_version: 1
 

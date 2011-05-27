@@ -91,7 +91,7 @@ div.arrow#main {
 }
 
 div.arrow#streamid {
-    margin-left: 240px;
+    margin-left: 190px;
 }
 
 div.arrow#menu {
@@ -116,7 +116,7 @@ div.no_arrow {
 }
 
 div.body {
-    min-height: 700px;
+    min-height: 300px;
     background-color: white;
     margin-top: 0px;
     margin-bottom: 0px;
@@ -300,8 +300,8 @@ div.pages span {
 }
 
 div.pages span#current {
-    background-color: #DD4814;
-    border: 1px outset #DD4814;
+    background-color: #1D81B9;
+    border: 1px outset #1D81B9;
 }
 
 div.pages span#current a {

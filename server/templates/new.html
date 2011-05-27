@@ -51,25 +51,10 @@
     <div class="title">{{ lang|translation:'wherecli' }}</div>
     {{ lang|translation:'wherecli1' }}
     <ul>
-        <li>{{ lang|translation:'wherecli2' }}
-        <a href="http://en.wikipedia.org/wiki/Universal_Plug_and_Play" target="_Blank">UPnP</a>
-        {{ lang|translation:'wherecli3' }}, {{ lang|translation:'wherecli4' }}.</li>
-        <li>{{ lang|translation:'wherecli5' }}.</li>
-        <li>{{ lang|translation:'wherecli6' }}
+        <li>{{ lang|translation:'wherecli2' }}.</li>
+        <li>{{ lang|translation:'wherecli3' }}
         <a href="http://github.com/NeoRazorX/pystream" target="_Blank">{{ lang|translation:'here' }}</a>.</li>
     </ul>
-    
-    {% if user_os = 'linux' %}
-        <center><a href="{{ linux_client_url }}" target="_Blank"><img src="/img/pystream-linux-client.png" alt="Linux client"/></a></center>
-    {% endif %}
-    
-    {% if user_os = 'windows' %}
-        <center><a href="{{ windows_client_url }}" target="_Blank"><img src="/img/pystream-windows-client.png" alt="Windows client"/></a></center>
-    {% endif %}
-    
-    {% if user_os = 'mac' %}
-        <center><a href="{{ mac_client_url }}" target="_Blank"><img src="/img/pystream-mac-client.png" alt="Windows client"/></a></center>
-    {% endif %}
     
     <table align="center">
     <tr>
