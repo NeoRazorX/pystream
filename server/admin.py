@@ -31,25 +31,19 @@ from base import *
 
 class Main_page(Basic_page, Basic_tools):
     def get(self):
-        m = Machines()
+        st = Stat_cache()
         template_values = {
             'title': 'pystream: admin',
-            'stats': self.get_stats(),
-            'previouss': memcache.get('previous_searches'),
-            'machines': m.get(),
+            'summary': st.get_summary(),
+            'downloads': st.get_downloads(),
+            'previouss': st.get_searches(),
+            'machines': st.get_machines(),
             'logout': users.create_logout_url('/'),
             'admin': users.is_current_user_admin(),
             'lang': self.get_lang()
         }
         path = os.path.join(os.path.dirname(__file__), 'templates/admin.html')
         self.response.out.write( template.render(path, template_values) )
-    
-    def get_stats(self):
-        sts = db.GqlQuery("SELECT * FROM Stat_item ORDER BY date DESC").fetch(1)
-        if sts:
-            return sts[0]
-        else:
-            return None
 
 
 class Streams_page(Basic_page, Basic_tools):
@@ -93,6 +87,50 @@ class Streams_page(Basic_page, Basic_tools):
                 done = True
             except:
                 logging.error('Fail to remove stream!')
+        return done
+
+
+class Requests_page(Basic_page, Basic_tools):
+    def get(self):
+        removed = self.remove_request( self.request.get('rm') )
+        rs,pages_data = self.get_requests(self.request.get('p'), 30)
+        template_values = {
+            'title': 'pystream: admin/requests',
+            'requests': rs,
+            'removed': removed,
+            'pages_data': pages_data,
+            'logout': users.create_logout_url('/'),
+            'admin': users.is_current_user_admin(),
+            'lang': self.get_lang()
+        }
+        path = os.path.join(os.path.dirname(__file__), 'templates/admin_requests.html')
+        self.response.out.write( template.render(path, template_values) )
+    
+    def get_requests(self, p=0, l=10):
+        rs = None
+        pages = total = 0
+        query = db.GqlQuery("SELECT * FROM Request ORDER BY date DESC")
+        total = query.count()
+        pages = int( math.ceil( total / float(l) ) )
+        try:
+            current = int(p)
+            if current < 0:
+                current = 0
+        except:
+            current = 0
+        rs = query.fetch(l, l*current)
+        return rs,['/admin/requests?p=', total, pages, current]
+    
+    def remove_request(self, key):
+        done = False
+        if key:
+            try:
+                r = Request.get( key )
+                r.rm_all()
+                logging.info('Removing request: ' + r.get_link())
+                done = True
+            except:
+                logging.error('Fail to remove request!')
         return done
 
 
@@ -173,6 +211,7 @@ def main():
     application = webapp.WSGIApplication([('/admin/', Main_page),
                                           ('/admin/streams', Streams_page),
                                           ('/admin/reports', Reports_page),
+                                          ('/admin/requests', Requests_page),
                                           ('/admin/stats', Stats_page)],
                                          debug=DEBUG_FLAG)
     webapp.template.register_template_library('filters.django_filters')

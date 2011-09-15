@@ -1,0 +1,71 @@
+{% include "header.html" %}
+<script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
+<script type="text/javascript" src="http://apis.google.com/js/plusone.js"></script>
+
+<div class="arrow" id="streamid"></div>
+<div class="body">
+
+<form name="stream" action="/mod_stream/{{ stream.key.id }}" method="post">
+<table class="social_buttons">
+<tr>
+{% if stream.edit_pass != '' %}
+    <td>{{ lang|translation:'e_pass' }}: <input name="e_pass" type="password"/></td>
+{% else %}
+    <td>{{ lang|translation:'onlyadminstream' }}</td>
+{% endif %}
+    <td align="right"><a href="/report?link={{ stream.get_link }}">{{ lang|translation:'report' }}</a></td>
+</tr>
+</table>
+
+<div class="stream_description">
+    {{ lang|translation:'description'|capfirst }}:
+    <textarea name="description" rows="3">{{ stream.description }}</textarea>
+    {{ lang|translation:'links'|capfirst }}:
+    <textarea name="links" rows="6">{% for link in stream.get_pylinks %}{{ link.url }}
+{% endfor %}</textarea>
+    <select name="public" onchange="change_stream_visibility()" onfocus="change_stream_visibility()">
+    {% if stream.is_public %}
+        <option value="true">{{ lang|translation:'public' }}</option>
+        <option value="false">{{ lang|translation:'private' }}</option>
+    {% else %}
+        <option value="true">{{ lang|translation:'public' }}</option>
+        <option value="false" selected="selected">{{ lang|translation:'private' }}</option>
+    {% endif %}
+    </select>
+    <div id="a_pass" class="hidden">
+        {{ lang|translation:'a_pass'|capfirst }}: <input name="a_pass" type="password" value="{{ stream.access_pass }}"/>
+    </div>
+    <br/>{{ captcha|safe }}
+    <input type="submit" value="{{ lang|translation:'save' }}"/>
+</div>
+</form>
+
+<div class="section">
+    <div class="title">{{ lang|translation:'help'|capfirst }}:</div>
+    {% if lang == 'es' %}
+        <ul>
+            <li>Cuanto más detallada sea la descripción mejor. Si quieres adjuntar imágenes simplemente incluye la url de la imgágen. Si necesitas subir alguna, puedes usar <a href="#iframe" onclick="show_on_iframe('imgur')">imgur</a>.</li>
+            <li>Incluye todos los enlaces en el cuadro de texto señalado. Si necesitas subir archivos, puedes usar <a href="#iframe" onclick="show_on_iframe('megaupload')">megaupload</a>.</li>
+            <li>Público: este stream será accesible por cualquiera, y aparecerá tanto en las búsquedas como en la sección de aletario.</li>
+            <li>Privado: este stream sólo será accesible por aquellos que tengas el enlace, no mostrándose ni en búsquedas, ni en la sección aleatorio.</li>
+            <li>Contraseña de acceso: si seleccionas que el stream sea privado, podrás además establecer una contraseña (si lo deseas), de forma que para poder ver el stream serán necesarios tanto en enlace como la contraseña.</li>
+            <li>Contraseña para editar: puedes establecer una contraseña para usarse en caso de que quieras cambiar algo en el stream. Esto es opcinal.</li>
+            <li>¡No olvides resolver el captcha!</li>
+        </ul>
+    {% else %}
+        <ul>
+            <li>Write a full description. If you need to include some pictures, you can use <a href="#iframe" onclick="show_on_iframe('imgur')">imgur</a>, just write the URLs on your description.</li>
+            <li>Include all links you need. If you need to upload any file you can use <a href="#iframe" onclick="show_on_iframe('megaupload')">megaupload</a>.</li>
+            <li>Public: this stream will be publicly available on searches and random.</li>
+            <li>Private: this stream will only available to anyone who know the link, will be hidden to searches and random.</li>
+            <li>Access password: you can set a password for a private stream, so anyone who want to read will be prompted for this password.</li>
+            <li>Edition password: you can set a password to use in case you want to edit this stream.</li>
+            <li>Don't forget the captcha!</li>
+        </ul>
+    {% endif %}
+</div>
+
+<center><a name="#iframe"><iframe id="webservice" src="" width="95%" height="0" frameborder="0"></iframe></center>
+
+</div>
+{% include "footer.html" %}

@@ -9,12 +9,18 @@
 {% if code %}
     <div class="error">{{ lang|translation:code }}</div>
     <br/>
-{% else %}
-    <br/>
+{% endif %}
+
+{% if code == '403' %}
+    <center><img src="/img/fuuu_face.png"/></center>
+{% endif %}
+
+{% if code == '403c' %}
+    <center><img src="/img/fuuu_face.png"/></center>
 {% endif %}
 
 {% if code == '404' %}
-    <center><img src="/img/not_found.png"/></center>
+    <center><img src="/img/fuuu_face.png"/></center>
 {% endif %}
 
 <div class="search">
@@ -24,41 +30,39 @@
     </form>
 </div>
 
-{% if previouss %}
-<center>
-{% for p in previouss %}
-    <a href="/search?query={{ p.0 }}" title="{{ p.1 }}">{{ p.0 }}</a> &nbsp;
-{% endfor %}
-</center><br/>
-{% endif %}
-
 {% if query %}
-<table class="custom">
-<tr class="top">
-    <td>Streams</td>
-    <td>Size</td>
-    <td>Status</td>
-    <td align="right">uptime</td>
-</tr>
-{% for stream in streams %}
-    <tr>
-        <td>
-            <a href="{{ stream.get_link }}" title="Stream: {{ stream.key.id }}">
-            {{ stream.description|truncate:90 }}
-            </a>
-        </td>
-        <td>{{ stream.size|size }}</td>
-        <td>{{ stream.status_text }}</td>
-        <td align="right">{{ stream.date|timesince }}</td>
-    </tr>
-{% empty %}
-    <tr>
-        <td colspan="5">
-            {{ lang|translation:'nostreamsfound' }}
-        </td>
-    </tr>
-{% endfor %}
-</table>
+<div class="section">
+    <div class="title">{{ lang|translation:'streams'|capfirst }}:</div>
+    {% if pages|search_filter:"stream" != '' %}
+        {{ pages|search_filter:"stream" }}
+    {% else %}
+        <table class="custom"><tr><td>{{ lang|translation:'nostreams' }}</td></tr></table>
+    {% endif %}
+    <br/><br/>
+    <div class="title">{{ lang|translation:'requests'|capfirst }}:</div>
+    {% if pages|search_filter:"request" != '' %}
+        {{ pages|search_filter:"request" }}
+    {% else %}
+        <table class="custom"><tr><td>{{ lang|translation:'norequests' }}</td></tr></table>
+    {% endif %}
+    {% if pylinks %}
+        <br/><br/>
+        <div class="title">Pylinks:</div>
+        {% for pyl in pylinks %}
+            {{ pyl|show_pylink:"true" }}
+        {% endfor %}
+    {% endif %}
+    <br/><br/>
+    <div class="title">{{ lang|translation:'help'|capfirst }}:</div>
+    {{ lang|translation:'refersearch'|capfirst }}: {{ query|show_tag }}
+</div>
+{% else %}
+    {% if tags %}
+    <div class="section">
+        <div class="title">{{ lang|translation:'worldtags'|capfirst }}:</div>
+        {{ tags|show_tags }}
+    </div>
+    {% endif %}
 {% endif %}
 
 </div>

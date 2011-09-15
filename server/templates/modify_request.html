@@ -1,0 +1,54 @@
+{% include "header.html" %}
+<script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
+<script type="text/javascript" src="http://apis.google.com/js/plusone.js"></script>
+
+<div class="arrow" id="streamid"></div>
+<div class="body">
+
+<form name="mod_stream" action="/mod_request/{{ request.key.id }}" method="post">
+<table class="social_buttons">
+<tr>
+{% if request.edit_pass != '' %}
+    <td>{{ lang|translation:'e_pass' }}: <input name="e_pass" type="password"/></td>
+{% else %}
+    <td>{{ lang|translation:'onlyadminrequest' }}!</td>
+{% endif %}
+    <td align="right"><a href="/report?link={{ request.get_link }}">{{ lang|translation:'report' }}</a></td>
+</tr>
+</table>
+
+<div class="stream_description">
+    {{ lang|translation:'description'|capfirst }}:
+    <textarea name="description" rows="3">{{ request.description }}</textarea>
+    <br/>{{ captcha|safe }}
+    <input type="submit" value="{{ lang|translation:'save' }}"/>
+</div>
+</form>
+
+<div class="section">
+    <div class="title">{{ lang|translation:'help'|capfirst }}:</div>
+    {% if lang == 'es' %}
+        <ul>
+            <li>Cuanto más detallada sea la descripción mejor. Puedes incluir enlaces a fotos o vídeos de youtube.</li>
+            <li>Si necesitas subir alguna foto, puedes usar <a href="#iframe" onclick="show_on_iframe('imgur')">imgur</a>.</li>
+            <li>Si necesitas subir archivos, puedes usar <a href="#iframe" onclick="show_on_iframe('megaupload')">megaupload</a>.</li>
+            <li>Puedes incluir tu email en caso de que quieras que pystream te notifique cuando haya respuestas. Tu email <b>no será público</b>.</li>
+            <li>Contraseña para editar: puedes establecer una contraseña para usarse en caso de que quieras cambiar algo en la petición. Esto es opcinal.</li>
+            <li>¡No olvides resolver el captcha!</li>
+        </ul>
+    {% else %}
+        <ul>
+            <li>Write a full description. You can paste links to picters or youtube videos.</li>
+            <li>If you need to upload a picture you can use <a href="#iframe" onclick="show_on_iframe('imgur')">imgur</a>.</li>
+            <li>If you need to upload a file you can use <a href="#iframe" onclick="show_on_iframe('megaupload')">megaupload</a>.</li>
+            <li>You can add your email in order to notify you when somebody write a comment. <b>Your email will be hidden</b>.</li>
+            <li>Edition password: you can set a password to use in case you want to edit this request.</li>
+            <li>Don't forget the captcha!</li>
+        </ul>
+    {% endif %}
+</div>
+
+<center><a name="#iframe"><iframe id="webservice" src="" width="95%" height="0" frameborder="0"></iframe></center>
+
+</div>
+{% include "footer.html" %}

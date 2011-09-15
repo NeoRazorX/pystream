@@ -16,62 +16,41 @@
     </tr>
     </table>
     </td>
-    <td align="right"><a href="/report?link={{ stream.get_link }}">{{ lang|translation:'report' }}</a></td>
+    <td align="right"><a href="/report?link={{ request.get_link }}">{{ lang|translation:'report' }}</a></td>
 </tr>
 </table>
 
+
 <div class="stream_description">
-    {{ stream.description|safe|linebreaksbr|urlcode }}
+    {{ request.description|safe|linebreaksbr|urlcode }}
 </div>
 <div class="stream_info">
-    {{ stream.date|date:"d/m/Y H:i" }}
+    {{ request.date|date:"d/m/Y H:i" }}
     {% if admin %}
-        | {{ stream.ip }}
-        | {{ stream.os|show_platform }}
+        | {{ request.ip }}
+        | {{ request.os|show_os }}
+        | {{ request.email }} |
     {% endif %}
-    | {{ stream.status_text }} |
-    {% for tag in stream.tags %}
+    {% for tag in request.tags %}
         {{ tag|show_tag }}
     {% empty %}
         no tags
     {% endfor %}
-    | <a href="/mod_stream/{{ stream.key.id }}">{{ lang|translation:'edit' }}</a>
+    | <a href="/mod_request/{{ request.key.id }}">{{ lang|translation:'edit' }}</a>
     {% if admin %}
-        | <a href="#" onclick="remove_stream('{{ stream.key }}')">{{ lang|translation:'remove' }}</a>
+        | <a href="#" onclick="remove_request('{{ request.key }}')">{{ lang|translation:'remove' }}</a>
     {% endif %}
-</div>
-
-{% if stream.status = 100 %}
-    <div class="warning">Stream closed</div>
-{% else %}
-
-<div class="pylinks">
-    <div class="options">
-        <span>
-        <a id="btn_pyl_def_lens" class="selected" href="#" onclick="select_pylinks_lens()">pylinks</a><a id="btn_pyl_txt_lens" href="#" onclick="select_pylinks_lens('text')">text</a>
-        </span>
-    </div>
-    <div id="pyl_default_lens">
-    {% for link in stream.get_pylinks %}
-        {{ link|show_pylink }}
-    {% endfor %}
-    </div>
-    <div id="pyl_text_lens" class="hidden">
-    {% for link in stream.get_pylinks %}
-        {{ link.url }}<br/>
-    {% endfor %}
-    </div>
 </div>
 
 
 <div class="section">
 <div class="title">{{ lang|translation:'comments'|capfirst }}:</div>
 <table class="comments">
-{% for comment in stream.get_comments %}
+{% for comment in request.get_comments %}
 <tr class="comment">
     <td class="autor">
         <a name="{{ comment.key.id }}"></a>
-        <a name="{{ forloop.counter }}" href="{{ stream.get_link }}#{{ forloop.counter }}">@{{ forloop.counter }}</a>
+        <a name="{{ forloop.counter }}" href="{{ request.get_link }}#{{ forloop.counter }}">@{{ forloop.counter }}</a>
         <br/>
         {{ comment.date|timesince }}
         <br/>
@@ -91,7 +70,7 @@
     <td><b>{{ lang|translation:'anonymous' }}</b></td>
     <td>
         <form name="comment" action="/comment" method="post">
-        <input type="hidden" name="origin" value="{{ stream.get_link }}"/>
+        <input type="hidden" name="origin" value="{{ request.get_link }}"/>
         <textarea name="text" rows="6" cols="60" onfocus="clear_comment(this, '{{ lang|translation:'leavecom' }}')">{{ lang|translation:'leavecom' }}</textarea>
         <br/>{{ captcha|safe }}
         <input type="submit" value="{{ lang|translation:'send' }}"/>
@@ -100,7 +79,7 @@
 </tr>
 </table>
 </div>
-{% endif %}
+
 
 </div>
 {% include "footer.html" %}

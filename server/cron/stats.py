@@ -16,35 +16,36 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
+import logging, datetime
 from google.appengine.ext import db
 from base import *
 
 class Stats():
     def __init__(self):
-        si = Stat_item()
-        si.streams,si.publics,si.online,si.sharing = self.get_streams()
-        si.comments = db.GqlQuery("SELECT * FROM Comment").count()
-        si.reports = db.GqlQuery("SELECT * FROM Report").count()
+        aux = db.GqlQuery("SELECT * FROM Stat_item WHERE date >= :1", datetime.date.today()).fetch(1)
+        if aux is None:
+            si = Stat_item()
+        elif len(aux) == 1:
+            si = aux[0]
+        else:
+            si = Stat_item()
+        st = Stat_cache()
+        summary = st.get_summary()
+        today = datetime.date.today()
+        si.comments = max(si.comments, db.GqlQuery("SELECT * FROM Comment WHERE date >= :1", today).count(), summary['comments'])
+        si.downloads = max(si.downloads, summary['downloads'])
+        si.ip6 = max(si.ip6, summary['ip6'])
+        si.upnp = max(si.upnp, summary['upnp'])
+        si.machines = max(si.machines, summary['machines'])
+        si.pylinks = max(si.pylinks, db.GqlQuery("SELECT * FROM Pylink WHERE date >= :1", today).count(), summary['pylinks'])
+        si.reports = max(si.reports, db.GqlQuery("SELECT * FROM Report").count())
+        si.requests = max(si.requests, db.GqlQuery("SELECT * FROM Request WHERE date >= :1", today).count(), summary['requests'])
+        si.searches = max(si.searches, summary['searches'])
+        si.streams = max(si.streams, db.GqlQuery("SELECT * FROM Stream WHERE date >= :1", today).count(), summary['streams'])
         try:
             si.put()
         except:
             logging.error("Can't save stat item!")
-    
-    def get_streams(self):
-        query = db.GqlQuery("SELECT * FROM Stream")
-        ss = 0
-        ps = 0
-        so = 0
-        sh = 0
-        for s in query:
-            ss += 1
-            sh += s.size
-            if s.public:
-                ps += 1
-            if s.online:
-                so += 1
-        return ss,ps,so,sh
     
 if __name__ == "__main__":
     s = Stats()

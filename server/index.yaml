@@ -12,5 +12,5 @@ indexes:
 
 - kind: Comment
   properties:
-  - name: stream_id
+  - name: origin
   - name: date

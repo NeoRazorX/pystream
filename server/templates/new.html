@@ -1,127 +1,37 @@
 {% include "header.html" %}
-
-<script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
-<script type="text/javascript" src="http://www.google.com/buzz/api/button.js"></script>
-
 <div class="arrow" id="menu"></div>
 <div class="body">
 
 <table class="social_buttons">
 <tr>
-    <td>
-    <table>
-    <tr>
-        <td><a title="Share on Google Buzz" class="google-buzz-button" href="http://www.google.com/buzz/post" data-button-style="small-count" data-locale="es"></a></td>
-        <td><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal">Tweet</a></td>
-        <td><iframe src="http://www.facebook.com/plugins/like.php?href&amp;send=true&amp;layout=button_count&amp;width=150&amp;show_faces=false&amp;action=like&amp;colorscheme=light&amp;font&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:150px; height:21px;" allowTransparency="true"></iframe></td>
-    </tr>
-    </table>
-    </td>
+    <td></td>
     <td align="right"><a href="/report?link=/new">{{ lang|translation:'report' }}</a></td>
 </tr>
 </table>
 
-<div class="section">
-    <a name="streams"></a>
-    <div class="title">{{ lang|translation:'whatpys' }}</div>
-    {{ lang|translation:'whatpys1' }}.
-    {{ lang|translation:'whatpys2' }} <a href="#client">{{ lang|translation:'pystreamcli' }}</a>.<br/>
-    {{ lang|translation:'whatpys3' }}:
-    <ul>
-        <li><b>{{ lang|translation:'whatpys4' }}</b>: {{ lang|translation:'whatpys5' }}.
-        {{ lang|translation:'whatpys6' }}.</li>
-        <li><b>{{ lang|translation:'whatpys7' }}</b>: {{ lang|translation:'whatpys8' }}
-        <a href="#lanparties">{{ lang|translation:'lanparties' }}</a>.
-        {{ lang|translation:'whatpys9' }}.</li>
-        <li><b>{{ lang|translation:'whatpys10' }}</b>: {{ lang|translation:'whatpys11' }}.</li>
-    </ul>
+<div class="stream_description">
+<table class="main">
+<tr>
+    <td><a href="/download"><img src="/img/share_files.png" alt="share files"/><br/>{{ lang|translation:'sharefiles'|capfirst }}</a></td>
+    <td><a href="/new_links"><img src="/img/new_links.png" alt="share links"/><br/>{{ lang|translation:'sharelinks'|capfirst }}</a></td>
+    <td><a href="/new_request"><img src="/img/new_request.png" alt="make a request"/><br/>{{ lang|translation:'makerequest'|capfirst }}</a></td>
+</tr>
+</table>
 </div>
 
 <div class="section">
-    <a name="lanparties"></a>
-    <div class="title">{{ lang|translation:'lanparties' }}:</div>
-    {{ lang|translation:'lanparties1' }} <a href="#client">{{ lang|translation:'pystreamcli' }}</a>,
-    {{ lang|translation:'lanparties2' }}.
-    {{ lang|translation:'lanparties3' }} <a href="/">{{ lang|translation:'mainpage' }}</a>,
-    {{ lang|translation:'lanparties4' }}.
-</div>
-
-<div class="section">
-    <a name="client"></a>
-    <div class="title">{{ lang|translation:'wherecli' }}</div>
-    {{ lang|translation:'wherecli1' }}
-    <ul>
-        <li>{{ lang|translation:'wherecli2' }}.</li>
-        <li>{{ lang|translation:'wherecli3' }}
-        <a href="http://github.com/NeoRazorX/pystream" target="_Blank">{{ lang|translation:'here' }}</a>.</li>
-    </ul>
-    
-    <table align="center">
-    <tr>
-        <td align="center"><a href="{{ windows_client_url }}" target="_Blank"><img src="/img/windows.png" alt="windows"/></a></td>
-        <td align="center"><a href="{{ linux_client_url }}"><img src="/img/linux.png" alt="linux"/></a></td>
-        <td align="center"><a href="{{ mac_client_url }}"><img src="/img/mac.png" alt="mac"/></a></td>
-    </tr>
-    <tr>
-        <td align="center" valign="top"><a href="{{ windows_client_url }}" target="_Blank">Windows</a></td>
-        <td align="center" valign="top"><a href="{{ linux_client_url }}">Linux</a></td>
-        <td align="center" valign="top"><a href="{{ mac_client_url }}">Mac</a></td>
-    </tr>
-    </table>
-</div>
-
-<div class="section">
-    <div class="title">{{ lang|translation:'cancli' }}</div>
-    <table width="100%">
-    <tr>
-        <td valign="top">
-            <table>
-                <tr>
-                    <td colspan="2">
-                    {{ lang|translation:'cancli1' }} {{ lang|translation:'cancli2' }}
-                    <a href="/new">http://www.pystream.com/new</a>
-                    {{ lang|translation:'cancli3' }}:
-                    </td>
-                </tr>
-                <tr><td align="right"><b>version</b>:</td><td>{{ lang|translation:'cancli4' }} ({{ pystream_version }}).</td></tr>
-                <tr><td align="right"><b>ip</b>:</td><td>{{ lang|translation:'cancli5' }}.</td></tr>
-                <tr><td align="right"><b>port</b>:</td><td>{{ lang|translation:'cancli6' }}.</td></tr>
-                <tr>
-                    <td colspan="2">
-                    <br/>
-                    {{ lang|translation:'cancli7' }} <a href="mailto:admin@pystream.com">{{ lang|translation:'tellme' }}</a>
-                    {{ lang|translation:'cancli8' }}.
-                    </td>
-                </tr>
-            </table>
-        </td>
-        <td valign="top">
-            <form name="stream" action="/new" method="post">
-            <input type="hidden" name="version" value="{{ pystream_version }}"/>
-            <input type="hidden" name="web" value="True"/>
-            <table>
-                <tr>
-                    <td colspan="2" align="center">
-                    {{ lang|translation:'cancli9' }} {{ lang|translation:'cancli10' }}
-                    </td>
-                </tr>
-                <tr>
-                    <td align="right"><b>IP:</b></td>
-                    <td><input type="text" name="ip" size='15' maxlength='15' value="0.0.0.0"/></td>
-                </tr>
-                <tr>
-                    <td align="right"><b>Port:</b></td>
-                    <td><input type="text" name="port" size='5' maxlength='5' value="80"/></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td><input type="submit" value="{{ lang|translation:'send' }}"/></td>
-                </tr>
-            </table>
-            </form>
-        </td>
-    </tr>
-    </table>
+    <div class="title">{{ lang|translation:'help'|capfirst }}:</div>
+    {% if lang == 'es' %}
+        <ul>
+            <li>Compartir enlaces: la forma más cómoda y fácil de compartir enlaces de interés, de megaupload, fileserve, mediafire, wupload...</li>
+            <li>Hacer una petición: ¿Llevas toda la tarde buscando un vídeo, foto, película o lo que sea? rellena una petición y nosotros te ayudaremos ;-)</li>
+        </ul>
+    {% else %}
+        <ul>
+            <li>Share links: the easy way to share links from megaupload, fileserve, mediafire, wupload...</li>
+            <li>Make a request: Can't find a photo, video or whatever? Make a request and we will help you ;-)</li>
+        </ul>
+    {% endif %}
 </div>
 
 </div>

@@ -2,11 +2,11 @@
 <div class="arrow" id="menu"></div>
 <div class="body">
 
-<center>
-    <s><a href="/admin/streams">streams</a></s>
-    | <a href="/admin/reports">reports</a>
-    | <a href="/admin/stats">stats</a>
-</center>
+<div class="options">
+    <span>
+    <a href="/admin/">main</a><a class="selected" href="/admin/streams">streams</a><a href="/admin/requests">requests</a><a href="/admin/reports">reports</a><a href="/admin/stats">stats</a>
+    </span>
+</div>
 
 {% if removed %}
     <div class="message">Stream removed successfull!</div>
@@ -15,28 +15,27 @@
 <table class="custom">
 <tr class="top">
     <td>Stream</td>
-    <td>Size</td>
-    <td>OS</td>
     <td>Description</td>
     <td>Status</td>
     <td>Comments</td>
+    <td>Pylinks</td>
+    <td>Size</td>
+    <td>OS</td>
     <td align="right">uptime</td>
 </tr>
 {% for stream in streams %}
     <tr>
-        <td>
-            <a href="{{ stream.get_link }}" title="LAN: {{ stream.lan_ip|full_ip }}">
-            {{ stream.ip|full_ip }}:{{ stream.port }}</a>
-        </td>
-        <td>{{ stream.size|size }}</td>
-        <td>{{ stream.os|show_platform:1 }}</td>
+        <td><a href="{{ stream.get_link }}" title="IP: {{ stream.ip }}">{{ stream.key.id }}</a></td>
         <td>{{ stream.description|truncate:80 }}</td>
         <td>{{ stream.status_text }}</td>
         <td>{{ stream.comments }}</td>
+        <td>{{ stream.pylinks|length }}</td>
+        <td>{{ stream.size|size }}</td>
+        <td>{{ stream.os|show_platform:1 }}</td>
         <td align="right">{{ stream.date|timesince }}</td>
     </tr>
 {% empty %}
-    <tr><td colspan="9">empty!</td></tr>
+    <tr><td colspan="8">empty!</td></tr>
 {% endfor %}
 </table>
 

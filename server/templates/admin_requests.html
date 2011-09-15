@@ -1,0 +1,41 @@
+{% include "header.html" %}
+<div class="arrow" id="menu"></div>
+<div class="body">
+
+<div class="options">
+    <span>
+    <a href="/admin/">main</a><a href="/admin/streams">streams</a><a class="selected" href="/admin/requests">requests</a><a href="/admin/reports">reports</a><a href="/admin/stats">stats</a>
+    </span>
+</div>
+
+{% if removed %}
+    <div class="message">Request removed successfull!</div>
+{% endif %}
+
+<table class="custom">
+<tr class="top">
+    <td>Request</td>
+    <td>Email</td>
+    <td>Description</td>
+    <td>Comments</td>
+    <td>OS</td>
+    <td align="right">uptime</td>
+</tr>
+{% for r in requests %}
+    <tr>
+        <td><a href="{{ r.get_link }}" title="IP: {{ r.ip }}">{{ r.key.id }}</a></td>
+        <td>{{ r.email }}</td>
+        <td>{{ r.description|truncate:80 }}</td>
+        <td>{{ r.comments }}</td>
+        <td>{{ r.os|show_platform:1 }}</td>
+        <td align="right">{{ r.date|timesince }}</td>
+    </tr>
+{% empty %}
+    <tr><td colspan="6">empty!</td></tr>
+{% endfor %}
+</table>
+
+{{ pages_data|pages }}
+
+</div>
+{% include "footer.html" %}

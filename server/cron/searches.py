@@ -16,14 +16,15 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-print 'Content-Type: text/plain'
-print ''
-print 'User-agent: *'
-print 'Allow: /'
-print 'Disallow: /ps/'
-print 'Disallow: /img/'
-print 'Disallow: /css/'
-print 'Disallow: /js/'
-print 'Disallow: /cron/'
-print 'Disallow: /admin/'
-print 'Disallow: /api/'
+import logging
+from base import *
+
+class Searches(Basic_tools):
+    def __init__(self):
+        all_tags = memcache.get('previous_searches')
+        for i in range(2):
+            self.search_job(all_tags)
+
+if __name__ == "__main__":
+    s = Searches()
+

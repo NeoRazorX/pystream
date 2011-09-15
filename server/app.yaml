@@ -22,12 +22,16 @@ handlers:
 - url: /robots.txt
   script: robots.py
 
-- url: /cron/stream_check
-  script: cron/streams.py
-  login: admin
-
 - url: /cron/stats
   script: cron/stats.py
+  login: admin
+
+- url: /cron/pylinks
+  script: cron/pylinks.py
+  login: admin
+
+- url: /cron/searches
+  script: cron/searches.py
   login: admin
 
 - url: /api/.*

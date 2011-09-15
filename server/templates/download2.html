@@ -1,0 +1,94 @@
+{% include "header.html" %}
+<div class="arrow" id="menu"></div>
+<div class="body">
+
+<table class="social_buttons">
+<tr>
+    <td colspan="2" align="right"><a href="/report?link=/download?os={{ download_os }}">{{ lang|translation:'report' }}</a></td>
+</tr>
+</table>
+
+{% if download_os = 'windows' %}
+<script type="text/javascript">
+    function download() { window.location.href = "{{ windows_client_url }}"; }
+</script>
+<div class="section">
+    <div class="title">Pystream for Windows</div>
+    <ul>
+        <li>clic <a href="{{ windows_client_url }}">here</a> if download is not started.</li>
+        <li>If pystream crash, check that you have all this DLL files:</li>
+        <ul>
+            <li>C:\Windows\system32\OLEAUT32.dll</li>
+            <li>C:\Windows\system32\USER32.dll</li>
+            <li>C:\Windows\system32\IMM32.dll</li>
+            <li>C:\Windows\system32\SHELL32.dll</li>
+            <li>C:\Windows\system32\KERNEL32.dll</li>
+            <li>C:\Windows\system32\COMDLG32.dll</li>
+            <li>C:\Windows\system32\COMCTL32.dll</li>
+            <li>C:\Windows\system32\ADVAPI32.dll</li>
+            <li>C:\Windows\system32\msvcrt.dll</li>
+            <li>C:\Windows\system32\WS2_32.dll</li>
+            <li>C:\Windows\system32\GDI32.dll</li>
+            <li>C:\Windows\system32\ole32.dll</li>
+            <li>C:\Windows\system32\ntdll.dll</li>
+            <li>C:\Windows\system32\RPCRT4.dll</li>
+        </ul>
+        <li>Send me a report if you have any issues.</li>
+    </ul>
+</div>
+{% endif %}
+
+{% if download_os = 'linux' %}
+<script type="text/javascript">
+    function download() { window.location.href = "{{ linux_client_url }}"; }
+</script>
+<div class="section">
+    <div class="title">Pystream for Linux</div>
+    <ul>
+        <li>Clic <a href="{{ linux_client_url }}">here</a> if download is not started.</li>
+        <li>Uncompress the downloaded file and clic on <b>pystream_gtk.py</b></li>
+    </ul>
+</div>
+{% endif %}
+
+{% if download_os != 'linux' %}
+{% if download_os != 'windows' %}
+<script type="text/javascript">
+    function download() { window.location.href = "{{ mac_client_url }}"; }
+</script>
+<div class="section">
+    <div class="title">Pystream for Mac</div>
+    <ul>
+        <li>Clic <a href="{{ mac_client_url }}">here</a> if download is not started.</li>
+        <li>Uncompress file and clic on <b>pystream_tk.py</b></li>
+        <li>Mac version is untested. Why? because i don't have a Mac ...
+         you can change this situation by <a href="mailto:admin@pystream.com">sending me</a>
+         a <a href="http://www.apple.es">Mac</a> ;-)</li>
+    </ul>
+</div>
+{% endif %}
+{% endif %}
+
+
+<div class="section">
+    <div class="title">Issues</div>
+    <ul>
+        <li>You need to <a href="http://www.google.com/search?q=open+router+port">open your port</a> in order to make your stream public.</li>
+        <li>Opera browser is unable to show password protected streams. Use another browser.</li>
+        <li><a href="http://en.wikipedia.org/wiki/Universal_Plug_and_Play">UPnP</a> is a technology that allows to automatically open your port on your router.</li>
+        <li>UPnP will be lock when pystream detects that your router has no UPnP support. Check <a href="http://miniupnp.free.fr/devicelist.php">compatibility list</a>.</li>
+        <li>Report me any issue you have.</li>
+    </ul>
+</div>
+
+<div class="section">
+    <div class="title">Source code</div>
+    <ul>
+        <li>Pystream is open source, and has a GPLv3 license (AGPLv3 for website).</li>
+        <li>Source code is <a href="http://github.com/NeoRazorX/pystream">here</a>.</li>
+        <li>All participation is wellcome ;-)</li>
+    </ul>
+</div>
+
+</div>
+{% include "footer.html" %}

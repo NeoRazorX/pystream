@@ -17,21 +17,100 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
 from google.appengine.ext import webapp
 from django.utils.safestring import mark_safe
+from django.utils.timesince import timesince
 from datetime import datetime, timedelta
+from base import *
 
 register = webapp.template.create_template_register()
 
 @register.filter
-def full_ip(n):
-    d = 256 * 256 * 256
-    q = []
-    while d > 0:
-        m,n = divmod(n,d)
-        q.append(str(m))
-        d = d/256
-    return mark_safe( '.'.join(q) )
+def urlcode(value):
+    aux_links = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', value)
+    for link in aux_links:
+        if link[-4:].lower() in ['.jpg', '.gif', '.png'] or link[-5:].lower() in ['.jpeg']:
+            value = value.replace(link, '<a target="_Blank" href="' + link + '"><img class="gallery" src="' + link + '"/></a>')
+        elif link[:31] == 'http://www.youtube.com/watch?v=':
+            value = value.replace(link, '<div><iframe width="420" height="345" src="http://www.youtube.com/embed/' + link.split('?v=')[1] + '" frameborder="0" allowfullscreen></iframe></div>')
+        elif link[:28] == 'http://www.xvideos.com/video':
+            videoid = re.findall(r'http://www.xvideos.com/video(.+?)/', link)
+            value = value.replace(link, '<div><iframe src="http://flashservice.xvideos.com/embedframe/'+videoid[0]+'" frameborder=0 width=510 height=400 scrolling=no></iframe></div>')
+        else:
+            value = value.replace(link, '<a target="_Blank" href="' + link + '">' + link + '</a>')
+    # pylinks
+    pylinks = re.findall(r'\[pylink\](.+?)\[/pylink\]', value)
+    for link in pylinks:
+        try:
+            pyl = Pylink.get(link)
+            if pyl:
+                value = value.replace('[pylink]'+link+'[/pylink]', show_pylink(pyl))
+            else:
+                value = value.replace('[pylink]'+link+'[/pylink]', 'error!')
+        except:
+            value = value.replace('[pylink]'+link+'[/pylink]', 'error!')
+    # tags
+    aux_tags = re.findall(r'#[0-9a-zA-Z+_]*', value)
+    for tag in aux_tags:
+        value = value.replace(tag, show_tag(tag[1:]))
+    # mentions
+    aux_mentions = re.findall(r'@[0-9]*', value)
+    for mention in aux_mentions:
+        value = value.replace(mention, '<a href="#'+mention[1:]+'">'+mention+'</a>')
+    return mark_safe(value)
+
+@register.filter
+def show_pylink(pyl, extra=False):
+    if pyl:
+        if extra:
+            texto = '<div class="pylink">'+pyl.get_status_html()+' &nbsp; <a href="'+pyl.url+'">'+pyl.url+'</a>'
+            for ori in pyl.origin:
+                texto += '&nbsp; <a class="stream" href="'+ori+'">'+ori+'</a>'
+            texto += '</div>'
+            return mark_safe(texto)
+        else:
+            return mark_safe('<div class="pylink">'+pyl.get_status_html()+' &nbsp; <a target="_Blank" href="'+pyl.url+'">'+pyl.url+'</a> &nbsp; <a class="file_name" href="/search?query='+pyl.get_file_name()+'">'+pyl.get_file_name()+'</a></div>')
+    else:
+        return ''
+
+@register.filter
+def show_tags(values):
+    if values is None:
+        return ''
+    else:
+        if len(values) > 0:
+            text = '<div class="worldintags">'
+            total = 0
+            for tag in values:
+                if total < 19:
+                    text += show_tag(tag[0]) + ' &nbsp;'
+            text += '</div>'
+            return mark_safe(text)
+        else:
+            return ''
+
+@register.filter
+def show_tag(value):
+    if value:
+        return mark_safe('<a class="tag" href="/search?query=' + value.lower().replace('_', '+') + '">#' + value.lower().replace(' ', '_') + '</a>')
+    else:
+        return ''
+
+@register.filter
+def search_filter(values, ptype = 'streams'):
+    text = ''
+    items = []
+    if len(values) > 0:
+        for item in values:
+            if item[1] == ptype:
+                items.append( item )
+    if len(items) > 0:
+        text += '<table class="custom">'
+        for s in items:
+            text += '<tr><td><a href="' + s[0] + '">' + s[3] + '</a></td><td align="right">' + timesince(s[2]) + '</td></tr>'
+        text += '</table>'
+    return mark_safe(text)
 
 @register.filter
 def truncate(value, arg):
@@ -75,7 +154,6 @@ def show_platform(ua, show=False):
     else:
         return mark_safe(os)
 
-
 @register.filter
 def size(n):
     if n < 1024:
@@ -88,14 +166,6 @@ def size(n):
         return mark_safe( str(n/1000000000) + ' GiB')
     else:
         return mark_safe( str(n/1000000000000) + ' TiB')
-
-@register.filter
-def stream_time_left(date, strikes):
-    if strikes < 0:
-        rdate = date - datetime.today() - timedelta(hours=24)
-    else:
-        rdate = date - datetime.today() - timedelta(hours=12)
-    return mark_safe('This stream will be removed after '+str( rdate.seconds/3600 )+' hours.')
 
 @register.filter
 def pages(data):
@@ -130,171 +200,96 @@ def pages(data):
 def translation(lang, tag):
     # quick and dirty translation filter
     english = {
-        'new': 'new',
-        'random': 'random',
-        'search': 'search',
-        'admin': 'admin',
-        'logout': 'logout',
-        'contact': 'contact',
-        'send': 'send',
-        'report': 'report an issue',
-        'lanparties': 'LAN Parties',
-        'download': 'DOWNLOAD',
-        'downlinux': 'DOWNLOAD Linux version',
-        'downwindow': 'DOWNLOAD Windows version',
-        'allvers': 'All versions (Window, Linux or Mac)',
-        'main1': "Deploy a mini-web server in secconds. The easy way to share your computer's folders to other computers, phones or tablets. Share your folders on LAN or Internet",
-        'main2': 'Perfect for',
-        'iwantknow': 'I want to know',
-        'more': 'more',
-        'ihave': 'I have',
-        'suggest': 'suggestions',
-        'pystreamcli': 'pystream client',
-        'here': 'here',
-        'tellme': 'tell me',
-        'new': 'new',
-        'sharing': 'Sharing',
-        'descript': 'Description',
-        'public': 'public',
-        'private': 'private',
-        'passwo': 'password (optional)',
-        'passwp': 'password protected',
-        'comments': 'Comments',
-        'leavecom': 'Leave a comment!',
-        'whatpys': 'What is pystream?',
-        'whatpys1': 'Pystream is a web service for sharing folders between computers',
-        'whatpys2': 'You can easily create a stream by using the',
-        'whatpys3': 'There are three types of streams',
-        'whatpys4': 'Public streams',
-        'whatpys5': 'avaliables for everyone, on searches and random',
-        'whatpys6': 'The easiest way to share folders with everyone',
-        'whatpys7': 'Private streams',
-        'whatpys8': 'hidden from searches (except from you LAN) and random, perfect for local sharing or',
-        'whatpys9': 'You can also use a password to protect you private stream',
-        'whatpys10': 'LAN only',
-        'whatpys11': 'without internet connection, no searching and no random',
-        'lanparties1': 'Download the',
-        'lanparties2': 'create the streams and enjoy',
-        'lanparties3': 'All streams (public or private) from your LAN will be shown on the',
-        'mainpage': 'main page',
-        'lanparties4': 'and will be avaliable for searches (from you LAN)',
-        'wherecli': 'Where can I get the pystream client?',
-        'wherecli1': 'Down here ;-)',
-        'wherecli2': 'Mac version is untested, so please report me any issue',
-        'wherecli3': 'Source code is',
-        'cancli': 'Can I develop my own client?',
-        'cancli1': 'Off course!',
-        'cancli2': 'To create a stream you only need to send a POST request to',
-        'cancli3': 'with this data',
-        'cancli4': 'API version',
-        'cancli5': 'Your public IP',
-        'cancli6': 'Your public port',
-        'cancli7': 'If you develop a new client, please',
-        'cancli8': "and i'll put it here",
-        'cancli9': '... or you can use this form.',
-        'cancli10': 'Show your creativity!',
-        'reportingi': 'Reporting issues or suggestions',
-        'reportingi1': 'Explain your issue or suggestion here',
-        'reportingi2': 'If this form fails...',
-        'reportingi3': 'You can send me an email',
-        'stnears': 'Streams nears you',
-        'nostreamsfound': 'No streams found!',
-        'nocomments': 'No comments yet!',
-        'beoriginal': 'Try to be original!',
-        'stnotwork': 'This stream is not working propertly',
-        'ithas': 'It has',
-        'toshow': 'to show',
-        'usingport': 'You are using port',
-        'stnotwork1': 'Pystream client can use UPnP to open your port on your router, but if it fails, or if UPnP support is not avaliable, you will need to manually open your port on you router',
-        'checkpycli': 'Check if pystream client is running',
         '403': 'Permission dennied!',
         '403c': 'You fail captcha!',
         '404': 'Page not found!',
-        '500': 'Internal server error!'
+        '500': 'Internal server error!',
+        'admin': 'admin',
+        'anonymous': 'anonymous',
+        'a_pass': 'password for access',
+        'comments': 'comments',
+        'contact': 'contact',
+        'description': 'description',
+        'edit': 'edit',
+        'e_pass': 'password for edit',
+        'help': 'help',
+        'leavecom': 'Leave a comment!',
+        'links': 'links',
+        'logout': 'logout',
+        'makerequest': 'make a request',
+        'new': 'new',
+        'nostreams': 'no streams found!',
+        'norequests': 'no requests found! <a href="/new_request">make your own request</a>.',
+        'onlyadminrequest': 'only an admin can edit this request!',
+        'onlyadminstream': 'only an admin can edit this stream!',
+        'private': 'private',
+        'public': 'public',
+        'random': 'random',
+        'refersearch': 'refer to this search by using this tag in your comments',
+        'remove': 'remove',
+        'report': 'report an issue',
+        'reportingi': 'reporting issues or suggestions',
+        'reportingi1': "Explain your issue or suggestion here.\nYou can leave your email to contact.",
+        'reportingi2': 'If this form fails...',
+        'reportingi3': 'You can send me an email <a href="mailto:admin@pystream.com">here</a>.',
+        'save': 'save',
+        'search': 'search',
+        'send': 'send',
+        'sharefiles': 'share files',
+        'sharelinks': 'share links',
+        'stream': 'stream',
+        'streams': 'streams',
+        'request': 'request',
+        'requests': 'requests',
+        'worldtags': 'world in tags',
+        'yourmail': 'your email'
     }
     spanish = {
-        'new': 'nuevo',
-        'random': 'aletario',
-        'search': 'buscar',
-        'admin': 'admin',
-        'logout': 'salir',
-        'contact': 'contacto',
-        'send': 'enviar',
-        'report': 'reportar un problema',
-        'lanparties': 'LAN Parties',
-        'download': 'DESCARGAR',
-        'downlinux': 'DESCARGAR versión para Linux',
-        'downwindow': 'DESCARGAR versión para Windows',
-        'allvers': 'Todas las versiones (Windows, Linux o Mac)',
-        'main1': 'Monta un mini-servidor web en segundos. La forma más sencilla de compartir una carpeta de tu ordenador con cualquier otro ordenador, teléfono móvil o tablet. Comparte tus carpetas en LAN o Internet',
-        'main2': '¡Perfecto para',
-        'iwantknow': 'Deseo saber',
-        'more': 'más',
-        'ihave': 'Tengo',
-        'suggest': 'sugerencias',
-        'pystreamcli': 'cliente pystream',
-        'here': 'aquí',
-        'tellme': 'dímelo',
-        'sharing': 'Compartiendo',
-        'descript': 'Descripción',
-        'public': 'público',
-        'private': 'privado',
-        'passwo': 'contraseña (opcional)',
-        'passwp': 'protegido por contraseña',
-        'comments': 'Comentarios',
-        'leavecom': '¡Deja un comentario!',
-        'whatpys': '¿Qué es pystream?',
-        'whatpys1': 'Pystream es un servicio web para compartir carpetas entre ordenadores',
-        'whatpys2': 'Puedes crear un stream muy fácilmente mediante el',
-        'whatpys3': 'Hay tres tipos de streams',
-        'whatpys4': 'Públicos',
-        'whatpys5': 'visibles para todo el mundo, en búsquedas y aleatorios',
-        'whatpys6': 'La forma más sencilla de compartir carpetas con todo el mundo',
-        'whatpys7': 'Privados',
-        'whatpys8': 'ocultos para búsquedas (excepto desde tu LAN) y aleatorios, perfecto para',
-        'whatpys9': 'Además puedes proteger tus streams privados mediante una contraseña',
-        'whatpys10': 'Sólo LAN',
-        'whatpys11': 'sólo visibles desde la red local, sin búsquedas ni aleatorios',
-        'lanparties1': 'Descarga el',
-        'lanparties2': 'crea los streams y disfruta',
-        'lanparties3': 'Todos los streams (públicos o privados) de tu LAN se mostrarán en la',
-        'mainpage': 'página principal',
-        'lanparties4': 'y estarán disponibles para búsquedas (desde tu LAN)',
-        'wherecli': '¿Dónde puedo descargar el cliente pystream?',
-        'wherecli1': 'Justo aquí debajo ;-)',
-        'wherecli2': 'La versión para Mac apenas ha sido provada, reportame cualquier error',
-        'wherecli3': 'El código fuente está',
-        'cancli': '¿Puedo desarollar mi propio cliente?',
-        'cancli1': '¡Por supuesto!',
-        'cancli2': 'Para crear un stream, solamente tienes que enviar una petición POST a',
-        'cancli3': 'con estos datos',
-        'cancli4': 'Versión de la API',
-        'cancli5': 'Tu IP pública',
-        'cancli6': 'Tu puerto público',
-        'cancli7': 'Si creas un nuevo cliente, por favor',
-        'cancli8': "y lo pondré aquí",
-        'cancli9': '... o bien puedes usar este formulario.',
-        'cancli10': '¡Muéstranos tu creatividad!',
-        'reportingi': 'Reportar un problema o sugerencia',
-        'reportingi1': 'Explica el problema o sugerencia aquí',
-        'reportingi2': 'Si este formulario falla...',
-        'reportingi3': 'Puedes enviarme un email',
-        'stnears': 'Streams cercanos',
-        'nostreamsfound': '¡No se encontraron streams!',
-        'nocomments': '¡Sin comentarios!',
-        'beoriginal': '¡Intenta ser un poco más original!',
-        'stnotwork': 'Este stream no está funcionando correctamente',
-        'ithas': 'Tiene',
-        'toshow': 'para mostrar',
-        'usingport': 'Estás usando el puerto',
-        'stnotwork1': 'El cliente pystream puede usar UPnP para abrir el puerto en tu router, pero si falla tendrás que abrir el puerto manualmente en tu router',
-        'checkpycli': 'Comprueba que el cliente pystream se está ejecutando',
         '403': '¡Permiso denegado!',
         '403c': '¡Has fallado el captcha!',
         '404': '¡Página no encontrada!',
-        '500': '¡Error interno del servidor!'
+        '500': '¡Error interno del servidor!',
+        'admin': 'admin',
+        'anonymous': 'anónimo',
+        'a_pass': 'contraseña de acceso',
+        'comments': 'comentarios',
+        'contact': 'contacto',
+        'description': 'descripción',
+        'edit': 'editar',
+        'e_pass': 'contraseña para editar',
+        'help': 'ayuda',
+        'leavecom': '¡Deja un comentario!',
+        'links': 'enlaces',
+        'logout': 'salir',
+        'makerequest': 'hacer una petición',
+        'new': 'nuevo',
+        'nostreams': '¡sin resultados!',
+        'norequests': '¡sin resultados! <a href="/new_request">haz tu propia petición</a>.',
+        'onlyadminrequest': '¡Solamente un administrador puede editar esta petición!',
+        'onlyadminstream': '¡Solamente un administrador puede editar este stream!',
+        'private': 'privado',
+        'public': 'público',
+        'random': 'aleatorio',
+        'refersearch': 'haz referencia a esta búsqueda usando esta etiqueta en tus comentarios',
+        'remove': 'eliminar',
+        'report': 'reportar un problema',
+        'reportingi': 'reportando problemas o sugerencias',
+        'reportingi1': "Explica tu problema aquí.\nPuedes dejar tu email de contacto.",
+        'reportingi2': 'si este formulario falla...',
+        'reportingi3': 'puedes enviarme un email <a href="mailto:admin@pystream.com">aquí</a>.',
+        'save': 'guardar',
+        'search': 'buscar',
+        'send': 'enviar',
+        'sharefiles': 'compartir archivos',
+        'sharelinks': 'compartir enlaces',
+        'stream': 'stream',
+        'streams': 'streams',
+        'request': 'petición',
+        'requests': 'peticiones',
+        'worldtags': 'el mundo en etiquetas',
+        'yourmail': 'tu email'
     }
     if lang == 'es':
-        return spanish.get(tag, '¡Error de traducción!')
+        return mark_safe( spanish.get(tag, '¡Error de traducción!') )
     else:
-        return english.get(tag, 'Translation error!')
+        return mark_safe( english.get(tag, 'Translation error!') )

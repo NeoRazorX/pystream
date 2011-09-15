@@ -3,19 +3,18 @@
 <div class="body">
 
 <div class="section">
-    <div class="title">{{ lang|translation:'reportingi' }}:</div>
+    <div class="title">{{ lang|translation:'reportingi'|capfirst }}:</div>
     <form name="report" action="/report" method="post">
-        <input type="hidden" name="link" value="http://www.pystream.com{{ link }}"/>
-        <textarea name="text" rows="12" cols="60" onfocus="this.select()">{{ lang|translation:'reportingi1' }}.</textarea>
+        <input type="hidden" name="link" value="{{ link }}"/>
+        <textarea name="text" rows="12" cols="60">{{ lang|translation:'reportingi1'|capfirst }}.</textarea>
         <br/>{{ captcha|safe }}
         <input type="submit" value="{{ lang|translation:'send' }}"/>
     </form>
 </div>
 
 <div class="section">
-    <div class="title">{{ lang|translation:'reportingi2' }}</div>
-    {{ lang|translation:'reportingi3' }}
-    <a href="mailto:admin@pystream.com">{{ lang|translation:'here' }}</a>.
+    <div class="title">{{ lang|translation:'reportingi2'|capfirst }}</div>
+    {{ lang|translation:'reportingi3'|capfirst }}
 </div>
 
 </div>

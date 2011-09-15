@@ -1,0 +1,46 @@
+{% include "header.html" %}
+<script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
+<script type="text/javascript" src="http://apis.google.com/js/plusone.js"></script>
+
+<div class="arrow" id="menu"></div>
+<div class="body">
+
+<table class="social_buttons">
+<tr>
+    <td>
+    <table>
+    <tr>
+        <td><g:plusone size="medium"></g:plusone></td>
+        <td><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal">Tweet</a></td>
+        <td><iframe src="http://www.facebook.com/plugins/like.php?href&amp;send=true&amp;layout=button_count&amp;width=150&amp;show_faces=false&amp;action=like&amp;colorscheme=light&amp;font&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:150px; height:21px;" allowTransparency="true"></iframe></td>
+    </tr>
+    </table>
+    </td>
+    <td align="right"><a href="/report?link=/download">{{ lang|translation:'report' }}</a></td>
+</tr>
+</table>
+
+{% if user_os = 'linux' %}
+    <center><img src="/img/pystream_linux.png" alt="Linux"/></center>
+{% endif %}
+
+<div class="section">
+    {% if lang == 'es' %}
+    <div class="title">Selecciona tu platafroma:</div>
+    Comparte archivos de forma directa e instantánea, tan solo debes ejecutar pystream, seleccionar una carpeta de tu pc y la visibilidad que quieras que tenga (público, privado o solamente en LAN).
+    {% else %}
+    <div class="title">Select your platform:</div>
+    Sharing folders made easy. Launch pystream, select a folder and share!
+    {% endif %}
+    
+    <table class="main">
+    <tr>
+        <td align="center"><a href="#"><img src="/img/windows.png" alt="windows"/><br/>Windows</a></td>
+        <td align="center"><a href="/download?os=linux"><img src="/img/linux.png" alt="linux"/><br/>Linux</a></td>
+        <td align="center"><a href="#"><img src="/img/mac.png" alt="mac"/><br/>Mac</a></td>
+    </tr>
+    </table>
+</div>
+
+</div>
+{% include "footer.html" %}

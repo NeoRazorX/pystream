@@ -2,34 +2,42 @@
 <div class="arrow" id="menu"></div>
 <div class="body">
 
-<center>
-    <a href="/admin/streams">streams</a>
-    | <a href="/admin/reports">reports</a>
-    | <s><a href="/admin/stats">stats</a></s>
-</center>
+<div class="options">
+    <span>
+    <a href="/admin/">main</a><a href="/admin/streams">streams</a><a href="/admin/requests">requests</a><a href="/admin/reports">reports</a><a class="selected" href="/admin/stats">stats</a>
+    </span>
+</div>
 
 <table class="custom">
 <tr class="top">
     <td>Date</td>
+    <td>Downloads</td>
+    <td>Machines</td>
+    <td>IP6</td>
+    <td>UPnP</td>
+    <td>Searches</td>
     <td>Streams</td>
-    <td>Publics</td>
-    <td>Online</td>
-    <td>Sharing</td>
+    <td>Pylinks</td>
+    <td>Requests</td>
     <td>Comments</td>
     <td>Reports</td>
 </tr>
 {% for s in stats %}
     <tr>
-        <td>{{ s.date|date:"d/m/Y H:i" }}</td>
+        <td>{{ s.date|date:"d/m/Y" }}</td>
+        <td>{{ s.downloads }}</td>
+        <td>{{ s.machines }}</td>
+        <td>{{ s.ip6 }} ({{ s.ip6_relation }}%)</td>
+        <td>{{ s.upnp }} ({{ s.upnp_relation }}%)</td>
+        <td>{{ s.searches }}</td>
         <td>{{ s.streams }}</td>
-        <td>{{ s.publics }} ({{ s.public_relation }}%)</td>
-        <td>{{ s.online }} ({{ s.online_relation }}%)</td>
-        <td>{{ s.sharing|size }} ({{ s.share_relation|size }}/stream)</td>
-        <td>{{ s.comments }} ({{ s.comments_relation }}/stream)</td>
+        <td>{{ s.pylinks }}</td>
+        <td>{{ s.requests }}</td>
+        <td>{{ s.comments }}</td>
         <td>{{ s.reports }}</td>
     </tr>
 {% empty %}
-    <tr><td colspan="9">empty!</td></tr>
+    <tr><td colspan="11">empty!</td></tr>
 {% endfor %}
 </table>
 

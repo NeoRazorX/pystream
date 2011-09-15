@@ -3,7 +3,15 @@
 <head>
     <title>{{ title }}</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta name="keywords" content="pystream, stream, python, share, files, lan party, lan parties, linux" />
+    {% if stream %}
+    <meta name="keywords" content="pystream, stream{% for tag in stream.tags %}, {{ tag }}{% endfor %}" />
+    {% endif %}
+    {% if request %}
+    <meta name="keywords" content="pystream, request{% for tag in request.tags %}, {{ tag }}{% endfor %}" />
+    {% endif %}
+    {% if not stream and not request %}
+    <meta name="keywords" content="pystream{% for tag in tags %}, {{ tag.0 }}{% endfor %}" />
+    {% endif %}
     <meta name="description" content="{{ description }}" />
     <meta name="Robots" content="all" />
     <link rel="stylesheet" href="/css/web.css" type="text/css" />
@@ -23,19 +31,25 @@
 <body onload="{{ onload }}">
 <div class="top_right">
     <a href="/new">{{ lang|translation:'new' }}</a>
-    | <a href="/random">{{ lang|translation:'random' }}</a>
-    | <a href="/search">{{ lang|translation:'search' }}</a>
+    <a href="/random">{{ lang|translation:'random' }}</a>
+    <a href="/search">{{ lang|translation:'search' }}</a>
     {% if admin %}
-        | <a href="/admin/">{{ lang|translation:'admin' }}</a>
-        | <a href="{{ logout }}">{{ lang|translation:'logout' }}</a>
+        <a href="/admin/">{{ lang|translation:'admin' }}</a>
+        <a href="{{ logout }}">{{ lang|translation:'logout' }}</a>
     {% endif %}
 </div>
 <div class="header">
     <a href="/"><img src="/img/logo.png" alt="pystream (alpha)"/></a>
     {% if stream %}
-        &nbsp; <a href="/s/{{ stream.key.id }}">{{ stream.key.id }}</a>
+        &nbsp; <a href="{{ stream.get_link }}">{{ stream.get_link.upper }}</a>
+        {% if stream.password %}
+            password protected
+        {% endif %}
     {% endif %}
-    {% if stream.password %}
-        <img src="/img/mini-lock.png" alt="locked" title="{{ lang|translation:'passwp' }}"/>
+    {% if request %}
+        &nbsp; <a href="{{ request.get_link }}">{{ request.get_link.upper }}</a>
+    {% endif %}
+    {% if title2 %}
+        &nbsp; {{ title2 }}
     {% endif %}
 </div>

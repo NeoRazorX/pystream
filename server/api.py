@@ -16,11 +16,22 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import cgi, os, random, math
+import cgi, os, random, math, datetime, re
 from google.appengine.api import users
 from google.appengine.ext.webapp.util import run_wsgi_app
 from base import *
 
+class Hello(webapp.RequestHandler, Basic_tools):
+    def get(self):
+        self.error(403)
+    
+    def post(self):
+        if self.request.get('version') == PYSTREAM_VERSION and self.request.get('machine'):
+            logging.info('Machine: ' + self.request.get('machine'))
+            st = Stat_cache()
+            st.put_machine(self.request.get('machine'), self.is_ip6(self.request.remote_addr), self.request.get('upnp'))
+        else:
+            self.error(403)
 
 class New_stream(webapp.RequestHandler, Basic_tools):
     def get(self):
@@ -29,183 +40,109 @@ class New_stream(webapp.RequestHandler, Basic_tools):
     def post(self):
         if self.request.get('version') != PYSTREAM_VERSION: # bad client version
             self.response.headers['Content-Type'] = 'text/plain'
-            self.response.out.write('Bad version! You need to download a new client -> http://www.pystream.com/new')
+            self.response.out.write('Bad version! You need to download a new client -> http://www.pystream.com/download')
             logging.warning('Bad client version! v'+self.request.get('version'))
-        elif self.request.get('port') and (self.request.get('ip') or self.request.get('lan_ip')): # client request
+            self.error(403)
+        elif self.request.get('machine') and self.request.get('port') and self.request.get('links'):
             try:
                 s = Stream()
-                if self.request.get('ip'):
-                    s.ip = self.dottedQuadToNum( self.request.get('ip') )
-                else:
-                    s.ip = self.dottedQuadToNum( self.request.remote_addr )
-                s.port = int( self.request.get('port') )
-                if self.request.get('lan_ip'):
-                    s.lan_ip = self.dottedQuadToNum( self.request.get('lan_ip') )
-                else:
-                    s.lan_ip = s.ip
                 if self.request.get('description'):
-                    s.description = cgi.escape( self.request.get('description').replace("\n", ' ') )[:499]
-                if self.request.get('size'):
-                    s.size = int( self.request.get('size') )
-                if self.request.get('os'):
-                    s.os = cgi.escape( self.request.get('os') )
-                if self.request.get('public') == 'False':
-                    s.public = False
-                if s.new_stream():
-                    self.response.headers['Content-Type'] = 'text/plain'
-                    self.response.out.write('key: ' + str( s.key() ) + ';id: ' + str( s.key().id() ) )
+                    s.description = cgi.escape( self.request.get('description') )
                 else:
-                    self.error(403)
+                    s.description = 'no description'
+                s.ip = self.request.remote_addr
+                s.os = self.request.get('machine')
+                # stream status
+                if self.is_ip6(self.request.remote_addr):
+                    if self.request.get('public') == 'True':
+                        s.status = 1
+                    elif self.request.get('a_pass'):
+                        s.access_pass = self.request.get('a_pass')
+                        s.status = 3
+                    else:
+                        s.status = 2
+                else:
+                    if self.request.get('public') == 'True':
+                        s.status = 11
+                    elif self.request.get('a_pass'):
+                        s.access_pass = self.request.get('a_pass')
+                        s.status = 13
+                    else:
+                        s.status = 12
+                s.put()
+                # pylinks
+                if self.request.get('links'):
+                    links = []
+                    for link in self.request.get('links').splitlines():
+                        links.append('http://' + self.request.remote_addr + ':' + self.request.get('port') + link)
+                    s.pylinks = self.new_pylinks(links, s.get_link())
+                    s.put()
+                # searches
+                s.tags = self.page2search(s.get_link(), s.description, 'stream', s.date)
+                s.put()
+                # stats
+                st = Stat_cache()
+                st.put_page('stream')
+                st.put_page('pylinks', len(s.pylinks))
+                # response
+                self.response.headers['Content-Type'] = 'text/plain'
+                self.response.out.write( str(s.key()) + "\n" + s.get_link() )
             except:
-                logging.error('Fail to store stream -> ' + self.request.get('ip') + ':' + self.request.get('port'))
+                logging.error('Fail to store stream -> ' + self.request.get('machine'))
                 self.error(500)
         else: # lost parameters
             self.error(403)
 
 
-class Stream_checking(webapp.RequestHandler, Basic_tools):
+class Stream_alive(webapp.RequestHandler, Basic_tools):
     def get(self):
-        self.response.headers['Content-Type'] = 'text/plain'
-        ss = self.get_streams()
-        for s in ss:
-            self.response.out.write(s + "\n")
-    
-    def get_streams(self):
-        mix = []
-        finalmix = []
-        # append near streams
-        ss = self.get_streams_from_ip( self.request.remote_addr )
-        if ss:
-            for s in ss:
-                mix.append(self.numToDottedQuad(s.lan_ip) + ':' + str(s.port))
-        # append public streams
-        if len(mix) < 20:
-            query = db.GqlQuery("SELECT * FROM Stream WHERE public = :1", True)
-            ss = query.fetch(10, random.randint(0, max(query.count()-10, 0)))
-            if ss:
-                for s in ss:
-                    # filter near streams
-                    if self.numToDottedQuad(s.ip) != self.request.remote_addr:
-                        mix.append(self.numToDottedQuad(s.ip) + ':' + str(s.port))
-        logging.info(str(len(mix)) + ' streams found!')
-        # random order
-        if mix:
-            for n in range(20):
-                if mix:
-                    elem = random.choice(mix)
-                    finalmix.append(elem)
-                    mix.remove(elem)
-        return finalmix
+        self.error(403)
     
     def post(self):
-        logging.info('Machine: ' + self.request.get('machine'))
-        m = Machines()
-        m.put(self.request.get('machine'))
         if self.request.get('version') != PYSTREAM_VERSION: # bad client version
+            self.response.headers['Content-Type'] = 'text/plain'
+            self.response.out.write('Bad version! You need to download a new client -> http://www.pystream.com/download')
             logging.warning('Bad client version! v'+self.request.get('version'))
             self.error(403)
-        else:
+        elif self.request.get('key'):
             try:
-                self.load_streams_for_results()
-                for n in range(20):
-                    if self.request.get('stream'+str(n)) != '':
-                        self.read_result(self.request.get('stream'+str(n)),
-                                         self.request.get('result'+str(n)))
+                s = Stream.get( self.request.get('key') )
+                s.alive = datetime.datetime.now()
+                s.put()
             except:
+                logging.error('Fail to set stream alive -> ' + self.request.get('key'))
                 self.error(500)
-    
-    def load_streams_for_results(self):
-        self.allss = self.get_streams_from_ip( self.request.remote_addr )
-        ips = []
-        if self.allss:
-            for n in range(20):
-                if self.request.get('stream'+str(n)) != '':
-                    ip = self.dottedQuadToNum( self.request.get('stream'+str(n)).partition(':')[0] )
-                    port = int( self.request.get('stream'+str(n)).partition(':')[2] )
-                    found = False
-                    for s in self.allss:
-                        if s.ip == self.dottedQuadToNum(self.request.remote_addr) and s.lan_ip == ip and s.port == port:
-                            found = True
-                    if not found and ip not in ips:
-                        ips.append(ip)
-                        logging.info('Need to read for ip: ' + self.request.get('stream'+str(n)).partition(':')[0])
         else:
-            logging.info('No near streams found in memcache!')
-            for n in range(20):
-                if self.request.get('stream'+str(n)) != '':
-                    ip = self.dottedQuadToNum( self.request.get('stream'+str(n)).partition(':')[0] )
-                    if ip not in ips:
-                        ips.append(ip)
-                        logging.info('Need to read for ip: ' + self.request.get('stream'+str(n)).partition(':')[0])
-        if ips:
-            logging.info('GQL read needed!')
-            aux = db.GqlQuery("SELECT * FROM Stream WHERE ip IN :1", ips).fetch(20)
-            for a in aux:
-                self.allss.append( a )
-        else:
-            logging.info('No need to GQL read!')
-    
-    def read_result(self, stream, result):
-        try:
-            ip = self.dottedQuadToNum( stream.partition(':')[0] )
-            port = int( stream.partition(':')[2] )
-            remote_ip = self.dottedQuadToNum( self.request.remote_addr )
-            
-            if self.allss:
-                for s in self.allss:
-                    if s.ip == remote_ip and s.lan_ip == ip and s.port == port: # near stream
-                        Stream_check_result(remote_ip, s.key().id(), result).put()
-                    elif s.ip == ip and s.port == port:
-                        Stream_check_result(remote_ip, s.key().id(), result).put()
-            else:
-                logging.info('Fake stream: ' + stream)
-        except:
-            logging.warning("Error processing result: " + stream + ' -> ' + result)
+            self.error(403)
 
 
-class Redir_stream(webapp.RequestHandler, Basic_tools):
-    def get(self, ids=None):
-        try:
-            s = Stream.get_by_id( int( ids ) )
-        except:
-            s = None
-        if s:
-            if s.password == '':
-                self.redir(s)
-            elif self.user_give_password(s):
-                self.redir(s)
-            elif self.is_publisher( s.key() ):
-                self.redir(s)
-            elif users.is_current_user_admin():
-                self.redir(s)
-            else:
-                self.error(403)
-        else:
-            self.error(404)
+class Close_stream(webapp.RequestHandler, Basic_tools):
+    def get(self):
+        self.error(403)
     
-    def redir(self, stream):
-        if self.request.remote_addr in [stream.full_ip(), '127.0.0.1']:
-            self.redirect('http://' + self.numToDottedQuad(stream.lan_ip) + ':' + str(stream.port))
-        else:
-            self.redirect('http://' + self.numToDottedQuad(stream.ip) + ':' + str(stream.port))
-    
-    def user_give_password(self, stream):
-        if self.request.cookies.get('pass' + str( stream.key().id() ), '') == stream.password:
-            return True
-        else:
-            return False
-    
-    def is_publisher(self, key):
-        if self.request.cookies.get('key' + str( key.id() ), '') == str(key):
-            return True
-        else:
-            return False
+    def post(self):
+        if self.request.get('version') != PYSTREAM_VERSION: # bad client version
+            self.response.headers['Content-Type'] = 'text/plain'
+            self.response.out.write('Bad version! You need to download a new client -> http://www.pystream.com/download')
+            logging.warning('Bad client version! v'+self.request.get('version'))
+        elif self.request.get('key'):
+            try:
+                s = Stream.get( self.request.get('key') )
+                s.status = 100
+                s.password = ''
+                s.put()
+            except:
+                logging.error('Fail to close stream -> ' + self.request.get('key'))
+                self.error(500)
+        else: # lost parameters
+            self.error(403)
 
 
 def main():
-    application = webapp.WSGIApplication([('/api/new', New_stream),
-                                          ('/api/check', Stream_checking),
-                                          (r'/api/redir/(.*)', Redir_stream)],
+    application = webapp.WSGIApplication([('/api/hello', Hello),
+                                          ('/api/new', New_stream),
+                                          ('/api/alive', Stream_alive),
+                                          ('/api/close', Close_stream)],
                                          debug=DEBUG_FLAG)
     run_wsgi_app(application)
 

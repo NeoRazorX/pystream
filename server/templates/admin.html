@@ -2,47 +2,60 @@
 <div class="arrow" id="menu"></div>
 <div class="body">
 
-<center>
-    <a href="/admin/streams">streams</a>
-    | <a href="/admin/reports">reports</a>
-    | <a href="/admin/stats">stats</a>
-</center>
+<div class="options">
+    <span>
+    <a class="selected" href="/admin/">main</a><a href="/admin/streams">streams</a><a href="/admin/requests">requests</a><a href="/admin/reports">reports</a><a href="/admin/stats">stats</a>
+    </span>
+</div>
 
-{% if stats %}
+{% if summary %}
 <div class="section">
-    <div class="title">Last stat:</div>
-    Streams: {{ stats.streams }}, 
-    Publics: {{ stats.publics }} ({{ stats.public_relation }}%),
-    Online: {{ stats.online }} ({{ stats.online_relation }}%),  
-    Sharing: {{ stats.sharing|size }} ({{ stats.share_relation|size }}/stream), 
-    Comments: {{ stats.comments }} ({{ stats.comments_relation }}/stream), 
-    Reports: {{ stats.reports }}.
+    <div class="title">Summary:</div>
+    Downloads: {{ summary.downloads }},
+    Machines: {{ summary.machines }},
+    Searches: {{ summary.searches }},
+    Streams: {{ summary.streams }},
+    Pylinks: {{ summary.pylinks }},
+    Requests: {{ summary.requests }},
+    Comments: {{ summary.comments }}.
 </div>
 {% endif %}
 
-<br/><br/>
-
-{% if previouss %}
-<div class="section">
-    <div class="title">Searches:</div>
-    <table class="custom">
-    {% for p in previouss %}
-    <tr><td><a href="/search?query={{ p.0 }}">{{ p.0 }}</a></td><td align="right">{{ p.1 }}</td></tr>
-    {% endfor %}
-    </table>
-</div>
-{% endif %}
-
-{% if machines %}
-<div class="section">
-    <div class="title">Machines:</div>
-    <table class="custom">
-    {% for m in machines %}
-    <tr><td>{{ m.0|capfirst }}</td><td align="right">{{ m.1 }}</td></tr>
-    {% endfor %}
-    </table>
-</div>
-{% endif %}
+<table width="100%">
+<tr>
+    <td valign="top">
+    <div class="section">
+        <div class="title">Downloads:</div>
+        <table class="custom">
+        <tr><td>Windows</td><td align="right">{{ downloads.windows }}</td></tr>
+        <tr><td>Linux</td><td align="right">{{ downloads.linux }}</td></tr>
+        <tr><td>Mac</td><td align="right">{{ downloads.mac }}</td></tr>
+        <tr><td>Unknown</td><td align="right">{{ downloads.unknown }}</td></tr>
+        </table>
+    </div>
+    </td>
+    <td valign="top">
+    <div class="section">
+        <div class="title">Machines:</div>
+        <table class="custom">
+        {% for m in machines %}
+        <tr><td>{{ m.0|capfirst }}</td><td align="right">{{ m.1 }}</td><td align="right">{{ m.2 }}</td><td align="right">{{ m.3 }}</td></tr>
+        {% endfor %}
+        </table>
+    </div>
+    </td>
+    <td valign="top">
+    <div class="section">
+        <div class="title">Searches:</div>
+        <table class="custom">
+        {% for p in previouss %}
+        <tr><td><a class="tag" href="/search?query={{ p.0 }}">#{{ p.0 }}</a></td><td align="right">{{ p.1 }}</td></tr>
+        {% endfor %}
+        </table>
+    </div>
+    </td>
+</tr>
+</table>
 
 </div>
 {% include "footer.html" %}

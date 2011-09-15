@@ -1,9 +1,13 @@
 cron:
 
-- description: Stream check
-  url: /cron/stream_check
-  schedule: every 10 minutes
-
 - description: Stats
   url: /cron/stats
-  schedule: every 24 hours
+  schedule: every 6 hours
+
+- description: Pylink checker
+  url: /cron/pylinks
+  schedule: every 5 minutes
+
+- description: Searches
+  url: /cron/searches
+  schedule: every 5 minutes

@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import cgi, os, random, Cookie, math
+import cgi, os, random, Cookie, math, re
 
 # loading django 1.2
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
@@ -32,23 +32,197 @@ from base import *
 
 class Main_page(Basic_page, Basic_tools):
     def get(self):
+        st = Stat_cache()
         template_values = {
             'title': 'pystream',
-            'description': 'Sharing folders made easy.',
-            'user_os': self.get_os( self.request.environ['HTTP_USER_AGENT'] ),
-            'windows_client_url': WINDOWS_CLIENT_URL,
-            'linux_client_url': LINUX_CLIENT_URL,
-            'mac_client_url': MAC_CLIENT_URL,
-            'local_streams': self.near_streams(),
+            'title2': 'Anonymous community to share links',
+            'description': "The easy way to share files or links. Can't find a file? make a request!",
+            'onload': 'document.search.query.focus()',
+            'tags': st.get_searches(),
             'admin': users.is_current_user_admin(),
             'logout': users.create_logout_url('/'),
             'lang': self.get_lang()
         }
         path = os.path.join(os.path.dirname(__file__), 'templates/main.html')
         self.response.out.write( template.render(path, template_values) )
+
+
+class Download_page(Basic_page, Basic_tools):
+    def get(self):
+        if self.request.get('os'):
+            st = Stat_cache()
+            st.put_download( self.request.get('os') ) # +1 to downloads
+        template_values = {
+            'title': 'download pystream',
+            'title2': 'download',
+            'description': 'Download pystream, sharing folders made easy.',
+            'admin': users.is_current_user_admin(),
+            'logout': users.create_logout_url('/'),
+            'user_os': self.get_os( self.request.environ['HTTP_USER_AGENT'] ),
+            'lang': self.get_lang(),
+            'windows_client_url': WINDOWS_CLIENT_URL,
+            'linux_client_url': LINUX_CLIENT_URL,
+            'mac_client_url': MAC_CLIENT_URL,
+            'download_os': self.request.get('os'),
+            'onload': 'download()',
+        }
+        if self.request.get('os'):
+            path = os.path.join(os.path.dirname(__file__), 'templates/download2.html')
+        else:
+            path = os.path.join(os.path.dirname(__file__), 'templates/download.html')
+        self.response.out.write( template.render(path, template_values) )
+
+
+class New_page(Basic_page, Basic_tools):
+    def get(self):
+        template_values = {
+            'title': 'pystream: new page',
+            'title2': 'Anonymous community to share links',
+            'description': "The easy way to share files or links. Can't find a file? make a request!",
+            'admin': users.is_current_user_admin(),
+            'logout': users.create_logout_url('/'),
+            'lang': self.get_lang()
+        }
+        path = os.path.join(os.path.dirname(__file__), 'templates/new.html')
+        self.response.out.write( template.render(path, template_values) )
+
+
+class New_stream_page(Basic_page, Basic_tools):
+    def get(self):
+        chtml = captcha.displayhtml(
+                    public_key = RECAPTCHA_PUBLIC_KEY,
+                    use_ssl = False,
+                    error = None)
+        template_values = {
+            'title': 'sharing links',
+            'title2': 'sharing links',
+            'description': 'Sahring links form.',
+            'admin': users.is_current_user_admin(),
+            'logout': users.create_logout_url('/'),
+            'lang': self.get_lang(),
+            'captcha': chtml
+        }
+        path = os.path.join(os.path.dirname(__file__), 'templates/new_stream.html')
+        self.response.out.write( template.render(path, template_values) )
     
-    def near_streams(self):
-        return self.order_streams_date( self.get_streams_from_ip( self.request.remote_addr ) )
+    def post(self):
+        if self.request.get('description'):
+            challenge = self.request.get('recaptcha_challenge_field')
+            response  = self.request.get('recaptcha_response_field')
+            remoteip  = self.request.remote_addr
+            cResponse = captcha.submit(challenge,
+                                       response,
+                                       RECAPTCHA_PRIVATE_KEY,
+                                       remoteip)
+            if cResponse.is_valid or users.is_current_user_admin():
+                    s = Stream()
+                    s.description = cgi.escape( self.request.get('description') )
+                    s.ip = self.request.remote_addr
+                    s.os = self.request.environ['HTTP_USER_AGENT']
+                    if self.request.get('public') == 'True':
+                        s.status = 91
+                    elif self.request.get('a_pass'):
+                        s.access_pass = self.request.get('a_pass')
+                        s.status = 93
+                    else:
+                        s.status = 92
+                    if self.request.get('e_pass'):
+                        s.edit_pass = self.request.get('e_pass')
+                    s.put()
+                    # pylinks
+                    aux_links = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', s.description)
+                    if aux_links:
+                        # discarting images and youtube links
+                        num = 0
+                        while num < len(aux_links):
+                            if aux_links[num][-4:].lower() in ['.jpg', '.gif', '.png']:
+                                aux_links.remove( aux_links[num] )
+                            elif aux_links[num][-5:].lower() in ['.jpeg']:
+                                aux_links.remove( aux_links[num] )
+                            elif aux_links[num][:31] == 'http://www.youtube.com/watch?v=':
+                                aux_links.remove( aux_links[num] )
+                            elif aux_links[num][:28] == 'http://www.xvideos.com/video':
+                                aux_links.remove( aux_links[num] )
+                            else:
+                                num += 1
+                        s.pylinks = self.new_pylinks(aux_links, s.get_link())
+                    # searches
+                    if s.status in [1, 11, 91]:
+                        aux_tags = []
+                        for tag in re.findall(r'#[0-9a-zA-Z+_]*', s.description):
+                            aux_tags.append( tag[1:] )
+                        self.tags2cache( aux_tags )
+                        s.tags = self.page2search(s.get_link(), s.description, 'stream', s.date)
+                        s.put()
+                    else:
+                        s.put()
+                    # stats
+                    st = Stat_cache()
+                    st.put_page('stream')
+                    st.put_page('pylinks', len(s.pylinks))
+                    self.redirect( s.get_link() )
+            else:
+                self.redirect('/error/403c')
+        else:
+            self.redirect('/error/403')
+
+
+class New_request_page(Basic_page, Basic_tools):
+    def get(self):
+        chtml = captcha.displayhtml(
+                    public_key = RECAPTCHA_PUBLIC_KEY,
+                    use_ssl = False,
+                    error = None)
+        template_values = {
+            'title': 'Making a request',
+            'title2': 'making a request',
+            'description': 'Making a new request form.',
+            'admin': users.is_current_user_admin(),
+            'logout': users.create_logout_url('/'),
+            'lang': self.get_lang(),
+            'captcha': chtml
+        }
+        path = os.path.join(os.path.dirname(__file__), 'templates/new_request.html')
+        self.response.out.write( template.render(path, template_values) )
+    
+    def post(self):
+        if self.request.get('description'):
+            challenge = self.request.get('recaptcha_challenge_field')
+            response  = self.request.get('recaptcha_response_field')
+            remoteip  = self.request.remote_addr
+            cResponse = captcha.submit(challenge,
+                                       response,
+                                       RECAPTCHA_PRIVATE_KEY,
+                                       remoteip)
+            if cResponse.is_valid or users.is_current_user_admin():
+                try:
+                    r = Request()
+                    r.description = cgi.escape( self.request.get('description') )
+                    r.ip = self.request.remote_addr
+                    r.os = self.request.environ['HTTP_USER_AGENT']
+                    if self.request.get('email'):
+                        r.email = self.request.get('email')
+                    if self.request.get('e_pass'):
+                        r.edit_pass = self.request.get('e_pass')
+                    r.put()
+                    # searches
+                    aux_tags = []
+                    for tag in re.findall(r'#[0-9a-zA-Z+_]*', r.description):
+                        aux_tags.append( tag[1:] )
+                    self.tags2cache( aux_tags )
+                    r.tags = self.page2search(r.get_link(), r.description, 'request', r.date)
+                    r.put()
+                    # stats
+                    st = Stat_cache()
+                    st.put_page('request')
+                    self.redirect( r.get_link() )
+                except:
+                    logging.error('Cant save request!')
+                    self.redirect('/error/500')
+            else:
+                self.redirect('/error/403c')
+        else:
+            self.redirect('/error/403')
 
 
 class Stream_page(Basic_page, Basic_tools):
@@ -59,88 +233,31 @@ class Stream_page(Basic_page, Basic_tools):
             s = None
         
         if s: # stream exists
-            if s.password != '': # is password protected
-                # must use /sp/ folder
-                self.redirect('/sp/' + str( s.key().id() ) )
-            if self.request.get('key') == str( s.key() ): # give us the key?
-                if not self.is_publisher( s.key() ): # have cookie?
-                    # save the cookie
-                    c = Cookie.SimpleCookie()
-                    c['key' + str( s.key().id() )] = self.request.get('key')
-                    c['key' + str( s.key().id() )]['path'] = '/'
-                    c['key' + str( s.key().id() )]['max-age'] = 86400
-                    self.response.headers.add_header('Set-Cookie', c.output())
-                # we dont want the user to post the key by mistake,
-                # so we reload without key on url
-                self.redirect( s.get_link() )
-            else: # all correct
+            if s.status not in [3, 13, 93]:
                 chtml = captcha.displayhtml(
                     public_key = RECAPTCHA_PUBLIC_KEY,
                     use_ssl = False,
                     error = None)
                 template_values = {
-                    'title': 'pystream: ' + str( s.key().id() ),
+                    'title': 'Stream ' + str( s.key().id() ),
                     'description': s.description,
                     'stream': s,
-                    'comments': s.get_comments(),
                     'captcha': chtml,
                     'admin': users.is_current_user_admin(),
                     'logout': users.create_logout_url('/'),
-                    'publisher': self.is_publisher( s.key() ),
                     'lang': self.get_lang()
                 }
                 path = os.path.join(os.path.dirname(__file__), 'templates/stream.html')
                 self.response.out.write( template.render(path, template_values) )
+            else:
+                self.redirect( s.get_link() )
         elif ids: # stream selected but not found
             self.redirect('/error/404')
         else: # no stream selected
-            # new stream page
-            template_values = {
-                'title': 'pystream: new stream',
-                'description': 'Sharing folders made easy.',
-                'pystream_version': PYSTREAM_VERSION,
-                'admin': users.is_current_user_admin(),
-                'logout': users.create_logout_url('/'),
-                'user_os': self.get_os( self.request.environ['HTTP_USER_AGENT'] ),
-                'lang': self.get_lang(),
-                'windows_client_url': WINDOWS_CLIENT_URL,
-                'linux_client_url': LINUX_CLIENT_URL,
-                'mac_client_url': MAC_CLIENT_URL
-            }
-            path = os.path.join(os.path.dirname(__file__), 'templates/new.html')
-            self.response.out.write( template.render(path, template_values) )
-    
-    # add new stream
-    def post(self):
-        if self.request.get('version') != PYSTREAM_VERSION: # bad client version
-            self.response.headers['Content-Type'] = 'text/plain'
-            self.response.out.write('Bad version! You need to download a new client -> http://www.pystream.com/new')
-            logging.warning('Bad client version!')
-        elif self.request.get('web') and self.request.get('ip') and self.request.get('port'): # webclient request
-            try:
-                s = Stream()
-                s.ip = self.dottedQuadToNum( self.request.get('ip') )
-                s.port = int( self.request.get('port') )
-                s.lan_ip = s.ip
-                s.os = "web"
-                if s.new_stream():
-                    self.redirect('/s/' + str( s.key().id() ) + '?key=' + str( s.key() ))
-                else:
-                    self.redirect('/error/403')
-            except:
-                logging.error('Fail to store stream from web -> ' + self.request.get('ip') + ':' + self.request.get('port'))
-                self.redirect('/error/500')
-        else: # lost parameters
-            self.redirect('/error/403')
-    
-    def is_publisher(self, key):
-        if self.request.cookies.get('key' + str( key.id() ), '') == str(key):
-            return True
-        else:
-            return False
+            self.redirect('/new')
 
 
-class Stream_protected_page(Stream_page, Basic_tools):
+class Protected_stream_page(Basic_page, Basic_tools):
     def get(self, ids=None):
         try:
             s = Stream.get_by_id( int( ids ) )
@@ -148,19 +265,32 @@ class Stream_protected_page(Stream_page, Basic_tools):
             s = None
         
         if s: # stream exists
-            if s.password == '': # is password protected
-                # must use /s/ folder
-                self.redirect('/s/' + str( s.key().id() ) )
-            elif not users.is_current_user_admin() and not self.is_publisher( s.key() ) and not self.user_give_password(s):
-                # captcha
+            if self.user_gives_password(s):
                 chtml = captcha.displayhtml(
                     public_key = RECAPTCHA_PUBLIC_KEY,
                     use_ssl = False,
                     error = None)
                 template_values = {
-                    'title': 'pystream: ' + str( s.key().id() ),
-                    'description': 'Sharing folders made easy.',
-                    'streamid': s.key().id(),
+                    'title': 'Stream ' + str( s.key().id() ),
+                    'description': s.description,
+                    'stream': s,
+                    'captcha': chtml,
+                    'admin': users.is_current_user_admin(),
+                    'logout': users.create_logout_url('/'),
+                    'lang': self.get_lang()
+                }
+                path = os.path.join(os.path.dirname(__file__), 'templates/stream.html')
+                self.response.out.write( template.render(path, template_values) )
+            else:
+                chtml = captcha.displayhtml(
+                    public_key = RECAPTCHA_PUBLIC_KEY,
+                    use_ssl = False,
+                    error = None)
+                template_values = {
+                    'title': 'Stream ' + str( s.key().id() ),
+                    'description': s.description,
+                    'onload': 'document.stream.password.focus()',
+                    'stream': s,
                     'captcha': chtml,
                     'admin': users.is_current_user_admin(),
                     'logout': users.create_logout_url('/'),
@@ -168,27 +298,10 @@ class Stream_protected_page(Stream_page, Basic_tools):
                 }
                 path = os.path.join(os.path.dirname(__file__), 'templates/stream_ask_password.html')
                 self.response.out.write( template.render(path, template_values) )
-            else: # all correct, show full stream
-                # captcha
-                chtml = captcha.displayhtml(
-                    public_key = RECAPTCHA_PUBLIC_KEY,
-                    use_ssl = False,
-                    error = None)
-                template_values = {
-                    'title': 'pystream: ' + str( s.key().id() ),
-                    'description': s.description,
-                    'stream': s,
-                    'comments': s.get_comments(),
-                    'captcha': chtml,
-                    'admin': users.is_current_user_admin(),
-                    'logout': users.create_logout_url('/'),
-                    'publisher': self.is_publisher( s.key() ),
-                    'lang': self.get_lang()
-                }
-                path = os.path.join(os.path.dirname(__file__), 'templates/stream.html')
-                self.response.out.write( template.render(path, template_values) )
-        else: # stream not found
+        elif ids: # stream selected but not found
             self.redirect('/error/404')
+        else: # no stream selected
+            self.redirect('/new')
     
     # to recive and store password
     def post(self, ids=None):
@@ -196,6 +309,7 @@ class Stream_protected_page(Stream_page, Basic_tools):
             s = Stream.get_by_id( int( ids ) )
         except:
             s = None
+        
         challenge = self.request.get('recaptcha_challenge_field')
         response  = self.request.get('recaptcha_response_field')
         remoteip  = self.request.remote_addr
@@ -203,49 +317,82 @@ class Stream_protected_page(Stream_page, Basic_tools):
                                    response,
                                    RECAPTCHA_PRIVATE_KEY,
                                    remoteip)
-        if s and self.request.get('password') == s.password and cResponse.is_valid:
+        if s and self.request.get('password') == s.access_pass and cResponse.is_valid:
             # save the cookie
             c = Cookie.SimpleCookie()
-            c['pass' + str( s.key().id() )] = self.request.get('password')
-            c['pass' + str( s.key().id() )]['path'] = '/'
-            c['pass' + str( s.key().id() )]['max-age'] = 86400
+            c['stream_pass_' + str( s.key().id() )] = self.request.get('password')
+            c['stream_pass_' + str( s.key().id() )]['path'] = '/'
+            c['stream_pass_' + str( s.key().id() )]['max-age'] = 86400
             self.response.headers.add_header('Set-Cookie', c.output())
-            self.redirect('/sp/' + str( s.key().id() ))
+            self.redirect( s.get_link() )
         elif s:
             self.redirect('/error/403')
         else:
             self.redirect('/error/404')
     
-    def user_give_password(self, stream):
-        if self.request.cookies.get('pass' + str( stream.key().id() ), '') == stream.password:
+    def user_gives_password(self, stream):
+        if self.request.cookies.get('stream_pass_' + str( stream.key().id() ), '') == stream.access_pass:
             return True
         else:
             return False
 
 
-class Modify_stream(Stream_page):
-    def get(self):
-        self.redirect('/error/403')
-    
-    def post(self):
+class Modify_stream(Basic_page, Basic_tools):
+    def get(self, ids=None):
         try:
-            s = Stream.get( self.request.get('key') )
+            s = Stream.get_by_id( int( ids ) )
+        except:
+            s = None
+        
+        if s: # stream exists
+            chtml = captcha.displayhtml(
+                public_key = RECAPTCHA_PUBLIC_KEY,
+                use_ssl = False,
+                error = None)
+            template_values = {
+                'title': 'Stream ' + str( s.key().id() ),
+                'title2': 'modifying stream',
+                'description': s.description,
+                'stream': s,
+                'captcha': chtml,
+                'admin': users.is_current_user_admin(),
+                'logout': users.create_logout_url('/'),
+                'lang': self.get_lang()
+            }
+            path = os.path.join(os.path.dirname(__file__), 'templates/modify_stream.html')
+            self.response.out.write( template.render(path, template_values) )
+        elif ids: # stream selected but not found
+            self.redirect('/error/404')
+        else: # no stream selected
+            self.redirect('/new')
+    
+    def post(self, ids=None):
+        try:
+            s = Stream.get_by_id( int( ids ) )
         except:
             s = None
         if s:
-            if users.is_current_user_admin() or self.is_publisher( s.key() ):
+            challenge = self.request.get('recaptcha_challenge_field')
+            response  = self.request.get('recaptcha_response_field')
+            remoteip  = self.request.remote_addr
+            cResponse = captcha.submit(challenge,
+                                       response,
+                                       RECAPTCHA_PRIVATE_KEY,
+                                       remoteip)
+            if (cResponse.is_valid and self.request.get('e_pass') == s.edit_pass and s.edit_pass != '') or users.is_current_user_admin():
                 try:
-                    s.description = cgi.escape( self.request.get('description').replace("\n", ' ') )[:499]
-                    s.password = cgi.escape( self.request.get('password') )
-                    if s.password:
-                        s.public = False
-                        s.online = False
-                    elif self.request.get('public') == 'False':
-                        s.public = False
-                        s.online = False
+                    s.description = cgi.escape( self.request.get('description') )
+                    # pylinks
+                    if self.request.get('links'):
+                        aux_links = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', self.request.get('links'))
+                        s.pylinks = self.new_pylinks(aux_links, s.get_link())
+                    # searches
+                    if s.status in [1, 11, 91]:
+                        self.tags2cache(s.tags)
+                        s.tags = self.page2search(s.get_link(), s.description, 'stream', s.date)
+                        s.put()
                     else:
-                        s.public = True
-                    s.put()
+                        s.put()
                     s.rm_cache()
                     self.redirect( s.get_link() )
                 except:
@@ -257,41 +404,136 @@ class Modify_stream(Stream_page):
             self.redirect('/error/404')
 
 
-class Random_stream(webapp.RequestHandler, Basic_tools):
+class Request_page(Basic_page, Basic_tools):
+    def get(self, idr=None):
+        try:
+            r = Request.get_by_id( int( idr ) )
+        except:
+            r = None
+        
+        if r: # request exists
+            chtml = captcha.displayhtml(
+                public_key = RECAPTCHA_PUBLIC_KEY,
+                use_ssl = False,
+                error = None)
+            template_values = {
+                'title': 'Request ' + str( r.key().id() ),
+                'description': r.description,
+                'request': r,
+                'comments': r.get_comments(),
+                'captcha': chtml,
+                'admin': users.is_current_user_admin(),
+                'logout': users.create_logout_url('/'),
+                'lang': self.get_lang()
+            }
+            path = os.path.join(os.path.dirname(__file__), 'templates/request.html')
+            self.response.out.write( template.render(path, template_values) )
+        elif idr: # request selected but not found
+            self.redirect('/error/404')
+        else: # no request selected
+            self.redirect('/new')
+
+
+class Modify_request(Basic_page, Basic_tools):
+    def get(self, idr=None):
+        try:
+            r = Request.get_by_id( int( idr ) )
+        except:
+            r = None
+        
+        if r: # request exists
+            chtml = captcha.displayhtml(
+                public_key = RECAPTCHA_PUBLIC_KEY,
+                use_ssl = False,
+                error = None)
+            template_values = {
+                'title': 'Request ' + str( r.key().id() ),
+                'title2': 'modifying request',
+                'description': r.description,
+                'request': r,
+                'comments': r.get_comments(),
+                'captcha': chtml,
+                'admin': users.is_current_user_admin(),
+                'logout': users.create_logout_url('/'),
+                'lang': self.get_lang()
+            }
+            path = os.path.join(os.path.dirname(__file__), 'templates/modify_request.html')
+            self.response.out.write( template.render(path, template_values) )
+        elif idr: # request selected but not found
+            self.redirect('/error/404')
+        else: # no request selected
+            self.redirect('/new')
+    
+    def post(self, idr=None):
+        try:
+            r = Request.get_by_id( int( idr ) )
+        except:
+            r = None
+        if r:
+            challenge = self.request.get('recaptcha_challenge_field')
+            response  = self.request.get('recaptcha_response_field')
+            remoteip  = self.request.remote_addr
+            cResponse = captcha.submit(challenge,
+                                       response,
+                                       RECAPTCHA_PRIVATE_KEY,
+                                       remoteip)
+            if (cResponse.is_valid and self.request.get('e_pass') == r.edit_pass and r.edit_pass != '') or users.is_current_user_admin():
+                try:
+                    r.description = cgi.escape( self.request.get('description') )
+                    # searches
+                    self.tags2cache(r.tags)
+                    r.tags = self.page2search(r.get_link(), r.description, 'request', r.date)
+                    r.put()
+                    r.rm_cache()
+                    self.redirect( r.get_link() )
+                except:
+                    logging.error('Cant modify request!')
+                    self.redirect('/error/500')
+            else: # not allowed
+                self.redirect('/error/403')
+        else: # stream not found
+            self.redirect('/error/404')
+
+
+class Random_page(webapp.RequestHandler, Basic_tools):
     def get(self):
-        self.streams = self.get_last_streams()
+        self.pages = self.get_last_pages()
         url = '/new'
-        if len( self.streams ) == 1:
-            url = '/s/' + str( self.streams[0].key().id() )
-        elif len( self.streams ) > 1:
-            url = '/s/' + str( random.choice( self.streams ).key().id() )
+        if len( self.pages ) == 1:
+            url = self.pages[0]
+        elif len( self.pages ) > 1:
+            url = random.choice( self.pages )
         self.redirect( url )
     
-    def get_last_streams(self):
-        ss = memcache.get('random_streams')
-        if ss is None:
-            ss = db.GqlQuery("SELECT * FROM Stream WHERE online = :1", True).fetch(100)
-            if not memcache.add('random_streams', ss):
-                logging.warning('Cant save random streams to memcache!')
-        ss2 = self.get_streams_from_ip( self.request.remote_addr )
-        if ss and ss2:
-            for s in ss2:
-                ss.append(s)
-        elif ss2:
-            ss = ss2
-        return ss
+    def get_last_pages(self):
+        rp = memcache.get('random_pages')
+        if rp is None:
+            rp = []
+            ss = db.GqlQuery("SELECT * FROM Stream ORDER BY date DESC").fetch(100)
+            if ss:
+                for s in ss:
+                    if s.status in [1, 11, 91]:
+                        rp.append( s.get_link() )
+            rs = db.GqlQuery("SELECT * FROM Request ORDER BY date DESC").fetch(100)
+            if rs:
+                for r in rs:
+                    rp.append( r.get_link() )
+            if len(rp) > 9:
+                if not memcache.add('random_pages', rp):
+                    logging.warning('Cant save random pages to memcache!')
+        return rp
 
 
-class Comment_stream(webapp.RequestHandler, Basic_tools):
+class Comment_to_page(webapp.RequestHandler, Basic_tools):
     # remove comment
     def get(self):
         if users.is_current_user_admin() and self.request.get('rm'):
             try:
                 c = Comment.get( self.request.get('rm') )
-                s = c.get_stream()
+                origin = c.get_origin()
                 c.delete()
-                s.rm_cache()
-                self.redirect( s.get_link() )
+                origin.rm_cache()
+                self.redirect( origin.get_link() )
             except:
                 logging.error('Cant remove comment!')
                 self.redirect('/error/500')
@@ -300,7 +542,7 @@ class Comment_stream(webapp.RequestHandler, Basic_tools):
     
     # add comment
     def post(self):
-        if self.request.get('stream_id') and self.request.get('text'):
+        if self.request.get('origin') and self.request.get('text'):
             challenge = self.request.get('recaptcha_challenge_field')
             response  = self.request.get('recaptcha_response_field')
             remoteip  = self.request.remote_addr
@@ -308,21 +550,55 @@ class Comment_stream(webapp.RequestHandler, Basic_tools):
                                        response,
                                        RECAPTCHA_PRIVATE_KEY,
                                        remoteip)
-            if cResponse.is_valid:
+            if cResponse.is_valid or users.is_current_user_admin():
                 try:
-                    s = Stream.get_by_id( int( self.request.get('stream_id') ) )
                     c = Comment()
-                    c.stream_id = int( self.request.get('stream_id') )
+                    c.origin = self.request.get('origin')
                     c.text = cgi.escape( self.request.get('text') )
-                    c.ip = self.dottedQuadToNum( self.request.remote_addr )
+                    c.ip = self.request.remote_addr
                     c.os = self.request.environ['HTTP_USER_AGENT']
-                    if self.is_publisher( s.key() ):
-                        c.autor = 'publisher'
-                    elif users.is_current_user_admin():
-                        c.autor = 'admin'
                     c.put()
-                    s.rm_cache()
-                    self.redirect(s.get_link() + '#' + str(c.key().id()))
+                    origin = c.get_origin()
+                    origin.rm_cache()
+                    # stats
+                    st = Stat_cache()
+                    st.put_page('comment')
+                    # tags
+                    aux_tags = []
+                    for tag in re.findall(r'#[0-9a-zA-Z+_]*', c.text):
+                        aux_tags.append( tag[1:] )
+                    self.tags2cache(aux_tags, st.get_searches())
+                    # pylinks
+                    aux_links = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', self.request.get('text'))
+                    if aux_links:
+                        # discarting images and youtube links
+                        num = 0
+                        while num < len(aux_links):
+                            if aux_links[num][-4:].lower() in ['.jpg', '.gif', '.png']:
+                                aux_links.remove( aux_links[num] )
+                            elif aux_links[num][-5:].lower() in ['.jpeg']:
+                                aux_links.remove( aux_links[num] )
+                            elif aux_links[num][:31] == 'http://www.youtube.com/watch?v=':
+                                aux_links.remove( aux_links[num] )
+                            elif aux_links[num][:28] == 'http://www.xvideos.com/video':
+                                aux_links.remove( aux_links[num] )
+                            else:
+                                num += 1
+                        # storing new pylinks
+                        pylinks = self.new_pylinks(aux_links, c.origin + '#' + str(c.key().id()))
+                        # replacing links with pylinks
+                        text = c.text
+                        num = 0
+                        aux_links = self.unique_links(aux_links)
+                        while num < len(aux_links) and num < len(pylinks):
+                            text = text.replace(aux_links[num], '[pylink]' + str(pylinks[num]) + '[/pylink]')
+                            num += 1
+                        c.text = text
+                        c.put()
+                        # stats
+                        st.put_page('pylinks', len(pylinks))
+                        logging.info('Encontrados ' + str(len(pylinks)) + ' pylinks!')
+                    self.redirect(origin.get_link() + '#' + str(c.key().id()))
                 except:
                     logging.error('Cant save comment!')
                     self.redirect('/error/500')
@@ -330,12 +606,6 @@ class Comment_stream(webapp.RequestHandler, Basic_tools):
                 self.redirect('/error/403c')
         else:
             self.redirect('/error/403')
-    
-    def is_publisher(self, key):
-        if self.request.cookies.get('key' + str( key.id() ), '') == str(key):
-            return True
-        else:
-            return False
 
 
 class Report_page(Basic_page, Basic_tools):
@@ -346,6 +616,7 @@ class Report_page(Basic_page, Basic_tools):
             error = None)
         template_values = {
             'title': 'pystream: reporting',
+            'title2': 'reporting',
             'description': "Pystream's reporting page.",
             'onload': 'document.report.text.focus()',
             'link': self.request.get('link'),
@@ -372,7 +643,7 @@ class Report_page(Basic_page, Basic_tools):
                     if self.request.get('link') != '':
                         r.link = self.request.get('link')
                     r.text = cgi.escape( self.request.get('text') )
-                    r.ip = self.dottedQuadToNum( self.request.remote_addr )
+                    r.ip = self.request.remote_addr
                     r.os = self.request.environ['HTTP_USER_AGENT']
                     r.put()
                     self.redirect( r.get_link() )
@@ -387,111 +658,63 @@ class Report_page(Basic_page, Basic_tools):
 
 class Search_page(Basic_page, Basic_tools):
     def get(self):
+        st = Stat_cache()
         template_values = {
             'title': 'pystream: searching',
+            'title2': 'Anonymous community to share links',
             'description': 'Search for public streams and private streams from your LAN.',
             'onload': 'document.search.query.focus()',
             'query': self.request.get('query'),
-            'streams': self.search_streams( self.request.get('query') ),
-            'previouss': self.previous_searches( self.request.get('query') ),
+            'pages': self.search( self.request.get('query') ),
+            'pylinks': self.search_pylink_file_name( self.request.get('query') ),
+            'tags': st.get_searches(),
             'admin': users.is_current_user_admin(),
             'logout': users.create_logout_url('/'),
             'lang': self.get_lang()
         }
         path = os.path.join(os.path.dirname(__file__), 'templates/search.html')
         self.response.out.write( template.render(path, template_values) )
-    
-    def search_streams(self, query):
-        if query:
-            mix = []
-            ss = Stream.all().search( query ).fetch(100)
-            # filtering for online or private near streams
-            for s in ss:
-                if s.online or s.ip == self.dottedQuadToNum(self.request.remote_addr):
-                    mix.append( s )
-            return self.order_streams_date(mix)
-        else:
-            return None
-    
-    def previous_searches(self, query):
-        schs = memcache.get('previous_searches')
-        if query:
-            found = False
-            if schs is None:
-                schs = [[query, 1]]
-                memcache.add('previous_searches', schs)
-            else:
-                for s in schs:
-                    if s[0] == query:
-                        s[1] += 1
-                        found = True
-                # short and limit to 19
-                if schs:
-                    total = 0
-                    aux = []
-                    elem = None
-                    while schs != []:
-                        for s in schs:
-                            if not elem:
-                                elem = s
-                            elif s[1] > elem[1]:
-                                elem = s
-                        if total < 19:
-                            aux.append(elem)
-                            total += 1
-                        schs.remove(elem)
-                        elem = None
-                    schs = aux
-                if not found:
-                    schs.append([query, 1])
-                memcache.replace('previous_searches', schs)
-        return schs
-
-
-class Author_page(Basic_page):
-    def get(self):
-        template_values = {
-            'title': 'pystream: author',
-            'description': "Information about Carlos Garcia Gomez, pystream's author",
-            'admin': users.is_current_user_admin(),
-            'logout': users.create_logout_url('/'),
-            'lang': self.get_lang()
-        }
-        path = os.path.join(os.path.dirname(__file__), 'templates/author.html')
-        self.response.out.write( template.render(path, template_values) )
 
 
 class Error_page(Basic_page):
     def get(self, code='404'):
+        st = Stat_cache()
         derror = {
             '403': 'Permission dennied',
             '403c': 'Captcha fail',
             '404': 'Page not found',
             '500': 'Internal server error',
         }
-        
         template_values = {
             'title': str(code) + ' - pystream',
+            'title2': 'Anonymous community to share links',
             'description': derror.get(code, 'Unknown error'),
+            'onload': 'document.search.query.focus()',
             'code': code,
-            'previouss': memcache.get('previous_searches'),
+            'tags': st.get_searches(),
+            'admin': users.is_current_user_admin(),
+            'logout': users.create_logout_url('/'),
             'lang': self.get_lang()
-            }
-        
+        }
         path = os.path.join(os.path.dirname(__file__), 'templates/search.html')
         self.response.out.write(template.render(path, template_values))
 
+
 def main():
     application = webapp.WSGIApplication([('/', Main_page),
-                                          ('/new', Stream_page),
+                                          ('/new', New_page),
+                                          ('/new_links', New_stream_page),
+                                          ('/new_request', New_request_page),
+                                          ('/download', Download_page),
                                           (r'/s/(.*)', Stream_page),
-                                          (r'/sp/(.*)', Stream_protected_page),
-                                          ('/mod_stream', Modify_stream),
-                                          ('/random', Random_stream),
-                                          ('/comment', Comment_stream),
+                                          (r'/ps/(.*)', Protected_stream_page),
+                                          (r'/r/(.*)', Request_page),
+                                          ('/mod_stream/(.*)', Modify_stream),
+                                          ('/mod_request/(.*)', Modify_request),
+                                          ('/random', Random_page),
+                                          ('/comment', Comment_to_page),
                                           ('/report', Report_page),
                                           ('/search', Search_page),
-                                          ('/author', Author_page),
                                           (r'/error/(.*)', Error_page),
                                           ('/.*', Error_page)],
                                          debug=DEBUG_FLAG)
