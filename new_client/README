@@ -7,13 +7,13 @@ RUN:
 This software has no need to install.
 
 Linux:
-- Run pystream_gtk.py or pystream_tk.py
+- Run pystream.py
 
 Windows:
-- Run pystream_tk.exe
+- Run pystream.exe
 
 Mac:
-- Run pystream_tk.py
+- Run pystream.py
 
 
 CONTACT:

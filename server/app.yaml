@@ -34,6 +34,10 @@ handlers:
   script: cron/searches.py
   login: admin
 
+- url: /cron/streams
+  script: cron/streams.py
+  login: admin
+
 - url: /api/.*
   script: api.py
 

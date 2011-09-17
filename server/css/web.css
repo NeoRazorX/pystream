@@ -258,6 +258,7 @@ div.section, div.pylinks {
 
 div.pylinks {
     border: 1px dashed black;
+    padding-right: 5px;
 }
 
 div.title {
@@ -387,6 +388,11 @@ table.custom tr:hover {
 
 table.custom tr.top:hover {
     background-color: white;
+}
+
+table.custom td.tweet {
+    padding: 5px;
+    border-bottom: 1px solid silver;
 }
 
 div.pages {

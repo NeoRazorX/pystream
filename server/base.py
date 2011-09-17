@@ -20,9 +20,9 @@ DEBUG_FLAG = True
 RECAPTCHA_PUBLIC_KEY = ''
 RECAPTCHA_PRIVATE_KEY = ''
 PYSTREAM_VERSION = '3'
-WINDOWS_CLIENT_URL = ''
-LINUX_CLIENT_URL = ''
-MAC_CLIENT_URL = ''
+WINDOWS_CLIENT_URL = '/download'
+LINUX_CLIENT_URL = '/download'
+MAC_CLIENT_URL = '/download'
 
 import logging, datetime, random, re
 from google.appengine.ext import webapp, db, search
@@ -40,6 +40,29 @@ class Basic_tools:
                 os = aux
         return os
     
+    def streams_from_ip(self, ip):
+        ss = db.GqlQuery("SELECT * FROM Stream WHERE ip = :1", ip).fetch(100)
+        if ss:
+            local_ss = []
+            # selecting non-fake streams
+            for s in ss:
+                if s.status in [1, 2, 3, 11, 12, 13]:
+                    local_ss.append(s)
+            # date order
+            finalmix = []
+            while len(local_ss) > 0:
+                elem = None
+                for m in local_ss:
+                    if not elem:
+                        elem = m
+                    elif m.date > elem.date:
+                        elem = m
+                finalmix.append(elem)
+                local_ss.remove(elem)
+            return finalmix
+        else:
+            return []
+    
     def tags2cache(self, tags, all_tags = None):
         if tags:
             # first check because may be not provided
@@ -48,7 +71,8 @@ class Basic_tools:
             if all_tags is None:
                 all_tags = []
                 for tag in tags:
-                    all_tags.append([tag, 0])
+                    if len(tag) > 1:
+                        all_tags.append([tag, 0])
                 memcache.add('previous_searches', all_tags)
             else:
                 for ntag in tags:
@@ -56,7 +80,7 @@ class Basic_tools:
                     for otag in all_tags:
                         if ntag == otag[0]:
                             found = True
-                    if not found:
+                    if not found and len(ntag) > 1:
                         all_tags.append([ntag.lower(), 0])
                 memcache.replace('previous_searches', all_tags)
             return all_tags
@@ -72,7 +96,10 @@ class Basic_tools:
                 if text.lower().find(tag[0]) != -1:
                     found_tags.append(tag[0])
                     tag_links = memcache.get('search_' + tag[0])
-                    element = [link, page_type, date, text[:99]]
+                    if len(text) > 200:
+                        element = [link, page_type, date, text[:200]+'...']
+                    else:
+                        element = [link, page_type, date, text]
                     if tag_links is None:
                         memcache.add('search_' + tag[0], [element])
                     else:
@@ -119,10 +146,10 @@ class Basic_tools:
         else:
             return None
     
-    def search(self, query):
+    def search(self, query=''):
         stats = Stat_cache()
         self.search_job( stats.get_searches() )
-        if query:
+        if len(query) > 1:
             stats.put_search(query)
             mix = memcache.get('search_' + query.lower())
             if mix is not None:
@@ -240,8 +267,8 @@ class Stat_cache():
                         self.machines[0][3] += 1
                 memcache.replace('all_pystream_machines', self.machines)
     
-    def put_search(self, query):
-        if query != '':
+    def put_search(self, query=''):
+        if len(query) > 1:
             found = False
             if self.searches is None:
                 self.searches = [[query.lower(), 1]]
@@ -353,8 +380,10 @@ class Stream(db.Model):
     description = db.TextProperty()
     edit_pass = db.StringProperty(default='')
     ip = db.StringProperty()
+    lan_ip = db.StringProperty()
     os = db.StringProperty(default='unknown')
     pylinks = db.ListProperty( db.Key )
+    port = db.IntegerProperty(default=8081)
     size = db.IntegerProperty(default=0)
     # status:
     # 0 -> default
@@ -534,6 +563,7 @@ class Pylink(db.Model):
     # 0 = unknown
     # 1 = online
     # 2 = offline
+    # 3 = no need to check
     status = db.IntegerProperty(default=0)
     url = db.StringProperty()
     
@@ -544,6 +574,8 @@ class Pylink(db.Model):
             return 'online'
         elif self.status == 2:
             return 'offline'
+        elif self.status == 3:
+            return 'no need to check'
         else:
             return 'error'
     
@@ -554,6 +586,8 @@ class Pylink(db.Model):
             return '<span class="green">online</span>'
         elif self.status == 2:
             return '<span class="red">offline</span>'
+        elif self.status == 3:
+            return '<span class="green">&nbsp;</span>'
         else:
             return '<span class="yellow">error</span>'
     

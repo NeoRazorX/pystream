@@ -41,16 +41,18 @@ class New_client:
             self.PYSTREAM_URL = 'http://www.pystream.com'
         self.stream_key = ''
         self.stream_link = ''
+        self.stream_edit_pass = ''
         self.gui()
     
     def gui(self):
         self.gtkb = gtk.Builder()
         self.gtkb.add_from_file('gui.glade')
         self.window = self.gtkb.get_object('mainwindow')
-        self.window.set_title('Pystream ' + str(self.PYSTREAM_VERSION))
+        self.window.set_title('Pystream Sharing Tool ' + str(self.PYSTREAM_VERSION))
         self.window.set_icon_from_file('icon.png')
         self.window.connect("delete_event", self.delete_event)
         self.window.connect("destroy", gtk.main_quit)
+        self.vbox1 = self.gtkb.get_object('vbox1')
         self.lb_online = self.gtkb.get_object('lb_online')
         self.lb_lan = self.gtkb.get_object('lb_lan')
         self.fcb_folder = self.gtkb.get_object('fcb_folder')
@@ -102,7 +104,22 @@ class New_client:
             response = urllib2.urlopen(self.PYSTREAM_URL + '/api/hello', data, timeout=2)
             resp_code = response.getcode()
             if resp_code == 200:
-                self.write2log("Pystream server said: Hello!")
+                lines = response.read().splitlines()
+                if lines:
+                    if lines[0] == 'Bad version!':
+                        self.write2log("Bad version!")
+                        label = gtk.Label('Edition password: ' + self.stream_edit_pass)
+                        lb_update = gtk.LinkButton(self.PYSTREAM_URL + '/download', label='Download a new version!')
+                        lb_update.show()
+                        infobar = gtk.InfoBar()
+                        infobar.show()
+                        infobar.get_content_area().add(lb_update)
+                        self.vbox1.pack_start(infobar, False)
+                        self.b_start.set_sensitive(False)
+                    else:
+                        self.write2log("Error!")
+                else:
+                    self.write2log("Hello!")
             else:
                 self.write2log("Error: " + str(resp_code))
         except urllib2.HTTPError, e:
@@ -147,7 +164,14 @@ class New_client:
                 thread.start_new_thread(self.run_webserver, ())
                 self.upnpc.add_port_mapping( int(self.sb_port.get_value()) )
                 self.write2log('Serving...')
-                gobject.timeout_add_seconds(3, self.send_alive)
+                gobject.timeout_add_seconds(300, self.send_alive)
+                # edition password
+                label = gtk.Label('Edition password: ' + self.stream_edit_pass)
+                label.show()
+                infobar = gtk.InfoBar()
+                infobar.show()
+                infobar.get_content_area().add(label)
+                self.vbox1.pack_start(infobar, False)
     
     def is_stream_public(self):
         return self.cb_visibility.get_active() == 0
@@ -174,18 +198,21 @@ class New_client:
                     'version': self.PYSTREAM_VERSION,
                     'machine': platform.uname(),
                     'port': self.port,
+                    'lan_ip': self.upnpc.local_ip,
                     'links': self.get_shared_files(folder),
+                    'size': self.get_folder_size(folder),
                     'public': self.is_stream_public()
                 }
                 try:
                     self.write2log("Sending new stream request...")
                     data = urllib.urlencode(values)
-                    response = urllib2.urlopen(self.PYSTREAM_URL + '/api/new', data, timeout=5)
+                    response = urllib2.urlopen(self.PYSTREAM_URL + '/api/new', data, timeout=20)
                     resp_code = response.getcode()
                     if resp_code == 200:
                         lines = response.read().splitlines()
                         self.stream_key = lines[0]
                         self.stream_link = lines[1]
+                        self.stream_edit_pass = lines[2]
                         self.write2log('New stream ready!')
                     else:
                         self.write2log("Error: " + str(resp_code))
@@ -202,6 +229,12 @@ class New_client:
         for filename in os.listdir(folder):
             text += '/' + filename + "\n"
         return text
+    
+    def get_folder_size(self, folder):
+        folder_size = 0
+        for filename in os.listdir(folder):
+            folder_size += os.path.getsize(folder + '/' + filename)
+        return folder_size
     
     def send_alive(self):
         if self.stream_key:

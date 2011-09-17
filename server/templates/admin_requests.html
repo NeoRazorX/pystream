@@ -27,7 +27,7 @@
         <td>{{ r.email }}</td>
         <td>{{ r.description|truncate:80 }}</td>
         <td>{{ r.comments }}</td>
-        <td>{{ r.os|show_platform:1 }}</td>
+        <td>{{ r.os|show_os:1 }}</td>
         <td align="right">{{ r.date|timesince }}</td>
     </tr>
 {% empty %}

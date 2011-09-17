@@ -34,11 +34,12 @@ class Main_page(Basic_page, Basic_tools):
     def get(self):
         st = Stat_cache()
         template_values = {
-            'title': 'pystream',
-            'title2': 'Anonymous community to share links',
+            'title': 'Pystream: anonymous community',
+            'title2': 'Anonymous community',
             'description': "The easy way to share files or links. Can't find a file? make a request!",
             'onload': 'document.search.query.focus()',
             'tags': st.get_searches(),
+            'local_streams': self.streams_from_ip( self.request.remote_addr ),
             'admin': users.is_current_user_admin(),
             'logout': users.create_logout_url('/'),
             'lang': self.get_lang()
@@ -53,9 +54,9 @@ class Download_page(Basic_page, Basic_tools):
             st = Stat_cache()
             st.put_download( self.request.get('os') ) # +1 to downloads
         template_values = {
-            'title': 'download pystream',
-            'title2': 'download',
-            'description': 'Download pystream, sharing folders made easy.',
+            'title': 'Download pystream sharing tool',
+            'title2': 'Download pystream sharing tool',
+            'description': 'Download pystream sharing tool, sharing folders made easy.',
             'admin': users.is_current_user_admin(),
             'logout': users.create_logout_url('/'),
             'user_os': self.get_os( self.request.environ['HTTP_USER_AGENT'] ),
@@ -76,8 +77,8 @@ class Download_page(Basic_page, Basic_tools):
 class New_page(Basic_page, Basic_tools):
     def get(self):
         template_values = {
-            'title': 'pystream: new page',
-            'title2': 'Anonymous community to share links',
+            'title': 'Pystream: new page',
+            'title2': 'Anonymous community',
             'description': "The easy way to share files or links. Can't find a file? make a request!",
             'admin': users.is_current_user_admin(),
             'logout': users.create_logout_url('/'),
@@ -94,8 +95,8 @@ class New_stream_page(Basic_page, Basic_tools):
                     use_ssl = False,
                     error = None)
         template_values = {
-            'title': 'sharing links',
-            'title2': 'sharing links',
+            'title': 'Sharing links on pystream',
+            'title2': 'Sharing links',
             'description': 'Sahring links form.',
             'admin': users.is_current_user_admin(),
             'logout': users.create_logout_url('/'),
@@ -130,21 +131,8 @@ class New_stream_page(Basic_page, Basic_tools):
                         s.edit_pass = self.request.get('e_pass')
                     s.put()
                     # pylinks
-                    aux_links = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', s.description)
-                    if aux_links:
-                        # discarting images and youtube links
-                        num = 0
-                        while num < len(aux_links):
-                            if aux_links[num][-4:].lower() in ['.jpg', '.gif', '.png']:
-                                aux_links.remove( aux_links[num] )
-                            elif aux_links[num][-5:].lower() in ['.jpeg']:
-                                aux_links.remove( aux_links[num] )
-                            elif aux_links[num][:31] == 'http://www.youtube.com/watch?v=':
-                                aux_links.remove( aux_links[num] )
-                            elif aux_links[num][:28] == 'http://www.xvideos.com/video':
-                                aux_links.remove( aux_links[num] )
-                            else:
-                                num += 1
+                    if self.request.get('links'):
+                        aux_links = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', self.request.get('links'))
                         s.pylinks = self.new_pylinks(aux_links, s.get_link())
                     # searches
                     if s.status in [1, 11, 91]:
@@ -174,8 +162,8 @@ class New_request_page(Basic_page, Basic_tools):
                     use_ssl = False,
                     error = None)
         template_values = {
-            'title': 'Making a request',
-            'title2': 'making a request',
+            'title': 'Making a request on pystream',
+            'title2': 'Making a request',
             'description': 'Making a new request form.',
             'admin': users.is_current_user_admin(),
             'logout': users.create_logout_url('/'),
@@ -351,8 +339,9 @@ class Modify_stream(Basic_page, Basic_tools):
                 error = None)
             template_values = {
                 'title': 'Stream ' + str( s.key().id() ),
-                'title2': 'modifying stream',
+                'title2': 'Modifying stream',
                 'description': s.description,
+                'onload': 'document.stream.e_pass.focus()',
                 'stream': s,
                 'captcha': chtml,
                 'admin': users.is_current_user_admin(),
@@ -448,8 +437,9 @@ class Modify_request(Basic_page, Basic_tools):
                 error = None)
             template_values = {
                 'title': 'Request ' + str( r.key().id() ),
-                'title2': 'modifying request',
+                'title2': 'Modifying request',
                 'description': r.description,
+                'onload': 'document.request.e_pass.focus()',
                 'request': r,
                 'comments': r.get_comments(),
                 'captcha': chtml,
@@ -615,8 +605,8 @@ class Report_page(Basic_page, Basic_tools):
             use_ssl = False,
             error = None)
         template_values = {
-            'title': 'pystream: reporting',
-            'title2': 'reporting',
+            'title': 'Pystream: reporting',
+            'title2': 'Reporting',
             'description': "Pystream's reporting page.",
             'onload': 'document.report.text.focus()',
             'link': self.request.get('link'),
@@ -656,17 +646,23 @@ class Report_page(Basic_page, Basic_tools):
             self.redirect('/error/403')
 
 
-class Search_page(Basic_page, Basic_tools):
+class Search_redir(Basic_page, Basic_tools):
     def get(self):
+        self.redirect('/search/' + self.request.get('query'))
+
+
+class Search_page(Basic_page, Basic_tools):
+    def get(self, query=None):
+        query = query.replace('%20', ' ').replace('%2B', ' ')
         st = Stat_cache()
         template_values = {
-            'title': 'pystream: searching',
-            'title2': 'Anonymous community to share links',
-            'description': 'Search for public streams and private streams from your LAN.',
+            'title': 'Pystream: searching #'+query.replace(' ', '_'),
+            'title2': 'Searching #'+query.replace(' ', '_'),
+            'description': 'Search for #'+query.replace(' ', '_')+' on pystream.',
             'onload': 'document.search.query.focus()',
-            'query': self.request.get('query'),
-            'pages': self.search( self.request.get('query') ),
-            'pylinks': self.search_pylink_file_name( self.request.get('query') ),
+            'query': query,
+            'pages': self.search( query ),
+            'pylinks': self.search_pylink_file_name( query ),
             'tags': st.get_searches(),
             'admin': users.is_current_user_admin(),
             'logout': users.create_logout_url('/'),
@@ -687,7 +683,7 @@ class Error_page(Basic_page):
         }
         template_values = {
             'title': str(code) + ' - pystream',
-            'title2': 'Anonymous community to share links',
+            'title2': 'Anonymous community',
             'description': derror.get(code, 'Unknown error'),
             'onload': 'document.search.query.focus()',
             'code': code,
@@ -714,7 +710,8 @@ def main():
                                           ('/random', Random_page),
                                           ('/comment', Comment_to_page),
                                           ('/report', Report_page),
-                                          ('/search', Search_page),
+                                          ('/search', Search_redir),
+                                          (r'/search/(.*)', Search_page),
                                           (r'/error/(.*)', Error_page),
                                           ('/.*', Error_page)],
                                          debug=DEBUG_FLAG)

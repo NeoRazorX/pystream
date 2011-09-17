@@ -3,7 +3,12 @@
 <div class="body">
 
 <table class="social_buttons">
-<tr><td align="right"><a href="/report?link=/">{{ lang|translation:'report' }}</a></td></tr>
+<tr>
+    {% if query %}
+    <td>{{ lang|translation:'refersearch'|capfirst }}: {{ query|show_tag }}</td>
+    {% endif %}
+    <td align="right"><a href="/report?link=/">{{ lang|translation:'report' }}</a></td>
+</tr>
 </table>
 
 {% if code %}
@@ -31,20 +36,18 @@
 </div>
 
 {% if query %}
+<table width="100%">
+<tr>
+<td valign="top" width="70%">
 <div class="section">
-    <div class="title">{{ lang|translation:'streams'|capfirst }}:</div>
-    {% if pages|search_filter:"stream" != '' %}
-        {{ pages|search_filter:"stream" }}
-    {% else %}
-        <table class="custom"><tr><td>{{ lang|translation:'nostreams' }}</td></tr></table>
-    {% endif %}
-    <br/><br/>
-    <div class="title">{{ lang|translation:'requests'|capfirst }}:</div>
-    {% if pages|search_filter:"request" != '' %}
-        {{ pages|search_filter:"request" }}
-    {% else %}
-        <table class="custom"><tr><td>{{ lang|translation:'norequests' }}</td></tr></table>
-    {% endif %}
+    <div class="title">{{ lang|translation:'results'|capfirst }}:</div>
+    <table class="custom">
+    {% for page in pages %}
+        <tr><td class="tweet"><a href="{{ page.0 }}">{{ page.3 }}</a><br/>{{ page.2|timesince }} | {{ page.1 }}</td></tr>
+    {% empty %}
+        <tr><td><div class="warning">{{ lang|translation:'noresults'|capfirst }}</a></td></tr>
+    {% endfor %}
+    </table>
     {% if pylinks %}
         <br/><br/>
         <div class="title">Pylinks:</div>
@@ -52,10 +55,15 @@
             {{ pyl|show_pylink:"true" }}
         {% endfor %}
     {% endif %}
-    <br/><br/>
-    <div class="title">{{ lang|translation:'help'|capfirst }}:</div>
-    {{ lang|translation:'refersearch'|capfirst }}: {{ query|show_tag }}
 </div>
+</td>
+{% if tags %}
+    <td valign="top">
+    {{ tags|show_tags }}
+    </td>
+{% endif %}
+</tr>
+</table>
 {% else %}
     {% if tags %}
     <div class="section">

@@ -2,13 +2,13 @@
 <div class="arrow" id="main"></div>
 <div class="body">
 
-<div class="search">
-    <form name="search" action="/search" method="get">
-        <input class="search_box" type="text" name="query" value="{{ query }}"/>
-        <input type="submit" value="{{ lang|translation:'search' }}"/>
-    </form>
-</div>
+<table class="social_buttons">
+<tr>
+    <td align="right"><a href="/report">{{ lang|translation:'report' }}</a></td>
+</tr>
+</table>
 
+<div class="stream_description">
 <table class="main">
 <tr>
     <td><a href="/download"><img src="/img/share_files.png" alt="share files"/><br/>{{ lang|translation:'sharefiles'|capfirst }}</a></td>
@@ -16,6 +16,25 @@
     <td><a href="/new_request"><img src="/img/new_request.png" alt="make a request"/><br/>{{ lang|translation:'makerequest'|capfirst }}</a></td>
 </tr>
 </table>
+
+<div class="search">
+    <form name="search" action="/search" method="get">
+        <input class="search_box" type="text" name="query" value="{{ query }}"/>
+        <input type="submit" value="{{ lang|translation:'search' }}"/>
+    </form>
+</div>
+</div>
+
+{% if local_streams %}
+<div class="section">
+    <div class="title">{{ lang|translation:'localstreams'|capfirst }}:</div>
+    <table class="custom">
+    {% for s in local_streams %}
+        <tr><td>{{ s.date|timesince }}</td><td><a href="{{ s.get_link }}">{{ s.description|truncate:"200" }}</a></td><td align="right">{{ s.size|size }}</td></tr>
+    {% endfor %}
+    </table>
+</div>
+{% endif %}
 
 {% if tags %}
 <div class="section">

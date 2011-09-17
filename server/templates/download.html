@@ -20,17 +20,13 @@
 </tr>
 </table>
 
-{% if user_os = 'linux' %}
-    <center><img src="/img/pystream_linux.png" alt="Linux"/></center>
-{% endif %}
-
-<div class="section">
+<div class="stream_description">
     {% if lang == 'es' %}
-    <div class="title">Selecciona tu platafroma:</div>
-    Comparte archivos de forma directa e instantánea, tan solo debes ejecutar pystream, seleccionar una carpeta de tu pc y la visibilidad que quieras que tenga (público, privado o solamente en LAN).
+    <b>Selecciona tu platafroma:</b><br/>
+    Comparte archivos de forma directa e instantánea, tan solo debes ejecutar <b>Pystream Sharing Tool</b>, seleccionar una carpeta de tu pc y la visibilidad que quieras que tenga (público, privado o solamente en LAN).
     {% else %}
-    <div class="title">Select your platform:</div>
-    Sharing folders made easy. Launch pystream, select a folder and share!
+    <b>Select your platform:</b><br/>
+    Sharing folders made easy. Launch <b>Pystream Sharing Tool</b>, select a folder and share!
     {% endif %}
     
     <table class="main">
@@ -41,6 +37,12 @@
     </tr>
     </table>
 </div>
+
+<br/>
+
+{% if user_os = 'linux' %}
+    <center><img src="/img/pystream_linux.png" alt="Linux"/></center>
+{% endif %}
 
 </div>
 {% include "footer.html" %}

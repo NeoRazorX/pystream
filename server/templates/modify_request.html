@@ -5,13 +5,13 @@
 <div class="arrow" id="streamid"></div>
 <div class="body">
 
-<form name="mod_stream" action="/mod_request/{{ request.key.id }}" method="post">
+<form name="request" action="/mod_request/{{ request.key.id }}" method="post">
 <table class="social_buttons">
 <tr>
 {% if request.edit_pass != '' %}
-    <td>{{ lang|translation:'e_pass' }}: <input name="e_pass" type="password"/></td>
+    <td>{{ lang|translation:'e_pass'|capfirst }}: <input name="e_pass" type="password"/></td>
 {% else %}
-    <td>{{ lang|translation:'onlyadminrequest' }}!</td>
+    <td>{{ lang|translation:'onlyadminrequest'|capfirst }}!</td>
 {% endif %}
     <td align="right"><a href="/report?link={{ request.get_link }}">{{ lang|translation:'report' }}</a></td>
 </tr>

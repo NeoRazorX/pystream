@@ -93,24 +93,9 @@ def show_tags(values):
 @register.filter
 def show_tag(value):
     if value:
-        return mark_safe('<a class="tag" href="/search?query=' + value.lower().replace('_', '+') + '">#' + value.lower().replace(' ', '_') + '</a>')
+        return mark_safe('<a class="tag" href="/search/' + value.lower().replace('_', '+') + '">#' + value.lower().replace(' ', '_') + '</a>')
     else:
         return ''
-
-@register.filter
-def search_filter(values, ptype = 'streams'):
-    text = ''
-    items = []
-    if len(values) > 0:
-        for item in values:
-            if item[1] == ptype:
-                items.append( item )
-    if len(items) > 0:
-        text += '<table class="custom">'
-        for s in items:
-            text += '<tr><td><a href="' + s[0] + '">' + s[3] + '</a></td><td align="right">' + timesince(s[2]) + '</td></tr>'
-        text += '</table>'
-    return mark_safe(text)
 
 @register.filter
 def truncate(value, arg):
@@ -215,11 +200,11 @@ def translation(lang, tag):
         'help': 'help',
         'leavecom': 'Leave a comment!',
         'links': 'links',
+        'localstreams': 'local streams',
         'logout': 'logout',
         'makerequest': 'make a request',
         'new': 'new',
-        'nostreams': 'no streams found!',
-        'norequests': 'no requests found! <a href="/new_request">make your own request</a>.',
+        'noresults': 'no streams found!',
         'onlyadminrequest': 'only an admin can edit this request!',
         'onlyadminstream': 'only an admin can edit this stream!',
         'private': 'private',
@@ -232,6 +217,7 @@ def translation(lang, tag):
         'reportingi1': "Explain your issue or suggestion here.\nYou can leave your email to contact.",
         'reportingi2': 'If this form fails...',
         'reportingi3': 'You can send me an email <a href="mailto:admin@pystream.com">here</a>.',
+        'results': 'results',
         'save': 'save',
         'search': 'search',
         'send': 'send',
@@ -260,11 +246,11 @@ def translation(lang, tag):
         'help': 'ayuda',
         'leavecom': '¡Deja un comentario!',
         'links': 'enlaces',
+        'localstreams': 'streams locales',
         'logout': 'salir',
         'makerequest': 'hacer una petición',
         'new': 'nuevo',
-        'nostreams': '¡sin resultados!',
-        'norequests': '¡sin resultados! <a href="/new_request">haz tu propia petición</a>.',
+        'noresults': '¡sin resultados!',
         'onlyadminrequest': '¡Solamente un administrador puede editar esta petición!',
         'onlyadminstream': '¡Solamente un administrador puede editar este stream!',
         'private': 'privado',
@@ -277,6 +263,7 @@ def translation(lang, tag):
         'reportingi1': "Explica tu problema aquí.\nPuedes dejar tu email de contacto.",
         'reportingi2': 'si este formulario falla...',
         'reportingi3': 'puedes enviarme un email <a href="mailto:admin@pystream.com">aquí</a>.',
+        'results': 'resultados',
         'save': 'guardar',
         'search': 'buscar',
         'send': 'enviar',

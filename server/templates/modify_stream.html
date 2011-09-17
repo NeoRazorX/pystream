@@ -9,9 +9,9 @@
 <table class="social_buttons">
 <tr>
 {% if stream.edit_pass != '' %}
-    <td>{{ lang|translation:'e_pass' }}: <input name="e_pass" type="password"/></td>
+    <td>{{ lang|translation:'e_pass'|capfirst }}: <input name="e_pass" type="password"/></td>
 {% else %}
-    <td>{{ lang|translation:'onlyadminstream' }}</td>
+    <td>{{ lang|translation:'onlyadminstream'|capfirst }}</td>
 {% endif %}
     <td align="right"><a href="/report?link={{ stream.get_link }}">{{ lang|translation:'report' }}</a></td>
 </tr>

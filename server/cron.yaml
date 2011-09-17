@@ -11,3 +11,7 @@ cron:
 - description: Searches
   url: /cron/searches
   schedule: every 5 minutes
+
+- description: Streams
+  url: /cron/streams
+  schedule: every 29 minutes

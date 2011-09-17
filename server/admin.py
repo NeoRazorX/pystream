@@ -34,6 +34,7 @@ class Main_page(Basic_page, Basic_tools):
         st = Stat_cache()
         template_values = {
             'title': 'pystream: admin',
+            'title2': 'Admin',
             'summary': st.get_summary(),
             'downloads': st.get_downloads(),
             'previouss': st.get_searches(),
@@ -52,6 +53,7 @@ class Streams_page(Basic_page, Basic_tools):
         ss,pages_data = self.get_streams(self.request.get('p'), 30)
         template_values = {
             'title': 'pystream: admin/streams',
+            'title2': 'Admin',
             'streams': ss,
             'removed': removed,
             'pages_data': pages_data,
@@ -96,6 +98,7 @@ class Requests_page(Basic_page, Basic_tools):
         rs,pages_data = self.get_requests(self.request.get('p'), 30)
         template_values = {
             'title': 'pystream: admin/requests',
+            'title2': 'Admin',
             'requests': rs,
             'removed': removed,
             'pages_data': pages_data,
@@ -140,6 +143,7 @@ class Reports_page(Basic_page, Basic_tools):
         rr,pages_data = self.get_reports(self.request.get('p'), 20)
         template_values = {
             'title': 'pystream: admin/reports',
+            'title2': 'Admin',
             'reports': rr,
             'removed': removed,
             'pages_data': pages_data,
@@ -182,6 +186,7 @@ class Stats_page(Basic_page, Basic_tools):
         sts,pages_data = self.get_stats(self.request.get('p'), 30)
         template_values = {
             'title': 'pystream: admin/stats',
+            'title2': 'Admin',
             'stats': sts,
             'pages_data': pages_data,
             'logout': users.create_logout_url('/'),

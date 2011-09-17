@@ -7,6 +7,9 @@
 
 <table class="social_buttons">
 <tr>
+{% if stream.size > 0 %}
+    <td>{{ stream.size|size }}</td>
+{% endif %}
     <td>
     <table>
     <tr>
@@ -41,14 +44,16 @@
     {% endif %}
 </div>
 
-{% if stream.status = 100 %}
+{% if stream.status >= 100 %}
     <div class="warning">Stream closed</div>
 {% else %}
 
+{% if stream.pylinks|length > 0 %}
 <div class="pylinks">
+    <a name="pylinks"></a>
     <div class="options">
         <span>
-        <a id="btn_pyl_def_lens" class="selected" href="#" onclick="select_pylinks_lens()">pylinks</a><a id="btn_pyl_txt_lens" href="#" onclick="select_pylinks_lens('text')">text</a>
+        <a id="btn_pyl_def_lens" class="selected" href="#pylinks" onclick="select_pylinks_lens()">pylinks</a><a id="btn_pyl_txt_lens" href="#pylinks" onclick="select_pylinks_lens('text')">text</a>
         </span>
     </div>
     <div id="pyl_default_lens">
@@ -62,7 +67,9 @@
     {% endfor %}
     </div>
 </div>
-
+{% else %}
+<div class="warning">No pylinks!</div>
+{% endif %}
 
 <div class="section">
 <div class="title">{{ lang|translation:'comments'|capfirst }}:</div>

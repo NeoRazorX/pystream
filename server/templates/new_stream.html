@@ -10,8 +10,10 @@
 
 <div class="stream_description">
 <form name="stream" action="/new_links" method="post">
-    {{ lang|translation:'description'|capfirst }} + {{ lang|translation:'links'|capfirst }}:
-    <textarea name="description" rows="12"></textarea>
+    {{ lang|translation:'description'|capfirst }}:
+    <textarea name="description" rows="8"></textarea>
+    {{ lang|translation:'links'|capfirst }}:
+    <textarea name="links" rows="8"></textarea>
     <select name="public" onchange="change_stream_visibility()">
         <option value="True">{{ lang|translation:'public' }}</option>
         <option value="False">{{ lang|translation:'private' }}</option>

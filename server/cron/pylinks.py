@@ -31,47 +31,75 @@ class Pylink_checker(Basic_tools):
             else:
                 logging.info('No pylinks to check!')
         else:
-            query = db.GqlQuery("SELECT * FROM Pylink")
+            query = db.GqlQuery("SELECT * FROM Pylink WHERE status != :1", 3)
             pylinks = query.fetch(5, random.randint(0, max(0, query.count()-1)))
             logging.info('Cheking random pylinks...')
         for pyl in pylinks:
-            status_code = 0
-            content = ''
-            try:
-                result = urlfetch.fetch( pyl.url )
-                status_code = result.status_code
-                content = result.content
-            except:
-                logging.warning("Can't check pylink: " + pyl.url)
-            if status_code == 200:
-                if pyl.url.find('megaupload.com') != -1:
-                    self.megaupload(pyl, content)
-                elif pyl.url.find('fileserve.com/file/') != -1:
-                    self.fileserve_file(pyl, content)
-                elif pyl.url.find('fileserve.com/list/') != -1:
-                    self.fileserve_list(pyl, content)
-                elif pyl.url.find('mediafire.com/?') != -1:
-                    self.mediafire(pyl, content)
-                elif pyl.url.find('wupload.com/file/') != -1:
-                    self.wupload_file(pyl, content)
-                elif pyl.url.find('wupload.com/folder/') != -1:
-                    self.wupload_list(pyl, content)
+            if pyl.url[:11] == '/api/redir/': # from pystream sharing tool
+                self.pst_link(pyl)
+            elif pyl.url[:7] == 'http://':
+                status_code = 0
+                content = ''
+                try:
+                    result = urlfetch.fetch( pyl.url )
+                    status_code = result.status_code
+                    content = result.content
+                except:
+                    logging.warning("Can't check pylink: " + pyl.url)
+                if status_code == 200:
+                    if pyl.url.find('megaupload.com') != -1:
+                        self.megaupload(pyl, content)
+                    elif pyl.url.find('fileserve.com/file/') != -1:
+                        self.fileserve_file(pyl, content)
+                    elif pyl.url.find('fileserve.com/list/') != -1:
+                        self.fileserve_list(pyl, content)
+                    elif pyl.url.find('mediafire.com/?') != -1:
+                        self.mediafire(pyl, content)
+                    elif pyl.url.find('wupload.com/file/') != -1:
+                        self.wupload_file(pyl, content)
+                    elif pyl.url.find('wupload.com/folder/') != -1:
+                        self.wupload_list(pyl, content)
+                    else:
+                        pyl.status = 3
+                        try:
+                            pyl.put()
+                            pyl.rm_cache()
+                            logging.info('Pylink ' + pyl.url + ' online!')
+                        except:
+                            logging.warning("Can't modify pylink:" + pyl.url)
                 else:
-                    pyl.status = 1
+                    pyl.status = 3
                     try:
                         pyl.put()
                         pyl.rm_cache()
-                        logging.info('Pylink ' + pyl.url + ' online!')
+                        logging.info('Pylink ' + pyl.url + ' offline!')
                     except:
                         logging.warning("Can't modify pylink:" + pyl.url)
-            else:
-                pyl.status = 2
-                try:
-                    pyl.put()
-                    pyl.rm_cache()
-                    logging.info('Pylink ' + pyl.url + ' offline!')
-                except:
-                    logging.warning("Can't modify pylink:" + pyl.url)
+            else: # no http link
+                self.no_http_link(pyl)
+    
+    def pst_link(self, pyl):
+        try:
+            pyl.status = 3
+            pyl.file_name = pyl.url.rpartition('/')[2]
+            pyl.put()
+            pyl.rm_cache()
+        except:
+            logging.warning("(pst) Can't modify pylink:" + pyl.url)
+    
+    def no_http_link(self, pyl):
+        if pyl.url[:13] == 'ed2k://|file|':
+            pyl.status = 3
+            file_name = re.findall('ed2k://|file|(.+?)|', pyl.url)
+            if file_name:
+                pyl.filename = file_name[0]
+            try:
+                pyl.put()
+                pyl.rm_cache()
+            except:
+                logging.warning("(ed2k) Can't modify pylink:" + pyl.url)
+        else:
+            logging.warning("Unknown link type:" + pyl.url)
     
     def megaupload(self, pyl, html):
         if html.find('down_butt_pad1') != -1:
@@ -112,7 +140,7 @@ class Pylink_checker(Basic_tools):
             links.append('http://www.fileserve.com/file/' + f)
         pylinks = self.new_pylinks(links, pyl.origin[0])
         if pylinks:
-            logging.info('(fileserve_list) ' + len(pylinks + ' pylinks created!')
+            logging.info('(fileserve_list) ' + len(pylinks + ' pylinks created!'))
             try:
                 pyl.rm_cache()
                 db.delete( pyl.key() )
@@ -167,7 +195,7 @@ class Pylink_checker(Basic_tools):
             links.append('http://www.wupload.com/file/' + f)
         pylinks = self.new_pylinks(links, pyl.origin[0])
         if pylinks:
-            logging.info('(wupload_list) ' + len(pylinks + ' pylinks created!')
+            logging.info('(wupload_list) ' + len(pylinks + ' pylinks created!'))
             try:
                 pyl.rm_cache()
                 db.delete( pyl.key() )
