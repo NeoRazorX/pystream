@@ -18,7 +18,7 @@
 
 
 try:
-    import sys, os, platform, socket, urllib, urllib2, re
+    import sys, os, platform, socket, urllib, urllib2, re, random
     import thread, SimpleHTTPServer, BaseHTTPServer, SocketServer
     import pygtk, gtk, gobject
 except Exception,e:
@@ -28,7 +28,7 @@ except Exception,e:
 
 class New_client:
     PYSTREAM_VERSION = 3
-    port = 8081
+    port = random.randint(8081, 9081)
     
     def __init__(self, argv):
         if len(argv) == 1:
@@ -179,12 +179,17 @@ class New_client:
     def is_stream_offline(self):
         return self.cb_visibility.get_active() == 2
     
+    def get_port(self):
+        try:
+            return int(self.sb_port.get_value())
+        except:
+            return self.port
+    
     def run_webserver(self):
         global PYSTREAM_RUN_WEBSERVER
         PYSTREAM_RUN_WEBSERVER = True
         os.chdir( self.fcb_folder.get_filename() )
-        port = int(self.sb_port.get_value())
-        httpd = ThreadedHTTPServer(('', port), SimpleHTTPServer.SimpleHTTPRequestHandler)
+        httpd = ThreadedHTTPServer(('', self.get_port()), SimpleHTTPServer.SimpleHTTPRequestHandler)
         while PYSTREAM_RUN_WEBSERVER:
             httpd.handle_request()
         os.chdir( self.initial_folder )
@@ -197,7 +202,7 @@ class New_client:
                 values = {
                     'version': self.PYSTREAM_VERSION,
                     'machine': platform.uname(),
-                    'port': self.port,
+                    'port': self.get_port(),
                     'lan_ip': self.upnpc.local_ip,
                     'links': self.get_shared_files(folder),
                     'size': self.get_folder_size(folder),
