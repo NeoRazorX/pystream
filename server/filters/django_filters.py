@@ -64,13 +64,13 @@ def urlcode(value):
 def show_pylink(pyl, extra=False):
     if pyl:
         if extra:
-            texto = '<div class="pylink">'+pyl.get_status_html()+' &nbsp; <a href="'+pyl.url+'">'+pyl.url+'</a>'
+            texto = '<div class="pylink">'+pyl.get_status_html()+' &nbsp; <a target="_Blank" href="'+pyl.url+'">'+truncate(pyl.url, 60)+'</a>'
             for ori in pyl.origin:
                 texto += '&nbsp; <a class="stream" href="'+ori+'">'+ori+'</a>'
             texto += '</div>'
             return mark_safe(texto)
         else:
-            return mark_safe('<div class="pylink">'+pyl.get_status_html()+' &nbsp; <a target="_Blank" href="'+pyl.url+'">'+pyl.url+'</a> &nbsp; <a class="file_name" href="/search?query='+pyl.get_file_name()+'">'+pyl.get_file_name()+'</a></div>')
+            return mark_safe('<div class="pylink">'+pyl.get_status_html()+' &nbsp; <a target="_Blank" href="'+pyl.url+'">'+truncate(pyl.url, 60)+'</a> &nbsp; <a class="file_name" href="/search?query='+pyl.get_file_name()+'">'+pyl.get_file_name()+'</a></div>')
     else:
         return ''
 
@@ -92,7 +92,7 @@ def show_tags(values):
 
 @register.filter
 def show_tag(value):
-    if value:
+    if len(value) > 1:
         return mark_safe('<a class="tag" href="/search/' + value.lower().replace('_', '+') + '">#' + value.lower().replace(' ', '_') + '</a>')
     else:
         return ''
@@ -204,7 +204,7 @@ def translation(lang, tag):
         'logout': 'logout',
         'makerequest': 'make a request',
         'new': 'new',
-        'noresults': 'no streams found!',
+        'noresults': 'No results! <a href="/new_request">Make a request</a>.',
         'onlyadminrequest': 'only an admin can edit this request!',
         'onlyadminstream': 'only an admin can edit this stream!',
         'private': 'private',
@@ -250,7 +250,7 @@ def translation(lang, tag):
         'logout': 'salir',
         'makerequest': 'hacer una petición',
         'new': 'nuevo',
-        'noresults': '¡sin resultados!',
+        'noresults': '¡Sin resultados! <a href="/new_request">Haz una petición</a>.',
         'onlyadminrequest': '¡Solamente un administrador puede editar esta petición!',
         'onlyadminstream': '¡Solamente un administrador puede editar este stream!',
         'private': 'privado',

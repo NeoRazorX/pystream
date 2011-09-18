@@ -310,7 +310,7 @@ class Upnp_client:
                         self.loaded = True
         if self.loaded:
             self.upnpc = miniupnpc.UPnP()
-            self.upnpc.discoverdelay = 200;
+            self.upnpc.discoverdelay = 200
             self.upnpc.discover()
             try:
                 self.upnpc.selectigd()

@@ -7,13 +7,7 @@ RUN:
 This software has no need to install.
 
 Linux:
-- Run pystream.py
-
-Windows:
-- Run pystream.exe
-
-Mac:
-- Run pystream.py
+- Run pst-linux.py
 
 
 CONTACT:

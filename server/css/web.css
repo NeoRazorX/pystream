@@ -52,8 +52,12 @@ input {
 }
 
 input[type='submit'] {
-    background-color: #1D81B9;
-    border: 2px outset #1D81B9;
+    background-color: green;
+    border: 1px solid green;
+    border-top-left-radius: 3px 3px;
+    border-top-right-radius: 3px 3px;
+    border-bottom-left-radius: 3px 3px;
+    border-bottom-right-radius: 3px 3px;
     font-size: 16px;
     color: white;
     font-weight: bold;
