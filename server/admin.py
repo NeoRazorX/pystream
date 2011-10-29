@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # This file is part of Pystream
 # Copyright (C) 2011  Carlos Garcia Gomez  admin@pystream.com

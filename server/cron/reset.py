@@ -17,15 +17,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
-from base import *
+from google.appengine.api import memcache
 
-class Searches(Basic_tools):
-    def __init__(self):
-        all_tags = memcache.get('previous_searches')
-        for i in range(2):
-            self.search_job(all_tags)
-
-if __name__ == "__main__":
-    s = Searches()
-
+memcache.delete_multi(['all_downloads', 'all_pystream_machines', 'previous_searches', 'new_pages', 'random_pages'])

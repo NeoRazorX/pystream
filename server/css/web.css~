@@ -52,8 +52,8 @@ input {
 }
 
 input[type='submit'] {
-    background-color: #363636;
-    border: 1px outset #363636;
+    background-color: #399F8C;
+    border: 1px outset #399F8C;
     border-top-left-radius: 3px 3px;
     border-top-right-radius: 3px 3px;
     border-bottom-left-radius: 3px 3px;
@@ -61,11 +61,6 @@ input[type='submit'] {
     font-size: 16px;
     color: white;
     font-weight: bold;
-}
-
-input[type='submit']:hover {
-    background-color: #4889F0;
-    border: 1px outset #4889F0;
 }
 
 div.header {

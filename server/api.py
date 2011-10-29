@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # This file is part of Pystream
 # Copyright (C) 2011  Carlos Garcia Gomez  admin@pystream.com
@@ -45,67 +46,123 @@ class New_stream(webapp.RequestHandler, Basic_tools):
         if self.request.get('version') != PYSTREAM_VERSION: # bad client version
             logging.info('Bad client version! v'+self.request.get('version'))
             self.error(403)
-        elif self.request.get('machine') and self.request.get('port') and self.request.get('links'):
+        elif self.request.get('machine'):
             try:
+                st = Stat_cache()
                 s = Stream()
                 if self.request.get('description'):
                     s.description = cgi.escape( self.request.get('description') )
                 else:
-                    if len(self.request.get('links')) > 200:
-                        s.description = 'Sharing files: ' + cgi.escape( self.request.get('links')[:200].replace("\n", ' ') ) + '...'
-                    else:
+                    if len(self.request.get('links')) > 449:
+                        s.description = 'Sharing files: ' + cgi.escape( self.request.get('links')[:449].replace("\n", ' ') ) + '...'
+                    elif self.request.get('links'):
                         s.description = 'Sharing files: ' + cgi.escape( self.request.get('links').replace("\n", ' ') )
+                    else:
+                        s.description = 'No description :('
                 s.ip = self.request.remote_addr
-                try:
-                    s.port = int( self.request.get('port') )
-                except:
-                    logging.error('Invalid port!')
-                if self.request.get('lan_ip') not in ['', self.request.remote_addr]:
-                    s.lan_ip = self.request.get('lan_ip')
                 s.os = self.request.get('machine')
-                try:
-                    s.size = int(self.request.get('size'))
-                except:
-                    s.size = 0
+                # is a fake stream?
+                if self.request.get('fake') == 'True':
+                    if self.request.get('public') == 'True':
+                        s.status = 91
+                    elif self.request.get('a_pass'):
+                        s.access_pass = self.request.get('a_pass')
+                        s.status = 93
+                    else:
+                        s.status = 92
+                else: # non fake stream
+                    try:
+                        s.port = int( self.request.get('port') )
+                    except:
+                        s.port = 8081
+                    if self.request.get('lan_ip') not in ['', self.request.remote_addr]:
+                        s.lan_ip = self.request.get('lan_ip')
+                    try:
+                        s.size = int(self.request.get('size'))
+                    except:
+                        s.size = 0
+                    # stream status
+                    if self.is_ip6(self.request.remote_addr):
+                        if self.request.get('public') == 'True':
+                            s.status = 1
+                        elif self.request.get('a_pass'):
+                            s.access_pass = self.request.get('a_pass')
+                            s.status = 3
+                        else:
+                            s.status = 2
+                    else:
+                        if self.request.get('public') == 'True':
+                            s.status = 11
+                        elif self.request.get('a_pass'):
+                            s.access_pass = self.request.get('a_pass')
+                            s.status = 13
+                        else:
+                            s.status = 12
                 # edition password
-                s.edit_pass = str( random.randint(0, 999999) )
-                # stream status
-                if self.is_ip6(self.request.remote_addr):
-                    if self.request.get('public') == 'True':
-                        s.status = 1
-                    elif self.request.get('a_pass'):
-                        s.access_pass = self.request.get('a_pass')
-                        s.status = 3
-                    else:
-                        s.status = 2
-                else:
-                    if self.request.get('public') == 'True':
-                        s.status = 11
-                    elif self.request.get('a_pass'):
-                        s.access_pass = self.request.get('a_pass')
-                        s.status = 13
-                    else:
-                        s.status = 12
+                s.edit_pass = self.get_random_password()
                 s.put()
                 # pylinks
                 if self.request.get('links'):
                     links = []
                     for link in self.request.get('links').splitlines():
-                        links.append('/api/redir/' + str( s.key().id() ) + link)
+                        if link[0] == '/':
+                            links.append('/api/redir/' + str(s.key().id()) + link)
+                        else:
+                            links.append(link)
                     s.pylinks = self.new_pylinks(links, s.get_link())
                     s.put()
                 # searches
                 s.tags = self.page2search(s.get_link(), s.description, 'stream', s.date)
                 s.put()
                 # stats
-                st = Stat_cache()
+                if self.request.get('firewalled') == 'True':
+                    st.put_firewalled_machine(self.request.get('machine'))
                 st.put_page('stream')
                 st.put_page('pylinks', len(s.pylinks))
                 # response
                 self.response.headers['Content-Type'] = 'text/plain'
-                self.response.out.write( str(s.key()) + "\n" + s.get_link() + "\n" + s.edit_pass )
+                self.response.out.write( str(s.key()) + "\n" + s.get_link() + "\n" + s.edit_pass + "\n" + self.request.remote_addr)
             except:
                 logging.error('Fail to store stream -> ' + self.request.get('machine'))
+                self.error(500)
+        else: # lost parameters
+            self.error(403)
+
+
+class Stream_add_link(webapp.RequestHandler, Basic_tools):
+    def get(self):
+        self.error(403)
+    
+    def post(self):
+        if self.request.get('version') != PYSTREAM_VERSION: # bad client version
+            logging.info('Bad client version! v'+self.request.get('version'))
+            self.error(403)
+        elif self.request.get('key') and self.request.get('links'):
+            try:
+                s = Stream.get( self.request.get('key') )
+                try:
+                    s.size = int(self.request.get('size'))
+                except:
+                    pass
+                # pylinks
+                links = []
+                for link in self.request.get('links').splitlines():
+                    if link[0] == '/':
+                        links.append('/api/redir/' + str(s.key().id()) + link)
+                    else:
+                        links.append(link)
+                s.add_links(links)
+                s.put()
+                s.rm_cache()
+                # stats
+                st = Stat_cache()
+                st.put_page('pylinks', len(links))
+                # response
+                self.response.headers['Content-Type'] = 'text/plain'
+                self.response.out.write( str(s.key()) + "\n" + s.get_link() + "\n" + s.edit_pass + "\n" + self.request.remote_addr)
+            except:
+                logging.error('Fail to add link to stream -> ' + self.request.get('key'))
+                logging.info(self.request.get('links'))
                 self.error(500)
         else: # lost parameters
             self.error(403)
@@ -145,10 +202,7 @@ class Close_stream(webapp.RequestHandler, Basic_tools):
                 s.status = 100
                 s.password = ''
                 s.put()
-                # pylinks
-                for pyl in s.get_pylinks():
-                    if pyl.origin == [ s.get_link() ]:
-                        db.delete( pyl.key() )
+                s.rm_cache()
             except:
                 logging.error('Fail to close stream -> ' + self.request.get('key'))
                 self.error(500)
@@ -157,35 +211,112 @@ class Close_stream(webapp.RequestHandler, Basic_tools):
 
 
 class Redir_link(webapp.RequestHandler, Basic_tools):
-    def get(self, ids=None, link=None):
-        if ids and link:
+    def get(self, link=None):
+        if link:
+            aux = link.partition('/')
             try:
-                s = Stream.get_by_id( int(ids) )
+                s = Stream.get_by_id( int(aux[0]) )
                 if s:
+                    url = 'http://' + s.ip + ':' + str(s.port) + '/' + aux[2]
                     if s.ip == self.request.remote_addr:
                         if self.is_ip6(self.request.remote_addr):
-                            self.redirect('http://localhost:' + str(s.port) + '/' + link)
+                            url = 'http://localhost:' + str(s.port) + '/' + aux[2]
                         elif s.lan_ip:
-                            self.redirect('http://' + s.lan_ip + ':' + str(s.port) + '/' + link)
-                        else:
-                            self.redirect('http://' + s.ip + ':' + str(s.port) + '/' + link)
+                            url = 'http://' + s.lan_ip + ':' + str(s.port) + '/' + aux[2]
+                    if not s.need_password():
+                        self.redirect(url)
+                    elif self.user_gives_password(s):
+                        self.redirect(url)
                     else:
-                        self.redirect('http://' + s.ip + ':' + str(s.port) + '/' + link)
+                        self.redirect('/error/403')
                 else:
-                    self.error(404)
+                    self.redirect('/error/404')
             except:
-                logging.warning("Can't redir on stream: " + ids + " to: " + link)
-                self.error(500)
+                logging.warning("Can't redir on: " + link)
+                self.redirect('/error/500')
+        else:
+            self.redirect('/error/403')
+    
+    def user_gives_password(self, stream):
+        if self.request.cookies.get('stream_pass_' + str( stream.key().id() ), '') == stream.access_pass:
+            return True
+        else:
+            return False
+
+
+class Pylink_exists(webapp.RequestHandler, Basic_tools):
+    def get(self):
+        self.error(403)
+    
+    def post(self):
+        if self.request.get('version') != PYSTREAM_VERSION: # bad client version
+            logging.info('Bad client version! v'+self.request.get('version'))
+            self.error(403)
+        else:
+            pylink = db.GqlQuery("SELECT * FROM Pylink WHERE url = :1", self.request.get('url')).fetch(1)
+            if pylink:
+                self.response.headers['Content-Type'] = 'text/plain'
+                for ori in pylink[0].origin:
+                    self.response.out.write(ori + "\n")
+            else:
+                self.error(403)
+
+
+class Pylink_check(webapp.RequestHandler, Basic_tools):
+    def get(self):
+        if self.request.get('version') != PYSTREAM_VERSION: # bad client version
+            logging.info('Bad client version! v'+self.request.get('version'))
+            self.error(403)
+        else:
+            self.response.headers['Content-Type'] = 'text/plain'
+            self.response.out.write( self.get_random_pylink() )
+    
+    def post(self):
+        if self.request.get('version') != PYSTREAM_VERSION: # bad client version
+            logging.info('Bad client version! v'+self.request.get('version'))
+            self.error(403)
+        elif self.request.get('url') and self.request.get('status') and self.request.get('rpkey') == RECAPTCHA_PRIVATE_KEY:
+            pylinks = db.GqlQuery("SELECT * FROM Pylink WHERE url = :1", self.request.get('url')).fetch(1)
+            if pylinks:
+                if self.request.get('filename'):
+                    pylinks[0].file_name = self.request.get('filename')
+                try:
+                    pylinks[0].status = int(self.request.get('status'))
+                    pylinks[0].put()
+                    pylinks[0].rm_cache()
+                    logging.info('Pylink: '+pylinks[0].url+' modified. Filename: '+pylinks[0].file_name+' status: '+str(pylinks[0].status))
+                except:
+                    logging.warning("Can't modify pylink: " + pylinks[0].url)
         else:
             self.error(403)
+    
+    def get_random_pylink(self):
+        url = ''
+        query = db.GqlQuery("SELECT * FROM Pylink WHERE status = :1", 0)
+        pylinks = query.fetch(20, random.randint(0, max(0, query.count()-20)))
+        if pylinks:
+            for pyl in pylinks:
+                if pyl.url.find('fileserve.com/list/') == -1 and pyl.url.find('wupload.com/folder/') == -1:
+                    url = pyl.url
+        else:
+            query = db.GqlQuery("SELECT * FROM Pylink WHERE status != :1", 3)
+            pylinks = query.fetch(20, random.randint(0, max(0, query.count()-20)))
+            if pylinks:
+                for pyl in pylinks:
+                    if pyl.url.find('fileserve.com/list/') == -1 and pyl.url.find('wupload.com/folder/') == -1:
+                        url = pyl.url
+        return url
 
 
 def main():
     application = webapp.WSGIApplication([('/api/hello', Hello),
                                           ('/api/new', New_stream),
+                                          ('/api/add_link', Stream_add_link),
                                           ('/api/alive', Stream_alive),
                                           ('/api/close', Close_stream),
-                                          (r'/api/redir/(.*)/(.*)', Redir_link)],
+                                          (r'/api/redir/(.*)', Redir_link),
+                                          ('/api/pylink_exists', Pylink_exists),
+                                          ('/api/check', Pylink_check)],
                                          debug=DEBUG_FLAG)
     run_wsgi_app(application)
 

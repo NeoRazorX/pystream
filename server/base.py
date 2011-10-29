@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # This file is part of Pystream
 # Copyright (C) 2011  Carlos Garcia Gomez  admin@pystream.com
@@ -19,12 +20,13 @@
 DEBUG_FLAG = True
 RECAPTCHA_PUBLIC_KEY = ''
 RECAPTCHA_PRIVATE_KEY = ''
-PYSTREAM_VERSION = '3'
+PYSTREAM_VERSION = '4'
+PYSTREAM_URL = 'http://www.pystream.com'
 WINDOWS_CLIENT_URL = '/download'
-LINUX_CLIENT_URL = '/download'
+LINUX_CLIENT_URL = 'https://github.com/downloads/NeoRazorX/pystream/pst-linux.tar.bz2'
 MAC_CLIENT_URL = '/download'
 
-import logging, datetime, random, re
+import logging, datetime, random, re, urllib
 from google.appengine.ext import webapp, db, search
 from google.appengine.api import memcache
 
@@ -46,7 +48,7 @@ class Basic_tools:
             local_ss = []
             # selecting non-fake streams
             for s in ss:
-                if s.status in [1, 2, 3, 11, 12, 13]:
+                if not s.is_fake() and not s.is_closed():
                     local_ss.append(s)
             # date order
             finalmix = []
@@ -63,6 +65,9 @@ class Basic_tools:
         else:
             return []
     
+    def valid_tag_name(self, tag):
+        return tag.strip().lower().replace('%20', '_').replace('%2B', '_').replace('+', '_').replace(' ', '_')
+    
     def tags2cache(self, tags, all_tags = None):
         if tags:
             # first check because may be not provided
@@ -72,16 +77,16 @@ class Basic_tools:
                 all_tags = []
                 for tag in tags:
                     if len(tag) > 1:
-                        all_tags.append([tag, 0])
+                        all_tags.append([self.valid_tag_name(tag), 0])
                 memcache.add('previous_searches', all_tags)
             else:
                 for ntag in tags:
                     found = False
                     for otag in all_tags:
-                        if ntag == otag[0]:
+                        if self.valid_tag_name(ntag) == otag[0]:
                             found = True
                     if not found and len(ntag) > 1:
-                        all_tags.append([ntag.lower(), 0])
+                        all_tags.append([self.valid_tag_name(ntag), 0])
                 memcache.replace('previous_searches', all_tags)
             return all_tags
         else:
@@ -92,9 +97,11 @@ class Basic_tools:
             all_tags = memcache.get('previous_searches')
         found_tags = []
         if link != '' and text != '' and all_tags is not None:
+            logging.info('Searching tags for link: ' + link)
             for tag in all_tags:
-                if text.lower().find(tag[0]) != -1:
+                if re.search('\\b'+tag[0]+'\\b', text.lower()) or re.search('\\b'+tag[0].replace('_', ' ')+'\\b', text.lower()):
                     found_tags.append(tag[0])
+                    logging.info('Link: ' + link + ' found tag: ' + tag[0])
                     tag_links = memcache.get('search_' + tag[0])
                     if len(text) > 200:
                         element = [link, page_type, date, text[:200]+'...']
@@ -116,10 +123,11 @@ class Basic_tools:
     def search_job(self, all_tags = None):
         if all_tags is None:
             all_tags = memcache.get('previous_searches')
-        if random.randint(0, 1) > 0:
-            streams = db.GqlQuery("SELECT * FROM Stream ORDER BY date DESC").fetch(20)
+        if random.randint(0, 3) > 0:
+            query = db.GqlQuery("SELECT * FROM Stream")
+            streams = query.fetch(20, random.randint(0, max(0, query.count()-20)))
             for s in streams:
-                if s.status in [1, 11, 91]:
+                if s.is_public():
                     self.tags2cache(s.tags, all_tags)
                     new_tags = self.page2search(s.get_link(), s.description, 'stream', s.date, all_tags)
                     if s.tags != new_tags:
@@ -129,7 +137,8 @@ class Basic_tools:
                         except:
                             pass
         else:
-            requests = db.GqlQuery("SELECT * FROM Request ORDER BY date DESC").fetch(20)
+            query = db.GqlQuery("SELECT * FROM Request")
+            requests = query.fetch(20, random.randint(0, max(0, query.count()-20)))
             for r in requests:
                 self.tags2cache(r.tags, all_tags)
                 new_tags = self.page2search(r.get_link(), r.description, 'request', r.date, all_tags)
@@ -147,10 +156,10 @@ class Basic_tools:
             return None
     
     def search(self, query=''):
-        stats = Stat_cache()
-        self.search_job( stats.get_searches() )
         if len(query) > 1:
+            stats = Stat_cache()
             stats.put_search(query)
+            self.search_job( stats.get_searches() )
             mix = memcache.get('search_' + query.lower())
             if mix is not None:
                 finalmix = []
@@ -176,26 +185,52 @@ class Basic_tools:
                 ulinks.append(link)
         return ulinks
     
+    def txt2links(self, txt):
+        links = []
+        aux_links = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', txt)
+        for link in aux_links:
+            if link not in links:
+                links.append(link)
+        aux_links = re.findall(r'/api/redir/[0-9]+/.+', txt)
+        for link in aux_links:
+            if link not in links:
+                links.append(link)
+        return links
+    
     def new_pylinks(self, links, origin):
         all_links = []
-        unique_links = self.unique_links(links)
-        if len(unique_links) > 0 and origin:
-            for link in unique_links:
-                olinks = db.GqlQuery("SELECT * FROM Pylink WHERE url = :1", link).fetch(1)
-                if olinks:
-                    if origin not in olinks[0].origin:
-                        aux_origin = olinks[0].origin
-                        aux_origin.append(origin)
-                        olinks[0].origin = aux_origin
-                        olinks[0].put()
-                    all_links.append( olinks[0].key() )
-                else:
-                    pyl = Pylink()
-                    pyl.url = link
-                    pyl.origin = [origin]
-                    pyl.put()
-                    all_links.append( pyl.key() )
+        if len(links) > 0 and origin:
+            while len(links) > 0:
+                check_links = []
+                while len(links) > 0 and len(check_links) < 25:
+                    check_links.append( links[0] )
+                    links.remove( links[0] )
+                olinks = db.GqlQuery("SELECT * FROM Pylink WHERE url in :1", check_links).fetch(25)
+                for l in check_links:
+                    encontrado = False
+                    if olinks:
+                        for o in olinks:
+                            if o.url == l:
+                                encontrado = True
+                                if origin not in o.origin:
+                                    aux_origin = o.origin
+                                    aux_origin.append(origin)
+                                    o.origin = aux_origin
+                                    o.put()
+                                all_links.append( o.key() )
+                    if not encontrado:
+                        pyl = Pylink()
+                        pyl.url = l
+                        pyl.origin = [origin]
+                        if pyl.url[:11] == '/api/redir/':
+                            pyl.file_name = urllib.unquote(pyl.url).rpartition('/')[2]
+                            pyl.status = 3
+                        pyl.put()
+                        all_links.append( pyl.key() )
         return all_links
+    
+    def get_random_password(self):
+        return str( random.randint(0, 999999) )
 
 
 class Basic_page(webapp.RequestHandler):
@@ -209,7 +244,7 @@ class Basic_page(webapp.RequestHandler):
             return 'en'
 
 
-class Stat_cache():
+class Stat_cache(Basic_tools):
     def __init__(self):
         self.downloads = memcache.get('all_downloads')
         self.machines = memcache.get('all_pystream_machines')
@@ -243,7 +278,7 @@ class Stat_cache():
                 if machine.lower().find( aux ) != -1:
                     os = aux
             if self.machines is None:
-                self.machines = [[os, 1, 0, 0]]
+                self.machines = [[os, 1, 0, 0, 0]]
                 if ip6:
                     self.machines[0][2] += 1
                 elif upnp:
@@ -260,11 +295,30 @@ class Stat_cache():
                             m[3] += 1
                         found = True
                 if not found:
-                    self.machines = [[os, 1, 0, 0]]
+                    self.machines = [[os, 1, 0, 0, 0]]
                     if ip6:
                         self.machines[0][2] += 1
                     elif upnp:
                         self.machines[0][3] += 1
+                memcache.replace('all_pystream_machines', self.machines)
+    
+    def put_firewalled_machine(self, machine):
+        if machine != '':
+            os = 'unknown'
+            for aux in ['bsd', 'darwin', 'mac', 'iphone', 'ipad', 'ipod', 'windows', 'linux', 'android']:
+                if machine.lower().find( aux ) != -1:
+                    os = aux
+            if self.machines is None:
+                self.machines = [[os, 1, 0, 0, 1]]
+                memcache.add('all_pystream_machines', self.machines)
+            else:
+                found = False
+                for m in self.machines:
+                    if m[0] == os:
+                        m[4] += 1
+                        found = True
+                if not found:
+                    self.machines = [[os, 1, 0, 0, 1]]
                 memcache.replace('all_pystream_machines', self.machines)
     
     def put_search(self, query=''):
@@ -275,11 +329,11 @@ class Stat_cache():
                 memcache.add('previous_searches', self.searches)
             else:
                 for s in self.searches:
-                    if s[0] == query:
+                    if s[0] == self.valid_tag_name(query):
                         s[1] += 1
                         found = True
                 if not found:
-                    self.searches.append([query.lower(), 1])
+                    self.searches.append([self.valid_tag_name(query), 1])
                 # short
                 if self.searches:
                     aux = []
@@ -309,8 +363,10 @@ class Stat_cache():
             is_cached = True
         if page_type == 'stream':
             self.pages['streams'] += num
+            memcache.delete('random_pages')
         elif page_type == 'request':
             self.pages['requests'] += num
+            memcache.delete('random_pages')
         elif page_type == 'comment':
             self.pages['comments'] += num
         elif page_type == 'pylinks':
@@ -339,12 +395,13 @@ class Stat_cache():
         if self.downloads:
             for d in self.downloads.values():
                 total_downloads += d
-        total_machines = total_machines_ip6 = total_machines_upnp = 0
+        total_machines = total_machines_ip6 = total_machines_upnp = total_machines_firewalled = 0
         if self.machines:
             for m in self.machines:
                 total_machines += m[1]
                 total_machines_ip6 += m[2]
                 total_machines_upnp += m[3]
+                total_machines_firewalled += m[4]
         total_searches = 0
         if self.searches:
             for s in self.searches:
@@ -363,6 +420,7 @@ class Stat_cache():
             'machines': total_machines,
             'ip6': total_machines_ip6,
             'upnp': total_machines_upnp,
+            'upnp': total_machines_firewalled,
             'searches': total_searches,
             'streams': total_streams,
             'requests': total_requests,
@@ -372,7 +430,7 @@ class Stat_cache():
         return summary
 
 
-class Stream(db.Model):
+class Stream(db.Model, Basic_tools):
     access_pass = db.StringProperty(default='')
     alive = db.DateTimeProperty(auto_now_add=True)
     comments = db.IntegerProperty(default=0)
@@ -442,9 +500,31 @@ class Stream(db.Model):
                         self.put()
                     except:
                         logging.warning("Can't fix stream's pylinks!")
+            # shorting
+            aux = []
+            while len(links) > 0:
+                selection = links[0]
+                for l in links:
+                    if l.file_name < selection.file_name:
+                        selection = l
+                aux.append(selection)
+                links.remove(selection)
+            links = aux
             if not memcache.add('pylinks_' + self.get_link(), links):
                 logging.warning("Error adding pylinks to memcache!")
         return links
+    
+    def add_links(self, links):
+        old_links = self.get_pylinks()
+        new_links = []
+        for link in links:
+            if link not in old_links:
+                new_links.append(link)
+        new_link_keys = self.new_pylinks(new_links, self.get_link())
+        link_keys = self.pylinks
+        for k in new_link_keys:
+            link_keys.append(k)
+        self.pylinks = link_keys
     
     def status_text(self):
         if self.status == 0:
@@ -480,19 +560,69 @@ class Stream(db.Model):
         else:
             return False
     
+    def is_fake(self):
+        if self.status in [91, 92, 93]:
+            return True
+        else:
+            return False
+    
+    def is_closed(self):
+        if self.status >= 100:
+            return True
+        else:
+            return False
+    
+    def need_password(self):
+        if self.status in [3, 13, 93]:
+            return True
+        else:
+            return False
+    
+    def set_public(self):
+        if self.status in [1, 2, 3]:
+            self.status = 1
+        elif self.status in [11, 12, 13]:
+            self.status = 11
+        else:
+            self.status = 91
+    
+    def set_private(self):
+        if self.status in [1, 2, 3]:
+            self.status = 2
+        elif self.status in [11, 12, 13]:
+            self.status = 12
+        else:
+            self.status = 92
+    
+    def set_private_passw(self):
+        if self.status in [1, 2, 3]:
+            self.status = 3
+        elif self.status in [11, 12, 13]:
+            self.status = 13
+        else:
+            self.status = 93
+    
     def rm_comments(self):
         db.delete( Comment.all().filter('origin = ', self.get_link()) )
+    
+    def rm_pylinks(self):
+        for pyl in self.get_pylinks():
+            if pyl.origin == [self.get_link()]:
+                logging.info('Removing pylink: ' + pyl.url)
+                db.delete(pyl)
     
     def rm_cache(self):
         memcache.delete_multi(['comments_'+str(self.key()), 'pylinks_'+self.get_link(), 'random_pages'])
     
     def rm_all(self):
         self.rm_comments()
+        self.rm_pylinks()
         self.rm_cache()
         db.delete( self.key() )
 
 
 class Request(db.Model):
+    checked = db.BooleanProperty(default=False)
     comments = db.IntegerProperty(default=0)
     date = db.DateTimeProperty(auto_now_add=True)
     description = db.TextProperty()
@@ -526,7 +656,7 @@ class Request(db.Model):
         db.delete( Comment.all().filter('origin = ', self.get_link()) )
     
     def rm_cache(self):
-        memcache.delete_multi(['comments_' + str(self.key()), 'random_pages', self.ip])
+        memcache.delete_multi(['comments_' + str(self.key()), 'random_pages'])
     
     def rm_all(self):
         self.rm_comments()
@@ -553,6 +683,9 @@ class Comment(db.Model):
                 return None
         except:
             return None
+    
+    def get_link(self):
+        return self.origin + '#' + str(self.key())
 
 
 class Pylink(db.Model):

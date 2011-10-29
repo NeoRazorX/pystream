@@ -28,17 +28,8 @@ register = webapp.template.create_template_register()
 
 @register.filter
 def urlcode(value):
-    aux_links = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', value)
-    for link in aux_links:
-        if link[-4:].lower() in ['.jpg', '.gif', '.png'] or link[-5:].lower() in ['.jpeg']:
-            value = value.replace(link, '<a target="_Blank" href="' + link + '"><img class="gallery" src="' + link + '"/></a>')
-        elif link[:31] == 'http://www.youtube.com/watch?v=':
-            value = value.replace(link, '<div><iframe width="420" height="345" src="http://www.youtube.com/embed/' + link.split('?v=')[1] + '" frameborder="0" allowfullscreen></iframe></div>')
-        elif link[:28] == 'http://www.xvideos.com/video':
-            videoid = re.findall(r'http://www.xvideos.com/video(.+?)/', link)
-            value = value.replace(link, '<div><iframe src="http://flashservice.xvideos.com/embedframe/'+videoid[0]+'" frameborder=0 width=510 height=400 scrolling=no></iframe></div>')
-        else:
-            value = value.replace(link, '<a target="_Blank" href="' + link + '">' + link + '</a>')
+    p = re.compile('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', re.DOTALL)
+    value = p.sub(urlizer, value)
     # pylinks
     pylinks = re.findall(r'\[pylink\](.+?)\[/pylink\]', value)
     for link in pylinks:
@@ -51,28 +42,49 @@ def urlcode(value):
         except:
             value = value.replace('[pylink]'+link+'[/pylink]', 'error!')
     # tags
-    aux_tags = re.findall(r'#[0-9a-zA-Z+_]*', value)
+    aux_tags = re.findall(r'#[0-9a-zA-Z+_]+\b', value)
     for tag in aux_tags:
         value = value.replace(tag, show_tag(tag[1:]))
     # mentions
-    aux_mentions = re.findall(r'@[0-9]*', value)
+    aux_mentions = re.findall(r'@[0-9]+\b', value)
     for mention in aux_mentions:
         value = value.replace(mention, '<a href="#'+mention[1:]+'">'+mention+'</a>')
     return mark_safe(value)
 
 @register.filter
+def urlizer(link):
+    if link.group(0)[-4:].lower() in ['.jpg', '.gif', '.png'] or link.group(0)[-5:].lower() in ['.jpeg']:
+        return '<a href="'+link.group(0)+'">'+imgur(link.group(0))+'</a>'
+    elif link.group(0)[:31] == 'http://www.youtube.com/watch?v=':
+        return '<div><iframe width="420" height="345" src="http://www.youtube.com/embed/' + link.group(0).split('?v=')[1] + '" frameborder="0" allowfullscreen></iframe></div>'
+    elif link.group(0)[:28] == 'http://www.xvideos.com/video':
+        #return '<div><iframe src="http://flashservice.xvideos.com/embedframe/'+link.group(0).split('/video')[1]+'" frameborder=0 width=510 height=400 scrolling=no></iframe></div>'
+        return '<a target="_Blank" href="' + link.group(0) + '">' + link.group(0) + '</a>'
+    else:
+        return '<a target="_Blank" href="' + link.group(0) + '">' + link.group(0) + '</a>'
+
+@register.filter
+def imgur(url=''):
+    mini = '<a target="_Blank" href="' + url + '"><img class="gallery" src="' + url + '" alt="image"/></a>'
+    if url[:19] == 'http://i.imgur.com/':
+        aux = str(url).split('.')
+        mini = '<a target="_Blank" href="' + url + '"><img class="gallery" src="http://i.imgur.' + aux[2] + 's.' + aux[3] + '" alt="imagen"/></a>'
+    return mark_safe(mini)
+
+@register.filter
 def show_pylink(pyl, extra=False):
+    texto = ''
     if pyl:
         if extra:
             texto = '<div class="pylink">'+pyl.get_status_html()+' &nbsp; <a target="_Blank" href="'+pyl.url+'">'+truncate(pyl.url, 60)+'</a>'
             for ori in pyl.origin:
                 texto += '&nbsp; <a class="stream" href="'+ori+'">'+ori+'</a>'
             texto += '</div>'
-            return mark_safe(texto)
+        elif pyl.url[:11] == '/api/redir/':
+            texto = '<div class="pylink"><a target="_Blank" href="'+pyl.url+'">'+pyl.get_file_name()+'</a> &nbsp; <a class="file_name" href="/search/'+pyl.get_file_name()+'">find more</a></div>'
         else:
-            return mark_safe('<div class="pylink">'+pyl.get_status_html()+' &nbsp; <a target="_Blank" href="'+pyl.url+'">'+truncate(pyl.url, 60)+'</a> &nbsp; <a class="file_name" href="/search?query='+pyl.get_file_name()+'">'+pyl.get_file_name()+'</a></div>')
-    else:
-        return ''
+            texto = '<div class="pylink">'+pyl.get_status_html()+' &nbsp; <a target="_Blank" href="'+pyl.url+'">'+truncate(pyl.url, 60)+'</a> &nbsp; <a class="file_name" href="/search/'+pyl.get_file_name()+'">'+pyl.get_file_name()+'</a></div>'
+    return mark_safe(texto)
 
 @register.filter
 def show_tags(values):
@@ -83,7 +95,7 @@ def show_tags(values):
             text = '<div class="worldintags">'
             total = 0
             for tag in values:
-                if total < 19:
+                if total < 19 and tag[1] > 0:
                     text += show_tag(tag[0]) + ' &nbsp;'
             text += '</div>'
             return mark_safe(text)
@@ -92,8 +104,9 @@ def show_tags(values):
 
 @register.filter
 def show_tag(value):
+    btools = Basic_tools()
     if len(value) > 1:
-        return mark_safe('<a class="tag" href="/search/' + value.lower().replace('_', '+') + '">#' + value.lower().replace(' ', '_') + '</a>')
+        return mark_safe('<a class="tag" href="/search/' + btools.valid_tag_name(value) + '">#' + btools.valid_tag_name(value) + '</a>')
     else:
         return ''
 
@@ -128,16 +141,13 @@ def show_os(ua, show=False):
         return mark_safe(os + '+' + browser)
 
 @register.filter
-def show_platform(ua, show=False):
+def show_platform(ua):
     os = 'unknown'
     # detecting os
     for aux in ['mac', 'windows', 'linux', 'ubuntu', 'debian', 'fedora', 'suse', 'web']:
         if ua.lower().find( aux ) != -1:
             os = aux
-    if show:
-        return mark_safe('<span title="' + ua + '">' + os + '</span>')
-    else:
-        return mark_safe(os)
+    return mark_safe('<span title="' + ua + '">' + os + '</span>')
 
 @register.filter
 def size(n):
@@ -204,7 +214,7 @@ def translation(lang, tag):
         'logout': 'logout',
         'makerequest': 'make a request',
         'new': 'new',
-        'noresults': 'No results! <a href="/new_request">Make a request</a>.',
+        'noresults': 'No results!',
         'onlyadminrequest': 'only an admin can edit this request!',
         'onlyadminstream': 'only an admin can edit this stream!',
         'private': 'private',
@@ -250,7 +260,7 @@ def translation(lang, tag):
         'logout': 'salir',
         'makerequest': 'hacer una petición',
         'new': 'nuevo',
-        'noresults': '¡Sin resultados! <a href="/new_request">Haz una petición</a>.',
+        'noresults': '¡Sin resultados!',
         'onlyadminrequest': '¡Solamente un administrador puede editar esta petición!',
         'onlyadminstream': '¡Solamente un administrador puede editar este stream!',
         'private': 'privado',

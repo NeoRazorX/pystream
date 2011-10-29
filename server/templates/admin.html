@@ -38,8 +38,21 @@
     <div class="section">
         <div class="title">Machines:</div>
         <table class="custom">
+        <tr>
+            <td></td>
+            <td align="right">Total</td>
+            <td align="right">IP6</td>
+            <td align="right">UPnP</td>
+            <td align="right">Firewalled</td>
+        </tr>
         {% for m in machines %}
-        <tr><td>{{ m.0|capfirst }}</td><td align="right">{{ m.1 }}</td><td align="right">{{ m.2 }}</td><td align="right">{{ m.3 }}</td></tr>
+        <tr>
+            <td>{{ m.0|capfirst }}</td>
+            <td align="right">{{ m.1 }}</td>
+            <td align="right">{{ m.2 }}</td>
+            <td align="right">{{ m.3 }}</td>
+            <td align="right">{{ m.4 }}</td>
+        </tr>
         {% endfor %}
         </table>
     </div>
@@ -49,7 +62,9 @@
         <div class="title">Searches:</div>
         <table class="custom">
         {% for p in previouss %}
-        <tr><td><a class="tag" href="/search?query={{ p.0 }}">#{{ p.0 }}</a></td><td align="right">{{ p.1 }}</td></tr>
+            {% if p.1 > 0 %}
+            <tr><td>{{ p.0|show_tag }}</a></td><td align="right">{{ p.1 }}</td></tr>
+            {% endif %}
         {% endfor %}
         </table>
     </div>

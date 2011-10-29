@@ -19,17 +19,17 @@
 
 <div class="stream_description">
     {{ lang|translation:'description'|capfirst }}:
-    <textarea name="description" rows="3">{{ stream.description }}</textarea>
+    <textarea name="description" rows="8">{{ stream.description }}</textarea>
     {{ lang|translation:'links'|capfirst }}:
-    <textarea name="links" rows="6">{% for link in stream.get_pylinks %}{{ link.url }}
+    <textarea name="links" rows="8">{% for link in stream.get_pylinks %}{{ link.url }}
 {% endfor %}</textarea>
     <select name="public" onchange="change_stream_visibility()" onfocus="change_stream_visibility()">
     {% if stream.is_public %}
-        <option value="true">{{ lang|translation:'public' }}</option>
-        <option value="false">{{ lang|translation:'private' }}</option>
+        <option value="True">{{ lang|translation:'public' }}</option>
+        <option value="False">{{ lang|translation:'private' }}</option>
     {% else %}
-        <option value="true">{{ lang|translation:'public' }}</option>
-        <option value="false" selected="selected">{{ lang|translation:'private' }}</option>
+        <option value="True">{{ lang|translation:'public' }}</option>
+        <option value="False" selected="selected">{{ lang|translation:'private' }}</option>
     {% endif %}
     </select>
     <div id="a_pass" class="hidden">

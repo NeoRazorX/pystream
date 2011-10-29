@@ -19,7 +19,7 @@
 
 <div class="stream_description">
     {{ lang|translation:'description'|capfirst }}:
-    <textarea name="description" rows="3">{{ request.description }}</textarea>
+    <textarea name="description" rows="10">{{ request.description }}</textarea>
     <br/>{{ captcha|safe }}
     <input type="submit" value="{{ lang|translation:'save' }}"/>
 </div>

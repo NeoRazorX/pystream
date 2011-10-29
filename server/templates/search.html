@@ -1,5 +1,11 @@
 {% include "header.html" %}
+<script type="text/javascript" src="http://apis.google.com/js/plusone.js"></script>
+
+{% if query %}
+<div class="arrow" id="streamid"></div>
+{% else %}
 <div class="arrow" id="menu"></div>
+{% endif %}
 <div class="body">
 
 <table class="social_buttons">
@@ -7,6 +13,7 @@
     {% if query %}
     <td>{{ lang|translation:'refersearch'|capfirst }}: {{ query|show_tag }}</td>
     {% endif %}
+    <td><g:plusone size="medium"></g:plusone></td>
     <td align="right"><a href="/report?link=/">{{ lang|translation:'report' }}</a></td>
 </tr>
 </table>
@@ -45,12 +52,20 @@
     {% for page in pages %}
         <tr><td class="tweet"><a href="{{ page.0 }}">{{ page.3 }}</a><br/>{{ page.2|timesince }} | {{ page.1 }}</td></tr>
     {% empty %}
-        <tr><td><div class="warning">{{ lang|translation:'noresults'|capfirst }}</a></td></tr>
+        <tr><td><div class="message">{{ lang|translation:'noresults'|capfirst }}</a></td></tr>
     {% endfor %}
+        <tr>
+            <td>
+            <form name="request" method="GET" action="/new_request">
+                <textarea rows="2" onclick="document.request.submit()"></textarea>
+                <input type="submit" value="{{ lang|translation:'send' }}"/>
+            </form>
+            </td>
+        </tr>
     </table>
     {% if pylinks %}
         <br/><br/>
-        <div class="title">Pylinks:</div>
+        <div class="title">Pylinks of {{ query }}:</div>
         {% for pyl in pylinks %}
             {{ pyl|show_pylink:"true" }}
         {% endfor %}

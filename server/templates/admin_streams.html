@@ -31,7 +31,11 @@
         <td>{{ stream.comments }}</td>
         <td>{{ stream.pylinks|length }}</td>
         <td>{{ stream.size|size }}</td>
-        <td>{{ stream.os|show_platform:1 }}</td>
+    {% if stream.is_fake %}
+        <td>{{ stream.os|show_os:"True" }}</td>
+    {% else %}
+        <td>{{ stream.os|show_platform }}</td>
+    {% endif %}
         <td align="right">{{ stream.date|timesince }}</td>
     </tr>
 {% empty %}

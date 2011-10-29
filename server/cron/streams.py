@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # This file is part of Pystream
 # Copyright (C) 2011  Carlos Garcia Gomez  admin@pystream.com
@@ -22,9 +23,10 @@ from base import *
 
 class Stream_checker():
     def __init__(self):
-        ss = db.GqlQuery("SELECT * FROM Stream WHERE status < :1", 19).fetch(100)
-        if ss:
-            for s in ss:
+        # closing bad streams
+        bads = db.GqlQuery("SELECT * FROM Stream WHERE status < :1", 19).fetch(100)
+        if bads:
+            for s in bads:
                 if s.alive < (datetime.datetime.today() - datetime.timedelta(minutes= 30)):
                     s.status = 101
                     try:
@@ -32,11 +34,23 @@ class Stream_checker():
                         s.put()
                         logging.info("Stream " + s.get_link() + " closed!")
                     except:
-                        logging.warning("Can't close stream: " + s.get_link())
+                        logging.warning("Can't close bad stream: " + s.get_link())
         else:
-            logging.info('No streams to check :-)')
+            logging.info('No bad streams to check :-)')
+        # removing old streams
+        olds = db.GqlQuery("SELECT * FROM Stream WHERE date < :1", datetime.datetime.today() - datetime.timedelta(days= 30)).fetch(10)
+        if olds:
+            logging.info(str(len(olds)) + ' old streams to check :-)')
+            for s in olds:
+                if s.is_closed():
+                    try:
+                        s.rm_all()
+                        logging.info("Stream " + s.get_link() + " removed!")
+                    except:
+                        logging.warning("Can't remove stream: " + s.get_link())
+        else:
+            logging.info('No old streams to check :-)')
 
 
 if __name__ == "__main__":
-    sc = Stream_checker()
-
+    Stream_checker()

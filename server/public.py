@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # This file is part of Pystream
 # Copyright (C) 2011  Carlos Garcia Gomez  admin@pystream.com
@@ -16,7 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import cgi, os, random, Cookie, math, re
+import cgi, os, random, Cookie, math, re, urllib
 
 # loading django 1.2
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
@@ -98,6 +99,7 @@ class New_stream_page(Basic_page, Basic_tools):
             'title': 'Sharing links on pystream',
             'title2': 'Sharing links',
             'description': 'Sahring links form.',
+            'onload': 'document.stream.description.focus()',
             'admin': users.is_current_user_admin(),
             'logout': users.create_logout_url('/'),
             'lang': self.get_lang(),
@@ -129,16 +131,18 @@ class New_stream_page(Basic_page, Basic_tools):
                         s.status = 92
                     if self.request.get('e_pass'):
                         s.edit_pass = self.request.get('e_pass')
+                    else:
+                        s.edit_pass = self.get_random_password()
                     s.put()
                     # pylinks
                     if self.request.get('links'):
-                        aux_links = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', self.request.get('links'))
+                        aux_links = self.txt2links( self.request.get('links') )
                         s.pylinks = self.new_pylinks(aux_links, s.get_link())
                     # searches
                     if s.status in [1, 11, 91]:
                         aux_tags = []
-                        for tag in re.findall(r'#[0-9a-zA-Z+_]*', s.description):
-                            aux_tags.append( tag[1:] )
+                        for tag in re.findall(r'#[0-9a-zA-Z+_]+', s.description):
+                            aux_tags.append( self.valid_tag_name(tag[1:]) )
                         self.tags2cache( aux_tags )
                         s.tags = self.page2search(s.get_link(), s.description, 'stream', s.date)
                         s.put()
@@ -165,6 +169,7 @@ class New_request_page(Basic_page, Basic_tools):
             'title': 'Making a request on pystream',
             'title2': 'Making a request',
             'description': 'Making a new request form.',
+            'onload': 'document.request.description.focus()',
             'admin': users.is_current_user_admin(),
             'logout': users.create_logout_url('/'),
             'lang': self.get_lang(),
@@ -192,11 +197,13 @@ class New_request_page(Basic_page, Basic_tools):
                         r.email = self.request.get('email')
                     if self.request.get('e_pass'):
                         r.edit_pass = self.request.get('e_pass')
+                    else:
+                        r.edit_pass = self.get_random_password()
                     r.put()
                     # searches
                     aux_tags = []
-                    for tag in re.findall(r'#[0-9a-zA-Z+_]*', r.description):
-                        aux_tags.append( tag[1:] )
+                    for tag in re.findall(r'#[0-9a-zA-Z+_]+', r.description):
+                        aux_tags.append( self.valid_tag_name(tag[1:]) )
                     self.tags2cache( aux_tags )
                     r.tags = self.page2search(r.get_link(), r.description, 'request', r.date)
                     r.put()
@@ -371,9 +378,17 @@ class Modify_stream(Basic_page, Basic_tools):
             if (cResponse.is_valid and self.request.get('e_pass') == s.edit_pass and s.edit_pass != '') or users.is_current_user_admin():
                 try:
                     s.description = cgi.escape( self.request.get('description') )
+                    # status
+                    if self.request.get('public') == 'True':
+                        s.set_public()
+                    elif self.request.get('a_pass'):
+                        s.access_pass = self.request.get('a_pass')
+                        s.set_private_passw()
+                    else:
+                        s.set_private()
                     # pylinks
                     if self.request.get('links'):
-                        aux_links = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', self.request.get('links'))
+                        aux_links = self.txt2links( self.request.get('links') )
                         s.pylinks = self.new_pylinks(aux_links, s.get_link())
                     # searches
                     if s.status in [1, 11, 91]:
@@ -498,6 +513,7 @@ class Random_page(webapp.RequestHandler, Basic_tools):
     def get_last_pages(self):
         rp = memcache.get('random_pages')
         if rp is None:
+            logging.info('Creating random_pages to store on memcache')
             rp = []
             ss = db.GqlQuery("SELECT * FROM Stream ORDER BY date DESC").fetch(100)
             if ss:
@@ -553,13 +569,14 @@ class Comment_to_page(webapp.RequestHandler, Basic_tools):
                     # stats
                     st = Stat_cache()
                     st.put_page('comment')
-                    # tags
+                    # searches
                     aux_tags = []
-                    for tag in re.findall(r'#[0-9a-zA-Z+_]*', c.text):
-                        aux_tags.append( tag[1:] )
+                    for tag in re.findall(r'#[0-9a-zA-Z+_]+\b', c.text):
+                        aux_tags.append( self.valid_tag_name(tag[1:]) )
                     self.tags2cache(aux_tags, st.get_searches())
+                    self.page2search(c.get_link(), c.text, 'comment', c.date, st.get_searches())
                     # pylinks
-                    aux_links = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', self.request.get('text'))
+                    aux_links = self.txt2links( self.request.get('text') )
                     if aux_links:
                         # discarting images and youtube links
                         num = 0
@@ -588,7 +605,7 @@ class Comment_to_page(webapp.RequestHandler, Basic_tools):
                         # stats
                         st.put_page('pylinks', len(pylinks))
                         logging.info('Encontrados ' + str(len(pylinks)) + ' pylinks!')
-                    self.redirect(origin.get_link() + '#' + str(c.key().id()))
+                    self.redirect( c.get_link() )
                 except:
                     logging.error('Cant save comment!')
                     self.redirect('/error/500')
@@ -653,16 +670,16 @@ class Search_redir(Basic_page, Basic_tools):
 
 class Search_page(Basic_page, Basic_tools):
     def get(self, query=None):
-        query = query.replace('%20', ' ').replace('%2B', ' ')
+        fixed_query = self.valid_tag_name(query)
         st = Stat_cache()
         template_values = {
-            'title': 'Pystream: searching #'+query.replace(' ', '_'),
-            'title2': 'Searching #'+query.replace(' ', '_'),
-            'description': 'Search for #'+query.replace(' ', '_')+' on pystream.',
+            'title': 'Pystream: searching #'+fixed_query,
+            'title2': 'Searching #'+fixed_query,
+            'description': 'Search for #'+fixed_query+' on pystream.',
             'onload': 'document.search.query.focus()',
-            'query': query,
-            'pages': self.search( query ),
-            'pylinks': self.search_pylink_file_name( query ),
+            'query': fixed_query,
+            'pages': self.search( fixed_query ),
+            'pylinks': self.search_pylink_file_name( urllib.unquote(query) ),
             'tags': st.get_searches(),
             'admin': users.is_current_user_admin(),
             'logout': users.create_logout_url('/'),

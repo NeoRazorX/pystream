@@ -49,13 +49,13 @@
 {% else %}
 
 {% if stream.pylinks|length > 0 %}
+<a name="pylinks"></a>
+<div class="options">
+    <span>
+    <a id="btn_pyl_def_lens" class="selected" href="#pylinks" onclick="select_pylinks_lens()">pylinks</a><a id="btn_pyl_txt_lens" href="#pylinks" onclick="select_pylinks_lens('text')">text</a>
+    </span>
+</div>
 <div class="pylinks">
-    <a name="pylinks"></a>
-    <div class="options">
-        <span>
-        <a id="btn_pyl_def_lens" class="selected" href="#pylinks" onclick="select_pylinks_lens()">pylinks</a><a id="btn_pyl_txt_lens" href="#pylinks" onclick="select_pylinks_lens('text')">text</a>
-        </span>
-    </div>
     <div id="pyl_default_lens">
     {% for link in stream.get_pylinks %}
         {{ link|show_pylink }}
@@ -77,7 +77,7 @@
 {% for comment in stream.get_comments %}
 <tr class="comment">
     <td class="autor">
-        <a name="{{ comment.key.id }}"></a>
+        <a name="{{ comment.key }}"></a>
         <a name="{{ forloop.counter }}" href="{{ stream.get_link }}#{{ forloop.counter }}">@{{ forloop.counter }}</a>
         <br/>
         {{ comment.date|timesince }}
@@ -104,6 +104,14 @@
         <input type="submit" value="{{ lang|translation:'send' }}"/>
         </form>
     </td>
+</tr>
+<tr>
+    <td>
+        <a href="#iframe" onclick="show_on_iframe('imgur')">Upload pictures</a>
+        <br/>
+        <a href="#iframe" onclick="show_on_iframe('megaupload')">Upload files</a>
+    </td>
+    <td><a name="#iframe"><iframe id="webservice" src="" width="99%" height="0" frameborder="0"></iframe></td>
 </tr>
 </table>
 </div>

@@ -1,9 +1,5 @@
 cron:
 
-- description: Stats
-  url: /cron/stats
-  schedule: every 6 hours
-
 - description: Pylink checker
   url: /cron/pylinks
   schedule: every 5 minutes
@@ -15,3 +11,15 @@ cron:
 - description: Streams
   url: /cron/streams
   schedule: every 29 minutes
+
+- description: Requests
+  url: /cron/requests
+  schedule: every 29 minutes
+
+- description: Stats
+  url: /cron/stats
+  schedule: every 6 hours
+
+- description: Reset
+  url: /cron/reset
+  schedule: every 24 hours

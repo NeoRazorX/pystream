@@ -22,13 +22,19 @@ try:
     import thread, SimpleHTTPServer, BaseHTTPServer, SocketServer
     import pygtk, gtk, gobject
 except Exception,e:
-    print 'Lost dependency:', e
+    print 'Lost dependency: ', e
     sys.exit(1)
 
 
 class New_client:
-    PYSTREAM_VERSION = 3
+    PYSTREAM_VERSION = 4
     port = random.randint(8081, 9081)
+    firewalled = True
+    stream_files = []
+    stream_size = 0
+    stream_key = ''
+    stream_link = ''
+    stream_edit_pass = ''
     
     def __init__(self, argv):
         if len(argv) == 1:
@@ -39,9 +45,6 @@ class New_client:
             self.PYSTREAM_URL = 'http://' + argv[2]
         else:
             self.PYSTREAM_URL = 'http://www.pystream.com'
-        self.stream_key = ''
-        self.stream_link = ''
-        self.stream_edit_pass = ''
         self.gui()
     
     def gui(self):
@@ -71,7 +74,7 @@ class New_client:
         self.cb_visibility.append_text('Public')
         self.cb_visibility.append_text('Private')
         self.cb_visibility.append_text('LAN only')
-        self.cb_visibility.set_active(0)
+        self.cb_visibility.set_active(2)
         self.b_start = self.gtkb.get_object('b_start')
         self.b_start.connect("clicked", self.gui_start_button, False)
         self.tv_log = self.gtkb.get_object('tv_log')
@@ -98,28 +101,26 @@ class New_client:
             'machine': platform.uname(),
             'upnp': self.upnpc.is_working()
         }
+        self.write2log("Sending hello...")
         try:
-            self.write2log("Sending hello request...")
             data = urllib.urlencode(values)
-            response = urllib2.urlopen(self.PYSTREAM_URL + '/api/hello', data, timeout=2)
+            response = urllib2.urlopen(self.PYSTREAM_URL + '/api/hello', data, timeout=5)
             resp_code = response.getcode()
             if resp_code == 200:
                 lines = response.read().splitlines()
                 if lines:
                     if lines[0] == 'Bad version!':
                         self.write2log("Bad version!")
-                        label = gtk.Label('Edition password: ' + self.stream_edit_pass)
                         lb_update = gtk.LinkButton(self.PYSTREAM_URL + '/download', label='Download a new version!')
                         lb_update.show()
                         infobar = gtk.InfoBar()
-                        infobar.show()
                         infobar.get_content_area().add(lb_update)
+                        infobar.show()
                         self.vbox1.pack_start(infobar, False)
                         self.b_start.set_sensitive(False)
-                    else:
-                        self.write2log("Error!")
                 else:
                     self.write2log("Hello!")
+                    self.cb_visibility.set_active(0)
             else:
                 self.write2log("Error: " + str(resp_code))
         except urllib2.HTTPError, e:
@@ -130,10 +131,14 @@ class New_client:
             self.write2log("Fatal error!")
     
     def delete_event(self, widget, event, data=None):
+        global PYSTREAM_RUN_WEBSERVER
+        PYSTREAM_RUN_WEBSERVER = False
         self.upnpc.delete_port_mapping( int(self.sb_port.get_value()) )
         self.send_close()
     
     def write2log(self, text):
+        while gtk.events_pending():
+            gtk.main_iteration()
         try:
             buff = self.tv_log.get_buffer()
             buff.insert(buff.get_end_iter(), text+"\n")
@@ -146,25 +151,23 @@ class New_client:
         self.fcb_folder.set_sensitive(False)
         self.sb_port.set_sensitive(False)
         self.cb_visibility.set_sensitive(False)
-        if self.is_stream_offline():
+        if self.is_stream_lan_only():
             self.lb_lan.set_uri('http://' + self.upnpc.local_ip + ':' + str(int(self.sb_port.get_value())))
             self.lb_lan.set_label('http://' + self.upnpc.local_ip + ':' + str(int(self.sb_port.get_value())))
             self.lb_lan.set_sensitive(True)
             thread.start_new_thread(self.run_webserver, ())
             self.write2log('Serving...')
         else:
-            self.new_stream( self.fcb_folder.get_filename() )
-            if self.stream_key != '' and self.stream_link != '':
+            thread.start_new_thread(self.run_webserver, ())
+            self.upnpc.add_port_mapping( int(self.sb_port.get_value()) )
+            self.write2log('Serving...')
+            if self.new_stream( self.fcb_folder.get_filename() ):
                 self.lb_online.set_uri(self.PYSTREAM_URL + self.stream_link)
                 self.lb_online.set_label(self.PYSTREAM_URL + self.stream_link)
                 self.lb_online.set_sensitive(True)
                 self.lb_lan.set_uri('http://' + self.upnpc.local_ip + ':' + str(int(self.sb_port.get_value())))
                 self.lb_lan.set_label('http://' + self.upnpc.local_ip + ':' + str(int(self.sb_port.get_value())))
                 self.lb_lan.set_sensitive(True)
-                thread.start_new_thread(self.run_webserver, ())
-                self.upnpc.add_port_mapping( int(self.sb_port.get_value()) )
-                self.write2log('Serving...')
-                gobject.timeout_add_seconds(300, self.send_alive)
                 # edition password
                 label = gtk.Label('Edition password: ' + self.stream_edit_pass)
                 label.show()
@@ -172,11 +175,20 @@ class New_client:
                 infobar.show()
                 infobar.get_content_area().add(label)
                 self.vbox1.pack_start(infobar, False)
+                # adding files and more info to stream
+                thread.start_new_thread(self.add_files_background, ())
+                # adding send_alive work
+                gobject.timeout_add_seconds(600, self.send_alive)
+    
+    def add_files_background(self):
+        files = self.get_shared_files( self.fcb_folder.get_filename() )
+        while len(files) > 0:
+            files = self.send_add_files(files)
     
     def is_stream_public(self):
         return self.cb_visibility.get_active() == 0
     
-    def is_stream_offline(self):
+    def is_stream_lan_only(self):
         return self.cb_visibility.get_active() == 2
     
     def get_port(self):
@@ -192,8 +204,6 @@ class New_client:
         httpd = ThreadedHTTPServer(('', self.get_port()), SimpleHTTPServer.SimpleHTTPRequestHandler)
         while PYSTREAM_RUN_WEBSERVER:
             httpd.handle_request()
-        os.chdir( self.initial_folder )
-        self.upnpc.add_port_mapping(port)
     
     def new_stream(self, folder):
         result = False
@@ -202,14 +212,14 @@ class New_client:
                 values = {
                     'version': self.PYSTREAM_VERSION,
                     'machine': platform.uname(),
+                    'upnp': self.upnpc.is_working(),
                     'port': self.get_port(),
                     'lan_ip': self.upnpc.local_ip,
-                    'links': self.get_shared_files(folder),
-                    'size': self.get_folder_size(folder),
-                    'public': self.is_stream_public()
+                    'public': self.is_stream_public(),
+                    'firewalled': self.is_stream_firewalled()
                 }
+                self.write2log("Sending new stream...")
                 try:
-                    self.write2log("Sending new stream request...")
                     data = urllib.urlencode(values)
                     response = urllib2.urlopen(self.PYSTREAM_URL + '/api/new', data, timeout=20)
                     resp_code = response.getcode()
@@ -218,7 +228,10 @@ class New_client:
                         self.stream_key = lines[0]
                         self.stream_link = lines[1]
                         self.stream_edit_pass = lines[2]
+                        if self.upnpc.external_ip == '':
+                            self.upnpc.external_ip = lines[3]
                         self.write2log('New stream ready!')
+                        result = True
                     else:
                         self.write2log("Error: " + str(resp_code))
                 except urllib2.HTTPError, e:
@@ -229,17 +242,64 @@ class New_client:
                     self.write2log("Fatal error!")
         return result
     
-    def get_shared_files(self, folder):
-        text = ''
-        for filename in os.listdir(folder):
-            text += '/' + filename + "\n"
-        return text
+    def send_add_files(self, files):
+        maxfs = 100
+        numfs = 0
+        files_to_send = ''
+        while numfs < maxfs and len(files) > 0:
+            files_to_send += files[0] + "\n"
+            files.remove(files[0])
+            numfs += 1
+        values = {
+            'version': self.PYSTREAM_VERSION,
+            'machine': platform.uname(),
+            'key': self.stream_key,
+            'links': files_to_send,
+            'size': self.stream_size
+        }
+        self.write2log('Adding files to stream ... ' + str(len(files)) + ' left')
+        try:
+            data = urllib.urlencode(values)
+            response = urllib2.urlopen(self.PYSTREAM_URL + '/api/add_link', data, timeout=20)
+            resp_code = response.getcode()
+            if resp_code == 200:
+                self.write2log("done!")
+            else:
+                self.write2log("Error: " + str(resp_code))
+        except urllib2.HTTPError, e:
+            self.write2log('Response code: ' + str(e.code))
+        except urllib2.URLError, e:
+            self.write2log( str(e.args) )
+        except:
+            self.write2log("Fatal error!")
+        return files
     
-    def get_folder_size(self, folder):
-        folder_size = 0
-        for filename in os.listdir(folder):
-            folder_size += os.path.getsize(folder + '/' + filename)
-        return folder_size
+    def get_shared_files(self, folder):
+        self.stream_files = []
+        self.stream_size = 0
+        for (path, dirs, files) in os.walk( folder ):
+            for f in files:
+                filename = os.path.join(path, f)
+                self.stream_files.append( urllib.quote(filename[len(folder):]) )
+                self.stream_size += os.path.getsize(filename)
+        return self.stream_files
+    
+    def is_stream_firewalled(self):
+        firewalled = True
+        proxy_list = [{'http': '204.45.48.42:3128'},
+                      {'http': '65.111.176.127:3128'}]
+        self.write2log("Checking online status...")
+        try:
+            proxy_handler = urllib2.ProxyHandler( random.choice(proxy_list) )
+            opener = urllib2.build_opener(proxy_handler)
+            response = opener.open('http://' + self.upnpc.external_ip + ':' + str(self.get_port()), timeout=10)
+            resp_code = response.getcode()
+            if resp_code == 200:
+                firewalled = False
+                self.write2log("Stream online!")
+        except:
+            self.write2log("Stream behind a firewall or NAT!")
+        return firewalled
     
     def send_alive(self):
         if self.stream_key:
@@ -248,10 +308,10 @@ class New_client:
                 'machine': platform.uname(),
                 'key': self.stream_key
             }
+            self.write2log("Sending alive message...")
             try:
-                self.write2log("Sending alive message...")
                 data = urllib.urlencode(values)
-                response = urllib2.urlopen(self.PYSTREAM_URL + '/api/alive', data, timeout=5)
+                response = urllib2.urlopen(self.PYSTREAM_URL + '/api/alive', data, timeout=20)
                 resp_code = response.getcode()
                 if resp_code == 200:
                     self.write2log('Alive!')
@@ -272,21 +332,21 @@ class New_client:
                 'machine': platform.uname(),
                 'key': self.stream_key
             }
+            print "Sending close message..."
             try:
-                self.write2log("Sending close message...")
                 data = urllib.urlencode(values)
-                response = urllib2.urlopen(self.PYSTREAM_URL + '/api/close', data, timeout=5)
+                response = urllib2.urlopen(self.PYSTREAM_URL + '/api/close', data, timeout=20)
                 resp_code = response.getcode()
                 if resp_code == 200:
-                    self.write2log('Close!')
+                    print 'Closed!'
                 else:
-                    self.write2log("Error: " + str(resp_code))
+                    print "Error: " + str(resp_code)
             except urllib2.HTTPError, e:
-                self.write2log('Response code: ' + str(e.code))
+                print 'Response code: ' + str(e.code)
             except urllib2.URLError, e:
-                self.write2log( str(e.args) )
+                print str(e.args)
             except:
-                self.write2log("Fatal error!")
+                print "Fatal error!"
 
 
 class Upnp_client:
@@ -336,7 +396,7 @@ class Upnp_client:
                 self.local_ip = s.getsockname()[0]
                 s.close()
             except:
-                self.write2log("No internet connection!")
+                print "No internet connection!"
     
     def is_working(self):
         if self.loaded and self.works:
@@ -382,6 +442,5 @@ class ThreadedHTTPServer(SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer)
 
 
 if __name__ == "__main__":
-    
     gobject.threads_init()
     ncli = New_client( sys.argv )

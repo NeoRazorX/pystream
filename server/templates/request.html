@@ -25,11 +25,11 @@
     {{ request.description|safe|linebreaksbr|urlcode }}
 </div>
 <div class="stream_info">
-    {{ request.date|date:"d/m/Y H:i" }}
+    {{ request.date|date:"d/m/Y H:i" }} |
     {% if admin %}
-        | {{ request.ip }}
-        | {{ request.os|show_os }}
-        | {{ request.email }} |
+        {{ request.ip }} |
+        {{ request.os|show_os }} |
+        {{ request.email }} |
     {% endif %}
     {% for tag in request.tags %}
         {{ tag|show_tag }}
@@ -49,7 +49,7 @@
 {% for comment in request.get_comments %}
 <tr class="comment">
     <td class="autor">
-        <a name="{{ comment.key.id }}"></a>
+        <a name="{{ comment.key }}"></a>
         <a name="{{ forloop.counter }}" href="{{ request.get_link }}#{{ forloop.counter }}">@{{ forloop.counter }}</a>
         <br/>
         {{ comment.date|timesince }}
@@ -76,6 +76,14 @@
         <input type="submit" value="{{ lang|translation:'send' }}"/>
         </form>
     </td>
+</tr>
+<tr>
+    <td>
+        <a href="#iframe" onclick="show_on_iframe('imgur')">Upload pictures</a>
+        <br/>
+        <a href="#iframe" onclick="show_on_iframe('megaupload')">Upload files</a>
+    </td>
+    <td><a name="#iframe"><iframe id="webservice" src="" width="99%" height="0" frameborder="0"></iframe></td>
 </tr>
 </table>
 </div>
